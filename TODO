@@ -1,0 +1,12 @@
+Tutti i task li dobbiamo assegnare a qualcuno di noi
+
+-definire bene il modello
+-scelta del linguaggio
+-io e dave vorremmo provare ad implementarlo con una rete neurale
+-algoritmo genetico
+-come gestire la storia delle percezioni dei robot?
+    -IDEA: manteniamo info sull'intera mappa, anche se non sappiamo niente
+-funzione di fitness: T per raccogliere tutte le lattine
+    -internamente a roby: lattine raccolte/T (?)
+-grafica (canvas e robottini che si muovono) (offline?)
+
