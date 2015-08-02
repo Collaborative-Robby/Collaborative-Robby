@@ -4,40 +4,16 @@
 #include <string.h>
 #include <fcntl.h>
 #include <dlfcn.h>
-
-enum types {
-	CAN = 0,
-	ROBBY,
-	WALL
-};
-
-struct map {
-	long unsigned int sizex, sizey;
-	long unsigned int n_robots;
-	long unsigned int n_cans;
-	void ***innermatrix;
-	struct robby **rl;
-};
-
-/* Common structure to all elements */
-/* Extendible, so we can declare beacons or some new elements */
-struct melement {
-	int type;
-};
-
-struct robby {
-	int type;
-	long unsigned int id;
-	long unsigned int x, y;
-	void (*move)(struct map *, struct robby *);
-};
-
-struct can {
-	int type;
-};
+#include "include/struct.h"
 
 /* callbacks functions */
 void (*move_callback)(struct map *, struct robby *);
+
+void *callbacks = NULL;
+
+char __can_const;
+
+#define CAN_DUMMY_PTR &__can_const
 
 int map_constructor(struct map *m, long unsigned int x, long unsigned int y,
                    long unsigned int robbynum,
@@ -69,16 +45,13 @@ int map_constructor(struct map *m, long unsigned int x, long unsigned int y,
 
 	for (i = 0; i < cannum; i++) {
 		long unsigned int nx, ny;
-		struct can *c;
-		do {
+		
+        do {
 			nx = (long unsigned int) random() % x;
 			ny = (long unsigned int) random() % y;
 		} while (m->innermatrix[nx][ny]);
-		c = malloc(sizeof(struct can));
-		if (!c)
-			return -1;
-		c->type=CAN;
-		m->innermatrix[nx][ny] = c;
+
+		m->innermatrix[nx][ny] = CAN_DUMMY_PTR;
 	}
 
 	return 0;
@@ -92,6 +65,9 @@ void map_destructor(struct map *m)
 	for (i = 0; i < m->sizey; i++)
 		free(m->innermatrix[i]);
 	free(m->innermatrix);
+
+    if (callbacks)
+	dlclose(callbacks);
 }
 
 #define print_dispatcher(m, i, j) ({\
@@ -100,10 +76,10 @@ void map_destructor(struct map *m)
 		printf("  ");\
 	else{\
 		e = (struct melement *) m->innermatrix[i][j];\
-		if (e->type == ROBBY)\
+        if (e==CAN_DUMMY_PTR)\
+            printf(" c");\
+        else if (e->type == ROBBY)\
 			printf("R%lu",((struct robby *)e)->id);\
-		else\
-			printf(" %d",e->type);\
 	}\
 })
 
@@ -117,7 +93,7 @@ static inline void print_map(struct map *m)
 		printf("[ ");
 		for (j = 0; j < m->sizey; j++) {
 			printf(" ");
-			print_dispatcher(m, i, j);
+			print_dispatcher(m, j, i);
 			printf(" ");
 		}
 		printf(" ]\n");
@@ -136,9 +112,11 @@ struct robby *robby_constructor(struct map *m)
 	do {
 		r->x = (long unsigned int) random() % m->sizex;
 		r->y = (long unsigned int) random() % m->sizey;
-	} while (m->innermatrix[r->x][r->y]);
+	} while (m->innermatrix[r->x][r->y] && !(m->innermatrix[r->x][r->y]==CAN_DUMMY_PTR));
 
-
+    if(m->innermatrix[r->x][r->y]) {
+        r->over=m->innermatrix[r->x][r->y];
+    }
 	m->innermatrix[r->x][r->y] = r;
 	m->rl[m->n_robots - 1] = r;
 
@@ -170,7 +148,7 @@ struct robby *robby_constructor(struct map *m)
 
 void load_plugin(char *path)
 {
-	void *callbacks = dlopen(path, RTLD_LAZY);
+	callbacks = dlopen(path, RTLD_LAZY);
 	if (!callbacks) {
 		fprintf(stderr, "%s\n", dlerror());
 		exit(EXIT_FAILURE);
@@ -180,7 +158,6 @@ void load_plugin(char *path)
 		fprintf(stderr, "%s\n", dlerror());
 		exit(EXIT_FAILURE);
 	}
-	dlclose(callbacks);
 }
 
 int main(int argc, char **argv)
