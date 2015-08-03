@@ -4,7 +4,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <dlfcn.h>
-#include "include/struct.h"
+#include <robby/struct.h>
 
 /* callbacks functions */
 void (*move_callback)(struct map *, struct robby *);
