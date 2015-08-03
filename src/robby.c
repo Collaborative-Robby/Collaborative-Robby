@@ -13,7 +13,7 @@ void *callbacks = NULL;
 
 char __can_const;
 
-#define CAN_DUMMY_PTR &__can_const
+#define CAN_DUMMY_PTR (void *)&__can_const
 
 int map_constructor(struct map *m, long unsigned int x, long unsigned int y,
                    long unsigned int robbynum,
@@ -198,6 +198,10 @@ int main(int argc, char **argv)
 		print_map(&m);
 		MOVE_ALL_ROBBIES(m);
 	}
+
+	/* last turn print */
+	print_status(m, round);
+	print_map(&m);
 
 	map_destructor(&m);
 
