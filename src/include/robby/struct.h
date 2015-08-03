@@ -23,8 +23,21 @@ struct robby {
 	int type;
 	long unsigned int id;
 	long unsigned int x, y;
-    void *over;
+	void *over;
 	void (*move)(struct map *, struct robby *);
+
+	int gathered_cans;
+	int last_gathered_can_time;
+
+	int viewradius;
+	char *view;
+
+	int learning_algorithm;
+
+	char **known_map;
+
+/*	struct neural_net *nnet;*/
+	char *dna;
 };
 
 #endif
