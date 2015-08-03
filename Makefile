@@ -15,22 +15,24 @@ BUILD_DIR:=build
 PLUGINS_SRC:=$(basename $(wildcard $(PLUGIN_SRC_DIR)/*))
 PLUGINS:=$(notdir $(PLUGINS_SRC))
 
-.PHONY: all clean plugins
+.PHONY: all clean plugins engine
 
-all: $(BUILD_DIR) robby-engine plugins
+all: $(BUILD_DIR) engine plugins
+
+engine: $(BUILD_DIR) $(BUILD_DIR)/robby-engine
 
 $(BUILD_DIR):
 	mkdir $@
 
-robby-engine: $(SRC_DIR)/robby.c $(INCLUDE_ROBBY_DIR)/struct.h
-	$(CC) $(CFLAGS) $< -o $(BUILD_DIR)/$@
+$(BUILD_DIR)/robby-engine: $(SRC_DIR)/robby.c $(INCLUDE_ROBBY_DIR)/struct.h
+	$(CC) $(CFLAGS) $< -o $@
 
-plugins: $(PLUGINS)
+plugins: $(BUILD_DIR) $(addprefix $(BUILD_DIR)/,$(PLUGINS))
 
-%: $(PLUGIN_SRC_DIR)/%.c $(INCLUDE_ROBBY_DIR)/module.h
+$(BUILD_DIR)/%: $(PLUGIN_SRC_DIR)/%.c $(INCLUDE_ROBBY_DIR)/module.h
 	$(CC) $(MCFLAGS) $< -o $@.o
-	$(CC) $(MCFLAGS_POST) -o $(BUILD_DIR)/$@ $@.o
-	rm $@.o
+	$(CC) $(MCFLAGS_POST) -o $@ $@.o
+	rm -f $@.o
 
 clean:
-	rm $(BUILD_DIR)
+	rm -rf $(BUILD_DIR)
