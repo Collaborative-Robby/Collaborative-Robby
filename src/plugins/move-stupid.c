@@ -3,34 +3,38 @@
 #include <robby/struct.h>
 #include <robby/module.h>
 
-void move(struct map *m, struct robby *r) {
-    int i,dirnum;
-    int* dir;
+void move(struct map *m, struct robby *r)
+{
+	int i,dirnum = -1;
+	int* dir;
 
+	m->innermatrix[r->x][r->y]=r->over;
 
-    m->innermatrix[r->x][r->y]=r->over;
-   
-    dirnum=rand()%4; 
-    dir=directions[dirnum];
+	if (r->over == CAN_DUMMY_PTR) {
+		/* pick up can */
+		r->over = NULL;
+		r->gathered_cans++;
+	} else {
+		/* Move in a random direction */
+		dirnum=rand()%4; 
+		dir=directions[dirnum];
 
-    switch(dirnum) {
-	case 0:
-		printf("robby %d: left\n", r->id);
-		break;
-	case 1:
-		printf("robby %d: right\n", r->id);
-		break;
-	case 2:
-		printf("robby %d: up\n", r->id);
-		break;
-	case 3:
-		printf("robby %d: down\n", r->id);
-		break;
-    }
+		r->x=(r->x+dir[0])%(m->sizex);
+		r->y=(r->y+dir[1])%(m->sizey);
 
-    r->x=(r->x+dir[0])%(m->sizex);
-    r->y=(r->y+dir[1])%(m->sizey);
-    
-    r->over=m->innermatrix[r->x][r->y];
-    m->innermatrix[r->x][r->y]=r;
+		r->over=m->innermatrix[r->x][r->y];
+		m->innermatrix[r->x][r->y]=r;
+	}
+
+	PRINT_MOVE_INFO(dirnum, r->id);
+}
+
+void generate_robbies(struct robby *rl, long unsigned int robbynum,
+		long unsigned int generation)
+{
+	int i;
+	/* do nothing */
+	if (generation == 0)
+		for (i = 0; i < robbynum; i++)
+			rl[i].id = i;
 }
