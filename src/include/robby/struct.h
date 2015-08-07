@@ -29,6 +29,8 @@ struct robby {
 	int gathered_cans;
 	int last_gathered_can_time;
 
+	float fitness;
+
 	int viewradius;
 	char *view;
 
