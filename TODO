@@ -1,5 +1,7 @@
 Tutti i task li dobbiamo assegnare a qualcuno di noi
 
+Modellazione:
+
 -definire bene il modello
 -scelta del linguaggio
 -io e dave vorremmo provare ad implementarlo con una rete neurale
@@ -10,3 +12,5 @@ Tutti i task li dobbiamo assegnare a qualcuno di noi
     -internamente a roby: lattine raccolte/T (?)
 -grafica (canvas e robottini che si muovono) (offline?)
 
+Programmazione:
+Macro/funzioni per la gestione delle direzioni da parte dei plugin (Dave)
