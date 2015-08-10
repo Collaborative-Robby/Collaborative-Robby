@@ -23,8 +23,9 @@ struct robby {
 	int type;
 	long unsigned int id;
 	long unsigned int x, y;
+	char moved;
 	void *over;
-	void (*move)(struct map *, struct robby *);
+	int (*move)(struct map *, struct robby *);
 
 	int gathered_cans;
 	int last_gathered_can_time;

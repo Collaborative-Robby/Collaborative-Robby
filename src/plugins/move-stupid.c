@@ -3,30 +3,29 @@
 #include <robby/struct.h>
 #include <robby/module.h>
 
-void move(struct map *m, struct robby *r)
+int move(struct map *m, struct robby *r)
 {
 	int i,dirnum = -1;
-	int* dir;
-
-	m->innermatrix[r->x][r->y]=r->over;
+	int success = 0; 
+	PREPARE_STATE(r);
 
 	if (r->over == CAN_DUMMY_PTR) {
 		/* pick up can */
 		r->over = NULL;
 		r->gathered_cans++;
+		success = 1;
 	} else {
 		/* Move in a random direction */
-		dirnum=rand()%4; 
-		dir=directions[dirnum];
+		dirnum=rand() % 4;
 
-		r->x=(r->x+dir[0])%(m->sizex);
-		r->y=(r->y+dir[1])%(m->sizey);
-
-		r->over=m->innermatrix[r->x][r->y];
-		m->innermatrix[r->x][r->y]=r;
+		success = MOVE_WRAP(r, m, dirnum);
 	}
 
-	PRINT_MOVE_INFO(dirnum, r->id);
+	UPDATE_STATE(r, m);
+
+	PRINT_MOVE_INFO(dirnum, r->id, success);
+
+	return success;
 }
 
 void generate_robbies(struct robby *rl, long unsigned int robbynum,

@@ -7,7 +7,7 @@
 #include <robby/struct.h>
 
 /* callbacks functions */
-void (*move_callback)(struct map *, struct robby *);
+int (*move_callback)(struct map *, struct robby *);
 void (*generate_robbies_callback)(struct robby *, long unsigned int, long unsigned int);
 
 void *callbacks = NULL;
@@ -165,7 +165,10 @@ struct robby *robby_constructor(struct map *m)
 #define MOVE_ALL_ROBBIES(m) ({\
 		int i;\
 		for (i=0; i < m.n_robots; i++) {\
-		m.rl[i]->move(&m, m.rl[i]);\
+		if (!m.rl[i]->moved) m.rl[i]->move(&m, m.rl[i]);\
+		}\
+		for (i=0; i < m.n_robots; i++) {\
+		m.rl[i]->moved = 0;\
 		}\
 		})
 
@@ -225,7 +228,7 @@ int compare_eval(const void *a, const void *b)
 #define print_in_generation_header(g) printf("===> Generation %d\n", g)
 #define print_end_generation_header(g, rl, rnum)\
 	printf("===> End of Generation %d Best fitness: %f\n", g,\
-		(rnum > 0 ? rl[0].fitness : 0))
+			(rnum > 0 ? rl[0].fitness : 0))
 
 void generational_step(long unsigned int sizex, long unsigned int sizey,
 		long unsigned int robbynum, long unsigned int cannum,
@@ -306,7 +309,7 @@ int main(int argc, char **argv)
 
 		zero_fitness(rl, robbynum);
 
-		generational_step(sizex, sizey, robbynum, cannum, cannum, rl);
+		generational_step(sizex, sizey, robbynum, cannum, totalrounds, rl);
 
 		sort_by_best_eval(rl, robbynum);
 
