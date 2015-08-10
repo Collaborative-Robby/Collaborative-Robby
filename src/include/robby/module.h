@@ -32,10 +32,10 @@ extern char __can_const;
 #define CAN_DUMMY_PTR (void *)&__can_const
 
 /* Directions as modification on the map */
-int left[] =  {-1, 0};
-int right[] = { 1, 0};
-int up[] =    { 0,-1};
-int down[] =  { 0, 1};
+int left[] =  { 0,-1};
+int right[] = { 0, 1};
+int up[] =    {-1, 0};
+int down[] =  { 1, 0};
 
 /* Array of directions and index to lookup */
 int* directions[]= {left, right, up, down };

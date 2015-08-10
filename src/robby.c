@@ -63,24 +63,24 @@ void map_destructor(struct map *m)
 	int i;
 	if (!m)
 		return;
-	for (i = 0; i < m->sizey; i++)
+	for (i = 0; i < m->sizex; i++)
 		free(m->innermatrix[i]);
 	free(m->innermatrix);
 
 }
 
 #define print_dispatcher(m, i, j) ({\
-		struct melement *e;\
-		if (!m->innermatrix[i][j])\
+	struct melement *e;\
+	if (!m->innermatrix[j][i])\
 		printf("  ");\
-		else{\
-		e = (struct melement *) m->innermatrix[i][j];\
+	else{\
+		e = (struct melement *) m->innermatrix[j][i];\
 		if (e==CAN_DUMMY_PTR)\
-		printf(" c");\
+			printf(" c");\
 		else if (e->type == ROBBY)\
-		printf("R%lu",((struct robby *)e)->id);\
-		}\
-		})
+			printf("R%lu",((struct robby *)e)->id);\
+	}\
+})
 
 static inline void print_map(struct map *m)
 {
