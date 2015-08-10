@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <dlfcn.h>
 #include <robby/struct.h>
+#include <robby/commons.h>
 
 /* callbacks functions */
 int (*move_callback)(struct map *, struct robby *);

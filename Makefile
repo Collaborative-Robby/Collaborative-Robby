@@ -15,6 +15,8 @@ BUILD_DIR:=build
 PLUGINS_SRC:=$(basename $(wildcard $(PLUGIN_SRC_DIR)/*))
 PLUGINS:=$(notdir $(PLUGINS_SRC))
 
+FIXED_COMMON=$(BUILD_DIR)/modules.o
+
 .PHONY: all clean plugins engine
 
 all: $(BUILD_DIR) engine plugins
@@ -27,11 +29,14 @@ $(BUILD_DIR):
 $(BUILD_DIR)/robby-engine: $(SRC_DIR)/robby.c $(INCLUDE_ROBBY_DIR)/struct.h
 	$(CC) $(CFLAGS) $< -o $@
 
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CC) $(MCFLAGS) $< -o $@
+
 plugins: $(BUILD_DIR) $(addprefix $(BUILD_DIR)/,$(PLUGINS))
 
-$(BUILD_DIR)/%: $(PLUGIN_SRC_DIR)/%.c $(INCLUDE_ROBBY_DIR)/module.h
+$(BUILD_DIR)/%: $(PLUGIN_SRC_DIR)/%.c $(FIXED_COMMON) $(INCLUDE_ROBBY_DIR)/module.h
 	$(CC) $(MCFLAGS) $< -o $@.o
-	$(CC) $(MCFLAGS_POST) -o $@ $@.o
+	$(CC) $(MCFLAGS_POST) $(FIXED_COMMON) -o $@ $@.o
 	rm -f $@.o
 
 clean:
