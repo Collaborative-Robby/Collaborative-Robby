@@ -79,7 +79,7 @@ void map_destructor(struct map *m)
 		if (e==CAN_DUMMY_PTR)\
 			printf(" c");\
 		else if (e->type == ROBBY)\
-			printf("R%lu",((struct robby *)e)->id);\
+			printf("R%d",((struct robby *)e)->id);\
 	}\
 })
 
@@ -124,6 +124,8 @@ struct robby *add_robby(struct map *m, struct robby *r)
 	m->rl[m->n_robots - 1] = r;
 
 	r->move = move_callback;
+
+	return r;
 }
 
 /* TODO windows version */
@@ -203,9 +205,9 @@ int compare_eval(const void *a, const void *b)
 
 #define sort_by_best_eval(rl, length) qsort(rl, length, sizeof(struct robby), compare_eval);
 
-#define print_in_generation_header(g) printf("===> Generation %d\n", g)
+#define print_in_generation_header(g) printf("===> Generation %lu\n", g)
 #define print_end_generation_header(g, rl, rnum)\
-	printf("===> End of Generation %d Best fitness: %f\n", g,\
+	printf("===> End of Generation %lu Best fitness: %f\n", g,\
 			(rnum > 0 ? rl[0].fitness : 0))
 
 void generational_step(long unsigned int sizex, long unsigned int sizey,

@@ -9,8 +9,6 @@
  */
 int move(struct map *m, struct robby *r)
 {
-	int i;
-
 	/* Dirnum = -1 means that the robby pulled up a can */
 	int dirnum = -1;
 

@@ -4,13 +4,14 @@
 #include <robby/struct.h>
 #include <robby/module.h>
 
-#define ROUND(x) ((x > floor(x) + 0.5? ceil(x) : floor(x)))
+#define ROUND(x) ((long unsigned int)(x > floor(x) + 0.5? ceil(x) : floor(x)))
 
 #define UNFOLD_VIEWSIZE(rad) (ROUND(M_PI * rad * rad))
-#define GET_VIEW_RADIUS(rad, vptr, map, wround) ({})
+#define GET_VIEW_RADIUS(rad, vptr, map, wround) ({0;})
 
 int update_view(struct robby *r, struct map *m, int wraparound)
 {
+	int items;
 	if (!r->view) {
 		r->view = (char *)calloc(UNFOLD_VIEWSIZE(r->viewradius), sizeof(char));
 		if (!r->view) {
@@ -19,7 +20,9 @@ int update_view(struct robby *r, struct map *m, int wraparound)
 		}
 	}
 
-	GET_VIEW_RADIUS(r->viewradius, r->view, m, wraparound);
+	items = GET_VIEW_RADIUS(r->viewradius, r->view, m, wraparound);
+
+	return items;
 }
 
 /* Move in a direction */
@@ -38,15 +41,15 @@ int move_dir(struct robby *r, struct map *m, int dirnum,  int impact,  int wrapa
 		newy = __WRAP_Y(r,m,dir);
 	} else {
 		/* Else specify that we can't go out of the matrix bounds */
-		newx = r->x+dir[0];
-		newy = r->y+dir[1];
+		newx = (long unsigned int)((int)r->x+dir[0]);
+		newy = (long unsigned int)((int)r->y+dir[1]);
 		oob = OUT_OF_BOUNDS(newx, newy, m);
 	}
 
 	if (!oob && !impact && OVER_ROBBY(m, newx, newy)) {
 		/* Give control to the robby that is over the destination cell */
 		new_over = m->innermatrix[newx][newy];
-		printf("robby %d: impact avoidance started giving control to robby %dn",
+		printf("robby %d: impact avoidance started giving control to robby %d\n",
 		       r->id, new_over->id);
 		if (!new_over->moved)
 			new_over->move(m, new_over);

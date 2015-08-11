@@ -81,9 +81,9 @@ extern int** directions;
 #define __WRAP_X(r,m,dir) ({\
 	long unsigned int out;\
 	if ((int)r->x+(int)dir[0] < 0)\
-		out = m->sizex+dir[0];\
+		out = (long unsigned int)((int)m->sizex+dir[0]);\
 	else\
-		out =(r->x+dir[0]) % m->sizex;\
+		out = (long unsigned int)((int)r->x+dir[0]) % m->sizex;\
 	out;\
 })
 
@@ -91,9 +91,9 @@ extern int** directions;
 #define __WRAP_Y(r,m,dir) ({\
 	long unsigned int out;\
 	if ((int)r->y+(int)dir[1] < 0)\
-		out = m->sizey+dir[1];\
+		out = (long unsigned int)((int)m->sizey+dir[1]);\
 	else\
-		out = (r->y+dir[1]) % m->sizey;\
+		out = (long unsigned int)((int)r->y+dir[1]) % m->sizey;\
 	out;\
 })
 

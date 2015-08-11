@@ -21,7 +21,7 @@ struct melement {
 
 struct robby {
 	int type;
-	long unsigned int id;
+	int id;
 	long unsigned int x, y;
 	char moved;
 	void *over;
