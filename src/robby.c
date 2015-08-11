@@ -276,29 +276,53 @@ void zero_fitness(struct robby *rl, long unsigned int robbynum)
 	}
 }
 
+#define USAGE "<plugin> [-h| -x <sizex>| -y <size y> | -r <#ofrobbies> | -c <#ofcans> | -R <# of rounds> | -g <# of generations>]"
 int main(int argc, char **argv)
 {
 	long unsigned int sizex, sizey, robbynum, cannum, totalrounds,
 	     totalgenerations, generation;
 	struct robby *rl;
+	int opt;
 
-	if (argc < 3) {
+	sizex = 10;
+	sizey = 10;
+	robbynum = 1;
+	cannum = 1;
+	totalrounds = 10;
+	totalgenerations = 10;
+
+	if (argc < 2) {
 		return EXIT_FAILURE;
 	}
 
 	RANDOM_SEED();
-
-	/* Usage / getargs? */
 	load_plugin(argv[1]);
 
-	sizex = strtoul(argv[2], NULL, 10);
-	sizey = strtoul(argv[3], NULL, 10);
-	robbynum = strtoul(argv[4], NULL, 10);
-
-	cannum = strtoul(argv[5], NULL, 10);
-	totalrounds = strtoul(argv[6], NULL, 10);
-
-	totalgenerations = strtoul(argv[7], NULL, 10);
+	while ((opt = getopt(argc - 1, argv + 1, "hx:y:r:c:R:g:")) != -1) {
+		switch (opt) {
+			case 'x':
+				sizex = strtoul(optarg, NULL, 10);
+				break;
+			case 'y':
+				sizey = strtoul(optarg, NULL, 10);
+				break;
+			case 'r':
+				robbynum = strtoul(optarg, NULL, 10);
+				break;
+			case 'R':
+				totalrounds = strtoul(optarg, NULL, 10);
+				break;
+			case 'c':
+				cannum = strtoul(optarg, NULL, 10);
+				break;
+			case 'g':
+				totalgenerations = strtoul(optarg, NULL, 10);
+				break;
+			case 'h':
+			default:
+				fprintf(stderr, "usage: %s %s\n", argv[0], USAGE);
+		}
+	}
 
 	rl = calloc(robbynum, sizeof(struct robby));
 
