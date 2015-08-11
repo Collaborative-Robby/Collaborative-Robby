@@ -1,4 +1,26 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <robby/struct.h>
 #include <robby/module.h>
+
+#define ROUND(x) ((x > floor(x) + 0.5? ceil(x) : floor(x)))
+
+#define UNFOLD_VIEWSIZE(rad) (ROUND(M_PI * rad * rad))
+#define GET_VIEW_RADIUS(rad, vptr, map, wround) ({})
+
+int update_view(struct robby *r, struct map *m, int wraparound)
+{
+	if (!r->view) {
+		r->view = (char *)calloc(UNFOLD_VIEWSIZE(r->viewradius), sizeof(char));
+		if (!r->view) {
+			fprintf(stderr, "robby %d error on malloc of view\n", r->id);
+			return -1;
+		}
+	}
+
+	GET_VIEW_RADIUS(r->viewradius, r->view, m, wraparound);
+}
 
 /* Move in a direction */
 int move_dir(struct robby *r, struct map *m, int dirnum,  int impact,  int wraparound)

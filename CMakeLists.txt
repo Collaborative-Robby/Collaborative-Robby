@@ -29,6 +29,7 @@ foreach(PLUG ${Plugins})
 		"${CORE_SOURCE_PROJECT_DIR}/modules.c"
 	)
 	add_library(${OUTNAME} SHARED ${CurrentPlugSources})
+	target_link_libraries(${OUTNAME} m)
 endforeach(PLUG)
 
 file(GLOB EngineSources

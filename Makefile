@@ -8,7 +8,7 @@ PLUGIN_SRC_DIR:=$(SRC_DIR)/plugins
 
 CFLAGS=-I $(INCLUDE_DIR) -ldl -rdynamic
 MCFLAGS:=-I $(INCLUDE_DIR) -fPIC -c
-MCFLAGS_POST:=--shared
+MCFLAGS_POST:=--shared -lm
 
 BUILD_DIR:=build
 
