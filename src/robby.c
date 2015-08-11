@@ -108,8 +108,10 @@ struct robby *add_robby(struct map *m, struct robby *r)
 	r->type = ROBBY;
 
 	do {
-		r->x = (long unsigned int) random() % m->sizex;
-		r->y = (long unsigned int) random() % m->sizey;
+		if (r->x >= m->sizex)
+			r->x = (long unsigned int) random() % m->sizex;
+		if (r->x >= m->sizey)
+			r->y = (long unsigned int) random() % m->sizey;
 	} while (m->innermatrix[r->x][r->y] && !(m->innermatrix[r->x][r->y]==CAN_DUMMY_PTR));
 
 	if(m->innermatrix[r->x][r->y]) {
@@ -122,31 +124,6 @@ struct robby *add_robby(struct map *m, struct robby *r)
 	m->rl[m->n_robots - 1] = r;
 
 	r->move = move_callback;
-}
-
-struct robby *robby_constructor(struct map *m)
-{
-	struct robby *r = malloc(sizeof(struct robby));
-	if (!r)
-		return r;
-
-	r->type = ROBBY;
-	r->id = m->n_robots++;
-
-	do {
-		r->x = (long unsigned int) random() % m->sizex;
-		r->y = (long unsigned int) random() % m->sizey;
-	} while (m->innermatrix[r->x][r->y] && !(m->innermatrix[r->x][r->y]==CAN_DUMMY_PTR));
-
-	if(m->innermatrix[r->x][r->y]) {
-		r->over=m->innermatrix[r->x][r->y];
-	}
-	m->innermatrix[r->x][r->y] = r;
-	m->rl[m->n_robots - 1] = r;
-
-	r->move = move_callback;
-
-	return r;
 }
 
 /* TODO windows version */
@@ -283,6 +260,7 @@ int main(int argc, char **argv)
 	     totalgenerations, generation;
 	struct robby *rl;
 	int opt;
+	int i;
 
 	sizex = 10;
 	sizey = 10;
@@ -329,6 +307,12 @@ int main(int argc, char **argv)
 	generation = 0;
 	for (generation = 0; generation < totalgenerations; generation++) {
 		print_in_generation_header(generation);
+
+		/* Random placing */
+		for (i = 0; i < robbynum; i++) {
+			rl[i].x = sizex;
+			rl[i].y = sizey;
+		}
 
 		generate_robbies_callback(rl, robbynum, generation);
 
