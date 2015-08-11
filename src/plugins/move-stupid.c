@@ -6,6 +6,7 @@
 
 /* Greedy procedural move, pick up a can if is possible, otherwise move in a
  * random direction.
+ * MUST return 0 if the move failed or 1 if the move succeded.
  */
 int move(struct map *m, struct robby *r)
 {
@@ -15,6 +16,7 @@ int move(struct map *m, struct robby *r)
 	/* 1 -> The action was successfully done. */
 	int success = 0;
 
+	/* Prepare the state of the robby */
 	PREPARE_STATE(r);
 
 	if (r->over == CAN_DUMMY_PTR) {
@@ -30,8 +32,10 @@ int move(struct map *m, struct robby *r)
 		success = MOVE_WRAP(r, m, dirnum);
 	}
 
+	/* Update the state of the robby with the new view */
 	UPDATE_STATE(r, m);
 
+	/* Display some info on the current move */
 	PRINT_MOVE_INFO(dirnum, r->id, success);
 
 	return success;
@@ -57,5 +61,7 @@ void generate_robbies(struct robby *rl, long unsigned int robbynum,
 		}
 	}
 
-	/* Do nothing for the next generations */
+	/* Do nothing for the next generations:
+	 * keep the same robbies in random positions.
+	 */
 }
