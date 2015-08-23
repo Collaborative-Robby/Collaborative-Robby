@@ -1,6 +1,7 @@
 /* Sample module for collaborative robby */
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <robby/struct.h>
 #include <robby/module.h>
 
@@ -33,7 +34,7 @@ int move(struct map *m, struct robby *r)
 	}
 
 	/* Update the state of the robby with the new view */
-	UPDATE_STATE(r, m);
+	update_view(r, m, false);
 
 	/* Display some info on the current move */
 	PRINT_MOVE_INFO(dirnum, r->id, success);
@@ -57,7 +58,7 @@ void generate_robbies(struct robby *rl, long unsigned int robbynum,
 			rl[i].id = i;
 
 			/* A radius of one for the view */
-			rl[i].viewradius = 1;
+			rl[i].viewradius = 2;
 		}
 	}
 

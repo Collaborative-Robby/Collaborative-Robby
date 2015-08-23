@@ -1,26 +1,113 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <robby/struct.h>
 #include <robby/module.h>
 
-#define ROUND(x) ((long unsigned int)(x > floor(x) + 0.5? ceil(x) : floor(x)))
+#define DISSIN(n, r) ((round((sin((M_PI / (2.0 * (float) r)) * (float) n) * r))))
 
-#define UNFOLD_VIEWSIZE(rad) (ROUND(M_PI * rad * rad))
-#define GET_VIEW_RADIUS(rad, vptr, map, wround) ({0;})
+#define SQUARE_SIZE(r) ((r-1)*2+1)
+
+#define VIEW_TOO_FAR -1
+#define VIEW_EMPTY 0
+#define VIEW_CAN 1
+#define VIEW_ROBBY 2
+#define VIEW_WALL 3 
+
+int get_circle_view (int viewradius, char **view) {
+    int i,j;
+    int x,y; 
+    for(i=1; i<=viewradius; i++) {
+        for(j=0; j<DISSIN(i,viewradius); j++) {
+            
+            x=viewradius+viewradius-i-1;
+            y=viewradius-j-1;
+            printf("%d %d\n", x, y);
+            view[x][y]=VIEW_EMPTY;
+
+            x=viewradius+viewradius-i-1;
+            y=viewradius+j-1;
+            printf("%d %d\n", x, y);
+            view[x][y]=VIEW_EMPTY;
+
+            x=i-1;
+            y=viewradius+j-1;
+            printf("%d %d\n", x, y);
+            view[x][y]=VIEW_EMPTY;
+
+            x=i-1;
+            y=viewradius-j-1;
+            printf("%d %d\n", x, y);
+            view[x][y]=VIEW_EMPTY;
+        }
+    }
+}
+
+int get_view(struct robby *r, struct map *m, int wraparound) {
+    int i,j;
+    int x,y;
+    for(i=0; i<SQUARE_SIZE(r->viewradius);i++) {
+        for(j=0; j<SQUARE_SIZE(r->viewradius);j++) {
+            x=r->x+(i-(r->viewradius-1)); 
+            y=r->y+(j-(r->viewradius-1));
+            if(r->view[i][j]==VIEW_TOO_FAR)
+                continue;
+            
+            //TODO wraparound
+            if(x>=m->sizex || x<0 || y>=m->sizey || y<0)
+                r->view[i][j]=VIEW_WALL;
+            else if(i==r->viewradius-1 && j==r->viewradius-1) {
+                if(r->over==CAN_DUMMY_PTR)
+                    r->view[i][j]=VIEW_CAN;
+                else
+                    r->view[i][j]=VIEW_EMPTY;
+            }
+            else if(m->innermatrix[x][y]==CAN_DUMMY_PTR)
+                r->view[i][j]=VIEW_CAN;
+            else if(m->innermatrix[x][y]==NULL)
+                r->view[i][j]=VIEW_EMPTY;
+            else
+                r->view[i][j]=VIEW_ROBBY;
+
+        }
+    }
+}
+
 
 int update_view(struct robby *r, struct map *m, int wraparound)
 {
-	int items;
+	int items,i,j;
 	if (!r->view) {
-		r->view = (char *)calloc(UNFOLD_VIEWSIZE(r->viewradius), sizeof(char));
+		r->view = (char **)calloc(SQUARE_SIZE(r->viewradius), sizeof(char*));
+        printf("%d\n", 2*(r->viewradius-1)+1);
 		if (!r->view) {
 			fprintf(stderr, "robby %d error on malloc of view\n", r->id);
 			return -1;
 		}
+        for(i=0; i<2*(r->viewradius-1)+1;i++) {
+            r->view[i] = (char*) calloc(SQUARE_SIZE(r->viewradius), sizeof(char));
+            if (!r->view[i]) {
+			    fprintf(stderr, "robby %d error on malloc of view\n", r->id);
+			    return -1;
+		    }
+            memset(r->view[i], VIEW_TOO_FAR,SQUARE_SIZE(r->viewradius));
+        }
+
+        get_circle_view(r->viewradius, r->view);
 	}
 
-	items = GET_VIEW_RADIUS(r->viewradius, r->view, m, wraparound);
+	items = get_view(r, m, wraparound);
+    
+    printf("%d\n", SQUARE_SIZE(r->viewradius));
+
+    for(i=0; i<SQUARE_SIZE(r->viewradius);i++) {
+        printf("{");
+        for(j=0; j<SQUARE_SIZE(r->viewradius);j++) {
+            printf(" %d ", r->view[i][j]);
+        }
+        printf("}\n");
+    }
 
 	return items;
 }

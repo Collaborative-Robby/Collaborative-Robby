@@ -33,7 +33,7 @@ struct robby {
 	float fitness;
 
 	int viewradius;
-	char *view;
+	char **view;
 
 	int learning_algorithm;
 

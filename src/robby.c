@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <fcntl.h>
 #include <dlfcn.h>
 #include <robby/struct.h>
@@ -10,6 +11,7 @@
 /* callbacks functions */
 int (*move_callback)(struct map *, struct robby *);
 void (*generate_robbies_callback)(struct robby *, long unsigned int, long unsigned int);
+int (*update_view_callback) (struct robby *, struct map *, int);
 
 void *callbacks = NULL;
 
@@ -124,6 +126,8 @@ struct robby *add_robby(struct map *m, struct robby *r)
 	m->rl[m->n_robots - 1] = r;
 
 	r->move = move_callback;
+    
+    update_view_callback(r, m, false);
 
 	return r;
 }
@@ -162,8 +166,9 @@ void load_plugin(char *path)
 
 	move_callback = dlsym(callbacks, "move");
 	generate_robbies_callback = dlsym(callbacks, "generate_robbies");
+    update_view_callback=dlsym(callbacks, "update_view");
 
-	if (!generate_robbies_callback || !move_callback) {
+	if (!generate_robbies_callback || !move_callback || !update_view_callback) {
 		fprintf(stderr, "%s\n", dlerror());
 		exit(EXIT_FAILURE);
 	}
