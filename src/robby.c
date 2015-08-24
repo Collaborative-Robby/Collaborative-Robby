@@ -30,7 +30,7 @@ int map_constructor(struct map *m, long unsigned int x, long unsigned int y,
 	if (!m->innermatrix)
 		return -1;
 
-	m->rl = calloc(robbynum, sizeof(struct robby));
+	m->rl = calloc(robbynum, sizeof(struct robby *));
 	if (!m->rl)
 		return -1;
 
@@ -43,7 +43,7 @@ int map_constructor(struct map *m, long unsigned int x, long unsigned int y,
 
 	m->sizex = x;
 	m->sizey = y;
-
+ 
 	m->n_robots = 0;
 	m->n_cans = cannum;
 
@@ -65,6 +65,10 @@ void map_destructor(struct map *m)
 {
 	int i;
 	if (!m)
+		return;
+	if (m->rl)
+		free(m->rl);
+	if (!m->innermatrix)
 		return;
 	for (i = 0; i < m->sizex; i++)
 		free(m->innermatrix[i]);
@@ -185,10 +189,27 @@ float eval(struct robby *r, long unsigned int totalcans)
 	return r->fitness;
 }
 
-void destroy_robbies(struct robby *rl)
+void destroy_robbies(struct robby *rl, int robbynum)
 {
-	if (rl)
-		free(rl);
+	int i,j;
+
+	if (!rl)
+		return;
+
+	/* View free */
+	for (i = 0; i < robbynum; i++) {
+		if (!rl[i].view)
+			continue;
+
+		for (j = 0; j < 2 * (rl[i].viewradius - 1) + 1; j++)
+			if (rl[i].view[j])
+				free(rl[i].view[j]);
+
+		free(rl[i].view);
+	}
+
+	free(rl);
+
 	if (callbacks)
 		dlclose(callbacks);
 }
@@ -332,5 +353,5 @@ int main(int argc, char **argv)
 		print_end_generation_header(generation, rl, robbynum);
 	}
 
-	destroy_robbies(rl);
+	destroy_robbies(rl, robbynum);
 }
