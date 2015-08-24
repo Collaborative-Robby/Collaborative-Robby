@@ -80,7 +80,6 @@ int update_view(struct robby *r, struct map *m, int wraparound)
 	int items,i,j;
 	if (!r->view) {
 		r->view = (char **)calloc(SQUARE_SIZE(r->viewradius), sizeof(char*));
-        printf("%d\n", 2*(r->viewradius-1)+1);
 		if (!r->view) {
 			fprintf(stderr, "robby %d error on malloc of view\n", r->id);
 			return -1;
