@@ -100,11 +100,20 @@ extern int** directions;
 /* Prepare the robby for the moving phase (avoid pre-move looping)*/
 #define PREPARE_STATE(r) (r->moved = 1)
 
+extern "C" {
 /* Move in a direction */
 int move_dir(struct robby *r, struct map *m, int dirnum, int impact, int waround);
 
 /* Update the robby view */
 int update_view(struct robby *r, struct map *m, int wraparound);
+
+
+void generate_robbies(struct robby *rl, long unsigned int robbynum,
+		long unsigned int generation);
+
+
+int move(struct map *m, struct robby *r);
+}
 
 /* Moving possibilities */
 

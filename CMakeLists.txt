@@ -7,6 +7,8 @@ set(Robby_VERSION_MINOR 1)
 set(CORE_SOURCE_PROJECT_DIR "${PROJECT_SOURCE_DIR}/src")
 set(PLUGINS_SOURCE_DIR "${CORE_SOURCE_PROJECT_DIR}/plugins")
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
+
 if (DEFINED ROBBY_DEBUG AND ROBBY_DEBUG)
 	MESSAGE(STATUS "Compiling with debug flag.")
 	ADD_DEFINITIONS(-D DEBUG)
@@ -23,17 +25,17 @@ file(GLOB Plugins
 
 foreach(PLUG ${Plugins})
 	string(REGEX REPLACE "${PLUGINS_SOURCE_DIR}/" "" OUTNAME ${PLUG})
-	string(REGEX REPLACE ".c$" "" OUTNAME ${OUTNAME})
+	string(REGEX REPLACE ".cpp$" "" OUTNAME ${OUTNAME})
 	file(GLOB CurrentPlugSources
 		"${PLUG}"
-		"${CORE_SOURCE_PROJECT_DIR}/modules.c"
+		"${CORE_SOURCE_PROJECT_DIR}/modules.cpp"
 	)
 	add_library(${OUTNAME} SHARED ${CurrentPlugSources})
 	target_link_libraries(${OUTNAME} m)
 endforeach(PLUG)
 
 file(GLOB EngineSources
-     "${CORE_SOURCE_PROJECT_DIR}/robby.c"
+     "${CORE_SOURCE_PROJECT_DIR}/robby.cpp"
 )
 
 add_executable(robby-engine ${EngineSources})
