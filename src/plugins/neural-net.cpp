@@ -11,9 +11,18 @@
  * MUST return 0 if the move failed or 1 if the move succeded.
  */
 
+
+list<list <Genome*> > species_lists;
+
 Genome::Genome(void) {
     this->node_count=0;
     this->global_innov=0;
+}
+
+Genome::mutate(void) {
+}
+
+Genome::copy(Genome *gen) {
 }
 
 Node::Node(int id, int type) {
@@ -62,6 +71,7 @@ void generate_robbies(struct robby *rl, long unsigned int robbynum,
 		long unsigned int generation)
 {
 	int i;
+    Genome* gen;
 
 	/* initialize robbies for the next generations */
 	if (generation == 0) {
@@ -71,8 +81,17 @@ void generate_robbies(struct robby *rl, long unsigned int robbynum,
 
 			/* A radius of one for the view */
 			rl[i].viewradius = 2;
+
+            rl[i].genome=new Genome();
 		}
 	}
+    
+    gen=rl[0].genome;
+    rl[0].genome->mutate();
+
+    for(i=0; i<robbynum; i++) {
+       rl[i].genome->copy(gen);
+    }
 
 	/* Do nothing for the next generations:
 	 * keep the same robbies in random positions.

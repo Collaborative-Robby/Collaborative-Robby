@@ -1,6 +1,8 @@
 #ifndef _ROBBY_STRUCT
 #define _ROBBY_STRUCT
 
+#include<robby/neural-net.h>
+
 enum types {
 	ROBBY,
 };
@@ -39,8 +41,8 @@ struct robby {
 
 	char **known_map;
 
-/*	struct neural_net *nnet;*/
-	char *dna;
+	Genome *genome;
+    char *dna;
 };
 
 #endif

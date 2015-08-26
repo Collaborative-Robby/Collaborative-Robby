@@ -1,3 +1,6 @@
+#ifndef NEURAL_NET_H
+#define NEURAL_NET_H
+
 #include <list>
 
 using namespace std;
@@ -17,8 +20,7 @@ class Node {
         int id;
         list<Gene> input_genes, output_genes;
         Node(int id, int type);
-        int Activate(Gene* activator, double input);
-
+        int activate(Gene* activator, double input);
 
 };
 
@@ -30,5 +32,8 @@ class Genome {
 
     public:
         Genome(void);
+        mutate(void);
+        copy(Genome *gen);
 };
 
+#endif

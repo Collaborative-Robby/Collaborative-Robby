@@ -7,8 +7,13 @@ Modellazione:
 -come gestire la storia delle percezioni dei robot?
     -IDEA: manteniamo info sull'intera mappa, anche se non sappiamo niente
 -funzione di fitness: T per raccogliere tutte le lattine
-    -internamente a roby: lattine raccolte/T (?)
+    -internamente a roby: lattine raccolte/T (?) #3
 -grafica (canvas e robottini che si muovono) (offline?)
+-gestione pool genetica #1
+-gestione mappe su file (csv?)
 
-Programmazione:
-Macro/funzioni per la gestione della vista (Dave)
+NNET:
+-Comparare genomi (specie) #2
+-mutazione rete neurale #1
+-gestione rete neurale (attivazione) #2
+-cross over #2
