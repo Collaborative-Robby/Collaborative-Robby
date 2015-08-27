@@ -37,6 +37,7 @@ class Genome {
         int mutate(void);
         int copy(Genome *gen);
         int node_mutate(void);
+        int link_mutate(bool force_bias);
 };
 
 #endif
