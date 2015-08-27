@@ -11,6 +11,8 @@ class Gene {
         class Node *in,*out;
         double weight;
         bool enabled;
+        int point_mutate(void);
+        void copy(Gene *g);
 };
 
 class Node {
@@ -18,7 +20,7 @@ class Node {
     public:
         int type;
         int id;
-        list<Gene> input_genes, output_genes;
+        list<Gene*> input_genes, output_genes;
         Node(int id, int type);
         int activate(Gene* activator, double input);
 
@@ -26,14 +28,15 @@ class Node {
 
 class Genome {
     private:
-        list<Node> node_list;
-        list<Gene> gene_list;
+        list<Node*> node_list;
+        list<Gene*> gene_list;
         int node_count,global_innov;
 
     public:
         Genome(void);
-        mutate(void);
-        copy(Genome *gen);
+        int mutate(void);
+        int copy(Genome *gen);
+        int node_mutate(void);
 };
 
 #endif
