@@ -5,9 +5,6 @@
 #include <robby/struct.h>
 #include <robby/module.h>
 
-#define DISSIN(n, r) ((round((sin((M_PI / (2.0 * (float) r)) * (float) n) * r))))
-
-#define SQUARE_SIZE(r) ((r-1)*2+1)
 
 #define VIEW_TOO_FAR -1
 #define VIEW_EMPTY 0
@@ -47,8 +44,8 @@ int get_circle_view (int viewradius, char **view) {
 int get_view(struct robby *r, struct map *m, int wraparound) {
     int i,j;
     int x,y;
-    for(i=0; i<SQUARE_SIZE(r->viewradius);i++) {
-        for(j=0; j<SQUARE_SIZE(r->viewradius);j++) {
+    for(i=0; i<SQUARE_SIDE;i++) {
+        for(j=0; j<SQUARE_SIDE;j++) {
             x=r->x+(i-(r->viewradius-1)); 
             y=r->y+(j-(r->viewradius-1));
             if(r->view[i][j]==VIEW_TOO_FAR)
@@ -79,18 +76,18 @@ int update_view(struct robby *r, struct map *m, int wraparound)
 {
 	int items,i,j;
 	if (!r->view) {
-		r->view = (char **)calloc(SQUARE_SIZE(r->viewradius), sizeof(char*));
+		r->view = (char **)calloc(SQUARE_SIDE, sizeof(char*));
 		if (!r->view) {
 			fprintf(stderr, "robby %d error on malloc of view\n", r->id);
 			return -1;
 		}
         for(i=0; i<2*(r->viewradius-1)+1;i++) {
-            r->view[i] = (char*) calloc(SQUARE_SIZE(r->viewradius), sizeof(char));
+            r->view[i] = (char*) calloc(SQUARE_SIDE, sizeof(char));
             if (!r->view[i]) {
 			    fprintf(stderr, "robby %d error on malloc of view\n", r->id);
 			    return -1;
 		    }
-            memset(r->view[i], VIEW_TOO_FAR,SQUARE_SIZE(r->viewradius));
+            memset(r->view[i], VIEW_TOO_FAR,SQUARE_SIDE);
         }
 
         get_circle_view(r->viewradius, r->view);
@@ -98,11 +95,11 @@ int update_view(struct robby *r, struct map *m, int wraparound)
 
 	items = get_view(r, m, wraparound);
     
-    printf("%d\n", SQUARE_SIZE(r->viewradius));
+    printf("%d\n", SQUARE_SIDE);
 
-    for(i=0; i<SQUARE_SIZE(r->viewradius);i++) {
+    for(i=0; i<SQUARE_SIDE;i++) {
         printf("{");
-        for(j=0; j<SQUARE_SIZE(r->viewradius);j++) {
+        for(j=0; j<SQUARE_SIDE;j++) {
             printf(" %d ", r->view[i][j]);
         }
         printf("}\n");

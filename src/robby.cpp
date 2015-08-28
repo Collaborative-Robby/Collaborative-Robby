@@ -162,7 +162,7 @@ struct robby *add_robby(struct map *m, struct robby *r)
 
 void load_plugin(char *path)
 {
-	callbacks = dlopen(path, RTLD_NOW);
+	callbacks = dlopen(path, RTLD_LAZY);
 	if (!callbacks) {
 		fprintf(stderr, "%s\n", dlerror());
 		exit(EXIT_FAILURE);

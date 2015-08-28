@@ -41,7 +41,7 @@ struct robby {
 
 	char **known_map;
 
-	Genome *genome;
+	class Genome *genome;
     char *dna;
 };
 

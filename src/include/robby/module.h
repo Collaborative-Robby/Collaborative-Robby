@@ -38,6 +38,18 @@ extern int** directions;
 #define UP directions[1]
 #define DOWN directions[2]
 
+
+#define DISSIN(n, r) ((round((sin((M_PI / (2.0 * (float) r)) * (float) n) * r))))
+
+//fixed view radius for every robby
+#define VIEW_RADIUS 2
+
+#define SQUARE_SIDE ((VIEW_RADIUS-1)*2+1)
+
+#define SQUARE_AREA (SQUARE_SIDE*SQUARE_SIDE)
+
+#define POSSIBLE_MOVES 5
+
 /* Print the last move status */
 #define PRINT_MOVE_INFO(move, id, s) ({\
 	switch(dirnum) {\

@@ -9,10 +9,12 @@
 #include <robby/module.h>
 #include <robby/neural-net.h>
 
-#define MUTATION_RATE_NODE 0.5
-#define MUTATION_RATE_CONNECTION 0.25
+#define MUTATION_RATE_NODE 2.5
+#define MUTATION_RATE_CONNECTION 2.25
 #define MUTATION_RATE_LINK 2.0
-#define MUTATION_RATE_BIAS 0.4
+#define MUTATION_RATE_BIAS 2.4
+#define MUTATION_RATE_ENABLE 2.2
+#define MUTATION_RATE_DISABLE 2.4
 
 #define PERTURB_CHANCE 0.9
 #define PERTURB_STEP 0.1
@@ -28,9 +30,23 @@
 
 list<list <Genome*> > species_lists;
 
-Genome::Genome(void) {
+Node::Node(int id, int type) {
+   this->type=type;
+   this->id=id;
+}
+
+Genome::Genome(int input_no, int output_no) {
+    int i;
+
     this->node_count=0;
     this->global_innov=0;
+
+    for(i=0;i<input_no;i++) {
+        this->node_list.push_back(new Node(i,0));
+    }
+    for(i=0;i<output_no;i++) {
+        this->node_list.push_back(new Node(input_no+i, 2));
+    }
 }
 
 int Genome::mutate(void) {
@@ -38,10 +54,14 @@ int Genome::mutate(void) {
     double mrate_link;
 
     mrate_link=MUTATION_RATE_LINK;
+    
+    cout << "begin mutation" <<endl;
 
     //mutate node, spezza un arco e aggiunge un nodo
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_NODE) 
         this->node_mutate(); 
+    
+    cout << "node mutation" << endl;
 
     //mutate link, aggiunge un link fra due nodi random
     while(mrate_link>0) {
@@ -49,6 +69,9 @@ int Genome::mutate(void) {
             this->link_mutate(false);
         mrate_link=mrate_link-1;
     }
+
+    cout << "mutate link" << endl;
+
     //mutate link+bias, aggiungi link con input da tutti i nodi di input
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_BIAS)
         this->link_mutate(true); 
@@ -58,15 +81,39 @@ int Genome::mutate(void) {
         for (gene_iter = this->gene_list.begin(); gene_iter != this->gene_list.end(); gene_iter++)
             (*gene_iter)->point_mutate();
     } 
-    //TODO enable/disable mutate
+    //enable/disable mutate
+    if(RANDOM_DOUBLE(1)<MUTATION_RATE_ENABLE)
+        this->enable_disable_mutate(true);
+
+
+    if(RANDOM_DOUBLE(1)<MUTATION_RATE_DISABLE)
+        this->enable_disable_mutate(false);
 }
 
 int Genome::copy(Genome *gen) {
 }
 
-Node::Node(int id, int type) {
-   this->type=type;
-   this->id=id;
+void Gene::copy(Gene *gen) {
+}
+
+void Genome::print() {
+    list<Node*>::iterator node_it;
+    list<Gene*>::iterator gene_it;
+
+
+    for(node_it=this->node_list.begin(); node_it!=this->node_list.end(); node_it++)
+        if(*node_it)
+            (*node_it)->print();
+
+    for(gene_it=this->gene_list.begin(); gene_it!=this->gene_list.end(); gene_it++)
+        if(*gene_it)
+            (*gene_it)->print();
+}
+
+
+
+void Node::print(void) {
+    cout << "node " << this->id << " " << this->type << endl;
 }
 
 int Genome::node_mutate(void) {
@@ -78,12 +125,18 @@ int Genome::node_mutate(void) {
     
     //TODO get id, define types
     neuron=new Node(1,1);
+
     this->node_list.push_back(neuron);
 
     list_len=this->gene_list.size();
-    gene_index=round(RANDOM_DOUBLE(list_len)); 
+    if(list_len==0)
+        return 1;
+    gene_index=round(RANDOM_DOUBLE(list_len-1)); 
     
+    cout << "d1 " << gene_index << endl;
+
     g_orig=LIST_GET(Gene*, this->gene_list, gene_index);
+    cout << "d2\n";
     
     if(!g_orig->enabled)
         return -1;
@@ -92,15 +145,17 @@ int Genome::node_mutate(void) {
     
     g1=new Gene();
     g2=new Gene();
+    
+    cout << "created" << endl;
 
-    g1->copy(g_orig);
+    //g1->copy(g_orig);
     g1->out=neuron;
     g1->weight=1.0;
     //TODO innovation
     g1->innovation=666;
     g1->enabled=true;
 
-    g2->copy(g_orig);
+    //g2->copy(g_orig);
     g2->in=neuron;
     g2->innovation=667;
     g2->enabled=true;
@@ -124,12 +179,17 @@ int Genome::link_mutate(bool force_bias) {
     Gene *new_gene;
 
     node_size=this->node_list.size();
-    rand1=round(RANDOM_DOUBLE(node_size));
-    rand2=round(RANDOM_DOUBLE(node_size));
+    if(node_size==0) {
+        return 1;
+    }
+    rand1=round(RANDOM_DOUBLE(node_size-1));
+    rand2=round(RANDOM_DOUBLE(node_size-1));
     
     n1=LIST_GET(Node*, this->node_list, rand1);
     n2=LIST_GET(Node*, this->node_list, rand2);
-    
+   
+    cout << "ciao"<<endl;
+
     if(n1->type==n2->type && n1->type==0)
         return 1;
     
@@ -167,6 +227,33 @@ int Gene::point_mutate(void) {
         this->weight=RANDOM_DOUBLE(1)*4-2;
 }
 
+int Genome::enable_disable_mutate(bool enable) {
+    Gene *selected;
+    list<Gene*> candidates;
+    list<Gene*>::iterator it;
+
+    for(it=this->gene_list.begin(); it!=this->gene_list.end();it++) {
+        if((*it)->enabled== not enable)
+            candidates.push_back(*it);
+    }
+
+    if(candidates.size()>0) {
+        selected=LIST_GET(Gene*, candidates, round(RANDOM_DOUBLE(candidates.size())));
+        selected->enabled=enable;
+    }
+
+}
+
+void Gene::print(void) {
+    cout<< "Gene " << this->innovation << " enabled: " << this->enabled << endl;
+    cout << "\tweight: " << this->weight;
+    if(this->in)
+        cout << "\tfrom: " <<  this->in->id << endl;
+    if(this->out)
+        cout << "\tto: " << this->out->id << endl;
+    
+}
+
 
 int move(struct map *m, struct robby *r)
 {
@@ -201,6 +288,7 @@ int move(struct map *m, struct robby *r)
 	return success;
 }
 
+
 /* Generate the robbies for the next generation (the list is sorted
  * from the best fitting to the worst).
  * You can choose fixed parameters for every robby.
@@ -210,25 +298,34 @@ void generate_robbies(struct robby *rl, long unsigned int robbynum,
 {
 	int i;
     Genome* gen;
+    
+    printf("wyo\n");
 
 	/* initialize robbies for the next generations */
 	if (generation == 0) {
 		for (i = 0; i < robbynum; i++) {
 			/* Set the ID */
 			rl[i].id = i;
-
+            
 			/* A radius of one for the view */
-			rl[i].viewradius = 2;
+			rl[i].viewradius = VIEW_RADIUS;
 
-            rl[i].genome=new Genome();
+            rl[i].genome= new Genome(SQUARE_AREA,POSSIBLE_MOVES);
 		}
 	}
     
-    gen=rl[0].genome;
-    rl[0].genome->mutate();
+    new Gene();
+    printf("diopo\n");
 
+    gen=(Genome*) rl[0].genome;
+    ((Genome*)rl[0].genome)->mutate();
+
+    //TODO fixa print
+    ((Genome*)rl[0].genome)->print();
+    exit(-1);
+    
     for(i=0; i<robbynum; i++) {
-       rl[i].genome->copy(gen);
+      // rl[i].genome->copy(gen);
     }
 
 	/* Do nothing for the next generations:
