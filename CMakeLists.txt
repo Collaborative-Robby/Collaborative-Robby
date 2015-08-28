@@ -23,16 +23,15 @@ file(GLOB Plugins
      "${PLUGINS_SOURCE_DIR}/*"
 )
 
-foreach(PLUG ${Plugins})
-	string(REGEX REPLACE "${PLUGINS_SOURCE_DIR}/" "" OUTNAME ${PLUG})
-	string(REGEX REPLACE ".cpp$" "" OUTNAME ${OUTNAME})
+foreach(PLUG_DIR ${Plugins})
+	string(REGEX REPLACE "${PLUGINS_SOURCE_DIR}/" "" OUTNAME "${PLUG_DIR}")
 	file(GLOB CurrentPlugSources
-		"${PLUG}"
+		"${PLUG_DIR}/*"
 		"${CORE_SOURCE_PROJECT_DIR}/modules.cpp"
 	)
 	add_library(${OUTNAME} SHARED ${CurrentPlugSources})
 	target_link_libraries(${OUTNAME} m)
-endforeach(PLUG)
+endforeach(PLUG_DIR)
 
 file(GLOB EngineSources
      "${CORE_SOURCE_PROJECT_DIR}/robby.cpp"

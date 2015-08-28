@@ -19,21 +19,37 @@
 #define PERTURB_CHANCE 0.9
 #define PERTURB_STEP 0.1
 
-/* Greedy procedural move, pick up a can if is possible, otherwise move in a
- * random direction.
- * MUST return 0 if the move failed or 1 if the move succeded.
- */
-
 #define RANDOM_DOUBLE(max) (((double) rand()/ (double) RAND_MAX)*(double) max)
 
 #define LIST_GET(ltype, l ,nelem) ({list<ltype>::iterator it=l.begin(); advance(it,nelem); *it;})
 
-list<list <Genome*> > species_lists;
+/* Node */
 
 Node::Node(int id, int type) {
    this->type=type;
    this->id=id;
 }
+
+void Node::print(void) {
+    cout << "node " << this->id << " " << this->type << endl;
+}
+
+/* Gene */
+
+void Gene::print(void) {
+    cout<< "Gene " << this->innovation << " enabled: " << this->enabled << endl;
+    cout << "\tweight: " << this->weight;
+    if(this->in)
+        cout << "\tfrom: " <<  this->in->id << endl;
+    if(this->out)
+        cout << "\tto: " << this->out->id << endl;
+    
+}
+
+void Gene::copy(Gene *gen) {
+}
+
+/* Genome */
 
 Genome::Genome(int input_no, int output_no) {
     int i;
@@ -93,9 +109,6 @@ int Genome::mutate(void) {
 int Genome::copy(Genome *gen) {
 }
 
-void Gene::copy(Gene *gen) {
-}
-
 void Genome::print() {
     list<Node*>::iterator node_it;
     list<Gene*>::iterator gene_it;
@@ -108,12 +121,6 @@ void Genome::print() {
     for(gene_it=this->gene_list.begin(); gene_it!=this->gene_list.end(); gene_it++)
         if(*gene_it)
             (*gene_it)->print();
-}
-
-
-
-void Node::print(void) {
-    cout << "node " << this->id << " " << this->type << endl;
 }
 
 int Genome::node_mutate(void) {
@@ -242,93 +249,4 @@ int Genome::enable_disable_mutate(bool enable) {
         selected->enabled=enable;
     }
 
-}
-
-void Gene::print(void) {
-    cout<< "Gene " << this->innovation << " enabled: " << this->enabled << endl;
-    cout << "\tweight: " << this->weight;
-    if(this->in)
-        cout << "\tfrom: " <<  this->in->id << endl;
-    if(this->out)
-        cout << "\tto: " << this->out->id << endl;
-    
-}
-
-
-int move(struct map *m, struct robby *r)
-{
-	/* Dirnum = -1 means that the robby pulled up a can */
-	int dirnum = -1;
-
-	/* 1 -> The action was successfully done. */
-	int success = 0;
-
-	/* Prepare the state of the robby */
-	PREPARE_STATE(r);
-
-	if (r->over == CAN_DUMMY_PTR) {
-		/* Pick up a can */
-		r->over = NULL;
-		r->gathered_cans++;
-		success = 1;
-	} else {
-		/* Move in a random direction */
-		dirnum=rand() % 4;
-
-		/* Move with wraparound */
-		success = MOVE_WRAP(r, m, dirnum);
-	}
-
-	/* Update the state of the robby with the new view */
-	update_view(r, m, false);
-
-	/* Display some info on the current move */
-	PRINT_MOVE_INFO(dirnum, r->id, success);
-
-	return success;
-}
-
-
-/* Generate the robbies for the next generation (the list is sorted
- * from the best fitting to the worst).
- * You can choose fixed parameters for every robby.
- */
-void generate_robbies(struct robby *rl, long unsigned int robbynum,
-		long unsigned int generation)
-{
-	int i;
-    Genome* gen;
-    
-    printf("wyo\n");
-
-	/* initialize robbies for the next generations */
-	if (generation == 0) {
-		for (i = 0; i < robbynum; i++) {
-			/* Set the ID */
-			rl[i].id = i;
-            
-			/* A radius of one for the view */
-			rl[i].viewradius = VIEW_RADIUS;
-
-            rl[i].genome= new Genome(SQUARE_AREA,POSSIBLE_MOVES);
-		}
-	}
-    
-    new Gene();
-    printf("diopo\n");
-
-    gen=(Genome*) rl[0].genome;
-    ((Genome*)rl[0].genome)->mutate();
-
-    //TODO fixa print
-    ((Genome*)rl[0].genome)->print();
-    exit(-1);
-    
-    for(i=0; i<robbynum; i++) {
-      // rl[i].genome->copy(gen);
-    }
-
-	/* Do nothing for the next generations:
-	 * keep the same robbies in random positions.
-	 */
 }
