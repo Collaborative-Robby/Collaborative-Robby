@@ -13,7 +13,7 @@ Modellazione:
 -gestione mappe su file (csv?)
 
 NNET:
+-Copia dei genomi #1
 -Comparare genomi (specie) #2
--mutazione rete neurale #1
 -gestione rete neurale (attivazione) #2
 -cross over #2
