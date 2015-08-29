@@ -27,11 +27,11 @@ class Node{
         list<Gene*> input_genes;
         list<Gene*> output_genes;
         Node(int id, int type);
+        Node(Node *copy);
         int activate(class Gene* activator, double input);
         virtual void print(void);
 
 };
-
 
 
 class Genome {

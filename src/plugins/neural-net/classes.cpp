@@ -30,6 +30,23 @@ Node::Node(int id, int type) {
    this->id=id;
 }
 
+Node::Node(Node* copy) {
+    Gene* current;
+    list<Gene*>::iterator g_it;
+
+    this->type=copy->type;
+    this->id=copy->id;
+    for(g_it=copy->input_genes.begin(); g_it!=copy->input_genes.end(); g_it++) {
+        current=*it;
+        this->input_genes.push_back(new Gene(current));
+    }
+    for(g_it=copy->output_genes.begin(); g_it!=copy->output_genes.end(); g_it++) {
+        current=*it;
+        this->output_genes.push_back(new Gene(current));
+    }
+
+}
+
 void Node::print(void) {
     cout << "node " << this->id << " " << this->type << endl;
 }
@@ -42,11 +59,12 @@ void Gene::print(void) {
     if(this->in)
         cout << "\tfrom: " <<  this->in->id << endl;
     if(this->out)
+        return;
         cout << "\tto: " << this->out->id << endl;
     
 }
 
-void Gene::copy(Gene *gen) {
+Gene::Gene(Gene *gen) {
     this->innovation=gen->innovation;
     this->in=gen->in;
     this->out=gen->out;
@@ -117,6 +135,21 @@ int Genome::mutate(void) {
 }
 
 int Genome::copy(Genome *gen) {
+    Node* node;
+    Gene* gene;
+    list<Node*>::iterator n_it;
+    list<Gene*>::iterator g_it;
+
+    this->node_count=gen->node_count;
+    this->global_innovation=gen->global_innovation;
+    
+    for(n_it=this->node_list.begin(); n_it!=this->node_list.end(); n_it++) {
+        node=new Node((*n_it)->id, (*n_it)->type);
+         
+    }
+            
+        
+
 }
 
 void Genome::print() {
