@@ -1,6 +1,7 @@
 #ifndef NEURAL_NET_H
 #define NEURAL_NET_H
 
+#include <map>
 #include <list>
 
 using namespace std;
@@ -33,11 +34,10 @@ class Node{
 
 };
 
-
 class Genome {
 
     public:
-        list<Node*> node_list;
+        map<int, Node*> node_map;
         list<Gene*> gene_list;
         int node_count,global_innov;
         Genome(int input_no, int output_no);
@@ -46,6 +46,7 @@ class Genome {
         int node_mutate(void);
         int link_mutate(bool force_bias);
         int enable_disable_mutate(bool enable);
+	int next_innovation(void);
         void print(void);
 };
 

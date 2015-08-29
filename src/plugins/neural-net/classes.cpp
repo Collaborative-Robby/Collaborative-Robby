@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include <iostream>
+#include <map>
 #include <list>
 #include <robby/struct.h>
 #include <robby/module.h>
@@ -22,6 +23,8 @@
 #define RANDOM_DOUBLE(max) (((double) rand()/ (double) RAND_MAX)*((double) max))
 
 #define LIST_GET(ltype, l ,nelem) ({list<ltype>::iterator it=l.begin(); advance(it,nelem); *it;})
+
+using namespace std;
 
 /* Node */
 
@@ -73,11 +76,14 @@ Genome::Genome(int input_no, int output_no) {
     this->global_innov=0;
 
     for(i=0;i<input_no;i++) {
-        this->node_list.push_back(new Node(i,0));
+        this->node_map.insert(std::pair<int, Node *>(i, new Node(i,0)));
     }
+    this->node_count += input_no;
+
     for(i=0;i<output_no;i++) {
-        this->node_list.push_back(new Node(input_no+i, 2));
+        this->node_map.insert(std::pair<int, Node *>(input_no+i, new Node(input_no + i,2)));
     }
+    this->node_count += output_no;
 }
 
 int Genome::mutate(void) {
@@ -129,29 +135,34 @@ int Genome::mutate(void) {
 }
 
 int Genome::copy(Genome *gen) {
-    Node* node;
+    int key;
+    Node *node, *val;
     Gene* gene;
-    list<Node*>::iterator n_it;
+    map<int, Node*>::iterator n_it;
     list<Gene*>::iterator g_it;
 
     this->node_count=gen->node_count;
     this->global_innov=gen->global_innov;
 
-    for(n_it=this->node_list.begin(); n_it!=this->node_list.end(); n_it++) {
-        node=new Node((*n_it)->id, (*n_it)->type);
+    for(n_it=this->node_map.begin(); n_it!=this->node_map.end(); n_it++) {
+	key = n_it->first;
+	val = n_it->second;
+        node=new Node(key, val->type);
     }
 
 }
 
 void Genome::print() {
-    list<Node*>::iterator node_it;
+    map<int, Node*>::iterator node_it;
     list<Gene*>::iterator gene_it;
 
-    for(node_it=this->node_list.begin(); node_it!=this->node_list.end(); node_it++)
-        (*node_it)->print();
+    for(node_it=this->node_map.begin(); node_it!=this->node_map.end(); node_it++) {
+        node_it->second->print();
+    }
 
-    for(gene_it=this->gene_list.begin(); gene_it!=this->gene_list.end(); gene_it++)
+    for(gene_it=this->gene_list.begin(); gene_it!=this->gene_list.end(); gene_it++) {
         (*gene_it)->print();
+    }
 
 }
 
@@ -159,13 +170,14 @@ int Genome::node_mutate(void) {
     Node *neuron;
     int list_len;
     int gene_index;
-    list<Node*>::iterator it;
+    map<int, Node*>::iterator it;
     Gene *g_orig, *g1,*g2;
     
     //TODO get id, define types
-    neuron=new Node(1,1);
+    neuron=new Node(this->node_count,1);
 
-    this->node_list.push_back(neuron);
+    this->node_map.insert(pair<int, Node*>(node_count, neuron));
+    this->node_count++;
 
     list_len=this->gene_list.size();
     if(list_len==0)
@@ -192,12 +204,12 @@ int Genome::node_mutate(void) {
     g1->out=neuron;
     g1->weight=1.0;
     //TODO innovation
-    g1->innovation=666;
+    g1->innovation=this->next_innovation();
     g1->enabled=true;
 
     //g2->copy(g_orig);
     g2->in=neuron;
-    g2->innovation=667;
+    g2->innovation=this->next_innovation();
     g2->enabled=true;
     
     neuron->input_genes.push_back(g1);
@@ -212,13 +224,17 @@ int Genome::node_mutate(void) {
     return 0;
 }
 
+int Genome::next_innovation() {
+	return this->global_innov++;
+}
+
 int Genome::link_mutate(bool force_bias) {
     int rand1,rand2;
     unsigned int node_size;
     Node *n1,*n2,*temp;
     Gene *new_gene;
 
-    node_size=this->node_list.size();
+    node_size=this->node_map.size();
 
     if(node_size==0) {
         return 1;
@@ -227,8 +243,10 @@ int Genome::link_mutate(bool force_bias) {
     rand2=round(RANDOM_DOUBLE(node_size-1));
    
 
-    n1=LIST_GET(Node*, this->node_list, rand1);
-    n2=LIST_GET(Node*, this->node_list, rand2);
+    //n1=LIST_GET(Node*, this->node_list, rand1);
+    n1=this->node_map[rand1];
+    //n2=LIST_GET(Node*, this->node_list, rand2);
+    n2=this->node_map[rand2];
    
 
     if(n1->type==n2->type && n1->type==0)
@@ -252,7 +270,8 @@ int Genome::link_mutate(bool force_bias) {
     //todo contains link
     //if(containslink) return 
 
-    //new_gene->innovation=get_innovation();
+    new_gene->innovation=this->next_innovation();
+
     new_gene->weight=RANDOM_DOUBLE(4)-2;
 
     
