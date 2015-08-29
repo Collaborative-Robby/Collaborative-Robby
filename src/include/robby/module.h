@@ -114,17 +114,17 @@ extern int** directions;
 
 extern "C" {
 /* Move in a direction */
-int move_dir(struct robby *r, struct map *m, int dirnum, int impact, int waround);
+int move_dir(struct robby *r, struct world_map *m, int dirnum, int impact, int waround);
 
 /* Update the robby view */
-int update_view(struct robby *r, struct map *m, int wraparound);
+int update_view(struct robby *r, struct world_map *m, int wraparound);
 
 
 void generate_robbies(struct robby *rl, long unsigned int robbynum,
 		long unsigned int generation);
 
 
-int move(struct map *m, struct robby *r);
+int move(struct world_map *m, struct robby *r);
 }
 
 /* Moving possibilities */

@@ -9,9 +9,9 @@
 #include <robby/commons.h>
 
 /* callbacks functions */
-int (*move_callback)(struct map *, struct robby *);
+int (*move_callback)(struct world_map *, struct robby *);
 void (*generate_robbies_callback)(struct robby *, long unsigned int, long unsigned int);
-int (*update_view_callback) (struct robby *, struct map *, int);
+int (*update_view_callback) (struct robby *, struct world_map *, int);
 
 void *callbacks = NULL;
 
@@ -19,7 +19,7 @@ char __can_const;
 
 #define CAN_DUMMY_PTR (void *)&__can_const
 
-int map_constructor(struct map *m, long unsigned int x, long unsigned int y,
+int map_constructor(struct world_map *m, long unsigned int x, long unsigned int y,
 		long unsigned int robbynum,
 		long unsigned int cannum)
 {
@@ -61,7 +61,7 @@ int map_constructor(struct map *m, long unsigned int x, long unsigned int y,
 	return 0;
 }
 
-void map_destructor(struct map *m)
+void map_destructor(struct world_map *m)
 {
 	int i;
 	if (!m)
@@ -89,7 +89,7 @@ void map_destructor(struct map *m)
 	}\
 })
 
-static inline void print_map(struct map *m)
+static inline void print_map(struct world_map *m)
 {
 	int i, j;
 	if (!m || !m->innermatrix)
@@ -106,7 +106,7 @@ static inline void print_map(struct map *m)
 	}
 }
 
-struct robby *add_robby(struct map *m, struct robby *r)
+struct robby *add_robby(struct world_map *m, struct robby *r)
 {
 	if (!r)
 		return r;
@@ -243,7 +243,7 @@ void generational_step(long unsigned int sizex, long unsigned int sizey,
 {
 	long unsigned int round;
 	int i;
-	struct map m;
+	struct world_map m;
 
 	round = 0;
 

@@ -7,7 +7,7 @@ enum types {
 	ROBBY,
 };
 
-struct map {
+struct world_map {
 	long unsigned int sizex, sizey;
 	long unsigned int n_robots;
 	long unsigned int n_cans;
@@ -27,7 +27,7 @@ struct robby {
 	long unsigned int x, y;
 	char moved;
 	void *over;
-	int (*move)(struct map *, struct robby *);
+	int (*move)(struct world_map *, struct robby *);
 
 	int gathered_cans;
 	int last_gathered_can_time;

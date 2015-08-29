@@ -41,7 +41,7 @@ int get_circle_view (int viewradius, char **view) {
     }
 }
 
-int get_view(struct robby *r, struct map *m, int wraparound) {
+int get_view(struct robby *r, struct world_map *m, int wraparound) {
     int i,j;
     int x,y;
     for(i=0; i<SQUARE_SIDE;i++) {
@@ -72,7 +72,7 @@ int get_view(struct robby *r, struct map *m, int wraparound) {
 }
 
 
-int update_view(struct robby *r, struct map *m, int wraparound)
+int update_view(struct robby *r, struct world_map *m, int wraparound)
 {
 	int items,i,j;
 	if (!r->view) {
@@ -109,7 +109,7 @@ int update_view(struct robby *r, struct map *m, int wraparound)
 }
 
 /* Move in a direction */
-int move_dir(struct robby *r, struct map *m, int dirnum,  int impact,  int wraparound)
+int move_dir(struct robby *r, struct world_map *m, int dirnum,  int impact,  int wraparound)
 {
 	int* dir;
 	int success = 0, oob = 0;

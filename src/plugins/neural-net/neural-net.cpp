@@ -11,7 +11,7 @@
 
 list<list <Genome*> > species_lists;
 
-int move(struct map *m, struct robby *r)
+int move(struct world_map *m, struct robby *r)
 {
 	/* Dirnum = -1 means that the robby pulled up a can */
 	int dirnum = -1;

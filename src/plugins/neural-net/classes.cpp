@@ -36,14 +36,6 @@ Node::Node(Node* copy) {
 
     this->type=copy->type;
     this->id=copy->id;
-    for(g_it=copy->input_genes.begin(); g_it!=copy->input_genes.end(); g_it++) {
-        current=*it;
-        this->input_genes.push_back(new Gene(current));
-    }
-    for(g_it=copy->output_genes.begin(); g_it!=copy->output_genes.end(); g_it++) {
-        current=*it;
-        this->output_genes.push_back(new Gene(current));
-    }
 
 }
 
@@ -55,19 +47,19 @@ void Node::print(void) {
 
 void Gene::print(void) {
     cout<< "Gene " << this->innovation << " enabled: " << this->enabled << endl;
-    cout << "\tweight: " << this->weight;
+    cout << "\tweight: " << this->weight << endl;
     if(this->in)
         cout << "\tfrom: " <<  this->in->id << endl;
     if(this->out)
-        return;
         cout << "\tto: " << this->out->id << endl;
-    
 }
 
-Gene::Gene(Gene *gen) {
+Gene::Gene(Gene *gen, bool copy_ptrs) {
     this->innovation=gen->innovation;
-    this->in=gen->in;
-    this->out=gen->out;
+    if (copy_ptrs) {
+	    this->in=gen->in;
+	    this->out=gen->out;
+    }
     this->weight=gen->weight;
     this->enabled=gen->enabled;
 }
@@ -129,9 +121,11 @@ int Genome::mutate(void) {
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_ENABLE)
         this->enable_disable_mutate(true);
 
+    cout << "enable connection" << endl;
 
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_DISABLE)
         this->enable_disable_mutate(false);
+    cout << "disable connection" << endl;
 }
 
 int Genome::copy(Genome *gen) {
@@ -141,14 +135,11 @@ int Genome::copy(Genome *gen) {
     list<Gene*>::iterator g_it;
 
     this->node_count=gen->node_count;
-    this->global_innovation=gen->global_innovation;
-    
+    this->global_innov=gen->global_innov;
+
     for(n_it=this->node_list.begin(); n_it!=this->node_list.end(); n_it++) {
         node=new Node((*n_it)->id, (*n_it)->type);
-         
     }
-            
-        
 
 }
 
@@ -156,14 +147,12 @@ void Genome::print() {
     list<Node*>::iterator node_it;
     list<Gene*>::iterator gene_it;
 
-
     for(node_it=this->node_list.begin(); node_it!=this->node_list.end(); node_it++)
-        if(*node_it)
-            (*node_it)->print();
+        (*node_it)->print();
 
     for(gene_it=this->gene_list.begin(); gene_it!=this->gene_list.end(); gene_it++)
-        if(*gene_it)
-            (*gene_it)->print();
+        (*gene_it)->print();
+
 }
 
 int Genome::node_mutate(void) {
@@ -194,19 +183,19 @@ int Genome::node_mutate(void) {
     
     g_orig->enabled=false;
     
-    g1=new Gene();
-    g2=new Gene();
+    g1=new Gene(g_orig, true);
+    g2=new Gene(g_orig, true);
     
     cout << "created" << endl;
 
-    g1->copy(g_orig);
+    //g1->copy(g_orig);
     g1->out=neuron;
     g1->weight=1.0;
     //TODO innovation
     g1->innovation=666;
     g1->enabled=true;
 
-    g2->copy(g_orig);
+    //g2->copy(g_orig);
     g2->in=neuron;
     g2->innovation=667;
     g2->enabled=true;

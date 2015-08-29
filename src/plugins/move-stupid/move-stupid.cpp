@@ -9,7 +9,7 @@
  * random direction.
  * MUST return 0 if the move failed or 1 if the move succeded.
  */
-int move(struct map *m, struct robby *r)
+int move(struct world_map *m, struct robby *r)
 {
 	/* Dirnum = -1 means that the robby pulled up a can */
 	int dirnum = -1;
