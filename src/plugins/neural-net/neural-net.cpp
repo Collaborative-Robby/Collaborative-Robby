@@ -55,8 +55,6 @@ void generate_robbies(struct robby *rl, long unsigned int robbynum,
 	int i;
     Genome* gen;
     
-    printf("wyo\n");
-
 	/* initialize robbies for the next generations */
 	if (generation == 0) {
 		for (i = 0; i < robbynum; i++) {
@@ -70,8 +68,6 @@ void generate_robbies(struct robby *rl, long unsigned int robbynum,
 		}
 	}
     
-    new Gene();
-    printf("diopo\n");
 
     gen=(Genome*) rl[0].genome;
     ((Genome*)rl[0].genome)->mutate();

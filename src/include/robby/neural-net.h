@@ -24,7 +24,8 @@ class Node{
     public:
         int type;
         int id;
-        list<class Gene*> input_genes, output_genes;
+        list<Gene*> input_genes;
+        list<Gene*> output_genes;
         Node(int id, int type);
         int activate(class Gene* activator, double input);
         virtual void print(void);
@@ -42,7 +43,7 @@ class Genome {
         Genome(int input_no, int output_no);
         virtual int mutate(void);
         virtual int copy(Genome *gen);
-        virtual int node_mutate(void);
+        int node_mutate(void);
         virtual int link_mutate(bool force_bias);
         virtual int enable_disable_mutate(bool enable);
         virtual void print(void);

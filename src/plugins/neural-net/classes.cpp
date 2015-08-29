@@ -19,7 +19,7 @@
 #define PERTURB_CHANCE 0.9
 #define PERTURB_STEP 0.1
 
-#define RANDOM_DOUBLE(max) (((double) rand()/ (double) RAND_MAX)*(double) max)
+#define RANDOM_DOUBLE(max) (((double) rand()/ (double) RAND_MAX)*((double) max))
 
 #define LIST_GET(ltype, l ,nelem) ({list<ltype>::iterator it=l.begin(); advance(it,nelem); *it;})
 
@@ -47,6 +47,11 @@ void Gene::print(void) {
 }
 
 void Gene::copy(Gene *gen) {
+    this->innovation=gen->innovation;
+    this->in=gen->in;
+    this->out=gen->out;
+    this->weight=gen->weight;
+    this->enabled=gen->enabled;
 }
 
 /* Genome */
@@ -92,11 +97,16 @@ int Genome::mutate(void) {
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_BIAS)
         this->link_mutate(true); 
 
+    cout <<"mutated+bias" << endl;
+    
     //mutate point, cambia i pesi
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_CONNECTION) {
         for (gene_iter = this->gene_list.begin(); gene_iter != this->gene_list.end(); gene_iter++)
             (*gene_iter)->point_mutate();
     } 
+    
+    cout << "mutate connection" << endl;
+
     //enable/disable mutate
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_ENABLE)
         this->enable_disable_mutate(true);
@@ -125,7 +135,7 @@ void Genome::print() {
 
 int Genome::node_mutate(void) {
     Node *neuron;
-    unsigned int list_len;
+    int list_len;
     int gene_index;
     list<Node*>::iterator it;
     Gene *g_orig, *g1,*g2;
@@ -138,7 +148,8 @@ int Genome::node_mutate(void) {
     list_len=this->gene_list.size();
     if(list_len==0)
         return 1;
-    gene_index=round(RANDOM_DOUBLE(list_len-1)); 
+
+    gene_index=(int) round(RANDOM_DOUBLE(list_len-1)); 
     
     cout << "d1 " << gene_index << endl;
 
@@ -155,14 +166,14 @@ int Genome::node_mutate(void) {
     
     cout << "created" << endl;
 
-    //g1->copy(g_orig);
+    g1->copy(g_orig);
     g1->out=neuron;
     g1->weight=1.0;
     //TODO innovation
     g1->innovation=666;
     g1->enabled=true;
 
-    //g2->copy(g_orig);
+    g2->copy(g_orig);
     g2->in=neuron;
     g2->innovation=667;
     g2->enabled=true;
@@ -186,16 +197,17 @@ int Genome::link_mutate(bool force_bias) {
     Gene *new_gene;
 
     node_size=this->node_list.size();
+
     if(node_size==0) {
         return 1;
     }
     rand1=round(RANDOM_DOUBLE(node_size-1));
     rand2=round(RANDOM_DOUBLE(node_size-1));
-    
+   
+
     n1=LIST_GET(Node*, this->node_list, rand1);
     n2=LIST_GET(Node*, this->node_list, rand2);
    
-    cout << "ciao"<<endl;
 
     if(n1->type==n2->type && n1->type==0)
         return 1;
@@ -205,7 +217,8 @@ int Genome::link_mutate(bool force_bias) {
         n2=n1;
         n1=temp;
     }
-       
+    
+
     new_gene=new Gene();
     new_gene->in=n1;
     new_gene->out=n2;
@@ -220,9 +233,15 @@ int Genome::link_mutate(bool force_bias) {
     //new_gene->innovation=get_innovation();
     new_gene->weight=RANDOM_DOUBLE(4)-2;
 
+    
+    n1->print();
+    n2->print();
+
     this->gene_list.push_back(new_gene);
+
     n1->output_genes.push_back(new_gene);
     n2->input_genes.push_back(new_gene);
+
 
     return 0;
 }
