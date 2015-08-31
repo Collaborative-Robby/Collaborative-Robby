@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <dlfcn.h>
 #include <robby/struct.h>
+#include <robby/dismath.h>
 #include <robby/commons.h>
 
 /* callbacks functions */
@@ -113,11 +114,10 @@ struct robby *add_robby(struct world_map *m, struct robby *r)
 
 	r->type = ROBBY;
 
+	/* TODO fixed position */
 	do {
-		if (r->x >= m->sizex)
-			r->x = (long unsigned int) random() % m->sizex;
-		if (r->x >= m->sizey)
-			r->y = (long unsigned int) random() % m->sizey;
+		r->x = (long unsigned int) RANDOM_DOUBLE(m->sizex);
+		r->y = (long unsigned int) RANDOM_DOUBLE(m->sizey);
 	} while (m->innermatrix[r->x][r->y] && !(m->innermatrix[r->x][r->y]==CAN_DUMMY_PTR));
 
 	if(m->innermatrix[r->x][r->y]) {
@@ -210,8 +210,8 @@ void destroy_robbies(struct robby *rl, int robbynum)
 
 	free(rl);
 
-	if (callbacks)
-		dlclose(callbacks);
+	//if (callbacks)
+		//dlclose(callbacks);
 }
 
 int compare_eval(const void *a, const void *b)

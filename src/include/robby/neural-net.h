@@ -13,11 +13,9 @@ class Gene {
         double weight;
         bool enabled;
         int point_mutate(void);
-	//void copy(Gene *g);
         void print(void);
-	Gene(Gene *gen, bool copy_ptrs);
-        Gene(void){
-        }
+	Gene(Gene *gen);
+	Gene(void);
 };
 
 class Node{
@@ -29,6 +27,7 @@ class Node{
         list<Gene*> output_genes;
         Node(int id, int type);
         Node(Node *copy);
+        ~Node(void);
         int activate(class Gene* activator, double input);
         void print(void);
 
@@ -41,8 +40,9 @@ class Genome {
         list<Gene*> gene_list;
         int node_count,global_innov;
         Genome(int input_no, int output_no);
+        Genome(Genome *gen);
+        ~Genome();
         int mutate(void);
-        int copy(Genome *gen);
         int node_mutate(void);
         int link_mutate(bool force_bias);
         int enable_disable_mutate(bool enable);

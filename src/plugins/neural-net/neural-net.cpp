@@ -44,7 +44,6 @@ int move(struct world_map *m, struct robby *r)
 	return success;
 }
 
-
 /* Generate the robbies for the next generation (the list is sorted
  * from the best fitting to the worst).
  * You can choose fixed parameters for every robby.
@@ -53,32 +52,38 @@ void generate_robbies(struct robby *rl, long unsigned int robbynum,
 		long unsigned int generation)
 {
 	int i;
-    Genome* gen;
+	Genome* gen;
     
 	/* initialize robbies for the next generations */
 	if (generation == 0) {
+		/* Create the genome for the robby */
+		rl[0].genome= new Genome(SQUARE_AREA,POSSIBLE_MOVES);
 		for (i = 0; i < robbynum; i++) {
 			/* Set the ID */
 			rl[i].id = i;
-            
 			/* A radius of one for the view */
 			rl[i].viewradius = VIEW_RADIUS;
 
-            rl[i].genome= new Genome(SQUARE_AREA,POSSIBLE_MOVES);
+			if (i > 0)
+				rl[i].genome = new Genome(rl[0].genome);
 		}
+	} else {
+		/* TODO Cross over */
 	}
-    
+    gen = rl[0].genome;
+    rl[0].genome->mutate();
 
-    gen=(Genome*) rl[0].genome;
-    ((Genome*)rl[0].genome)->mutate();
+	rl[0].genome->print();
 
-    //TODO fixa print
-    ((Genome*)rl[0].genome)->print();
-    exit(-1);
-    
-    for(i=0; i<robbynum; i++) {
-      // rl[i].genome->copy(gen);
-    }
+	for(i=1; i<robbynum; i++) {
+		/* delete/garbage collecting */
+		delete rl[i].genome;
+
+		cout <<"-----" << endl;
+
+		rl[i].genome = new Genome(gen);
+		rl[i].genome->print();
+	}
 
 	/* Do nothing for the next generations:
 	 * keep the same robbies in random positions.

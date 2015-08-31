@@ -8,19 +8,18 @@
 #include <list>
 #include <robby/struct.h>
 #include <robby/module.h>
+#include <robby/dismath.h>
 #include <robby/neural-net.h>
 
-#define MUTATION_RATE_NODE 2.5
-#define MUTATION_RATE_CONNECTION 2.25
+#define MUTATION_RATE_NODE 0.5
+#define MUTATION_RATE_CONNECTION 0.25
 #define MUTATION_RATE_LINK 2.0
-#define MUTATION_RATE_BIAS 2.4
-#define MUTATION_RATE_ENABLE 2.2
-#define MUTATION_RATE_DISABLE 2.4
+#define MUTATION_RATE_BIAS 0.4
+#define MUTATION_RATE_ENABLE 0.2
+#define MUTATION_RATE_DISABLE 0.4
 
 #define PERTURB_CHANCE 0.9
 #define PERTURB_STEP 0.1
-
-#define RANDOM_DOUBLE(max) (((double) rand()/ (double) RAND_MAX)*((double) max))
 
 #define LIST_GET(ltype, l ,nelem) ({list<ltype>::iterator it=l.begin(); advance(it,nelem); *it;})
 
@@ -39,7 +38,11 @@ Node::Node(Node* copy) {
 
     this->type=copy->type;
     this->id=copy->id;
+}
 
+Node::~Node(void) {
+	this->input_genes.clear();
+	this->output_genes.clear();
 }
 
 void Node::print(void) {
@@ -48,8 +51,12 @@ void Node::print(void) {
 
 /* Gene */
 
+Gene::Gene(void) {
+	this->enabled = true;
+}
+
 void Gene::print(void) {
-    cout<< "Gene " << this->innovation << " enabled: " << this->enabled << endl;
+    cout<< "Gene " << this->innovation << " " << (this->enabled ? "en" : "dis" ) << "abled" << endl;
     cout << "\tweight: " << this->weight << endl;
     if(this->in)
         cout << "\tfrom: " <<  this->in->id << endl;
@@ -57,12 +64,10 @@ void Gene::print(void) {
         cout << "\tto: " << this->out->id << endl;
 }
 
-Gene::Gene(Gene *gen, bool copy_ptrs) {
+Gene::Gene(Gene *gen) {
     this->innovation=gen->innovation;
-    if (copy_ptrs) {
-	    this->in=gen->in;
-	    this->out=gen->out;
-    }
+    this->in=gen->in;
+    this->out=gen->out;
     this->weight=gen->weight;
     this->enabled=gen->enabled;
 }
@@ -86,18 +91,32 @@ Genome::Genome(int input_no, int output_no) {
     this->node_count += output_no;
 }
 
+Genome::~Genome(void) {
+    list<Gene*>::iterator g_it;
+    map<int, Node*>::iterator n_it;
+
+    for(n_it=this->node_map.begin(); n_it!=this->node_map.end(); n_it++)
+        delete n_it->second;
+
+    for(g_it=this->gene_list.begin(); g_it!=this->gene_list.end(); g_it++)
+        delete *g_it;
+
+    this->gene_list.clear();
+    this->node_map.clear();
+}
+
 int Genome::mutate(void) {
     list<Gene*>::iterator gene_iter;
     double mrate_link;
 
     mrate_link=MUTATION_RATE_LINK;
-    
+
     cout << "begin mutation" <<endl;
 
     //mutate node, spezza un arco e aggiunge un nodo
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_NODE) 
         this->node_mutate(); 
-    
+
     cout << "node mutation" << endl;
 
     //mutate link, aggiunge un link fra due nodi random
@@ -134,7 +153,7 @@ int Genome::mutate(void) {
     cout << "disable connection" << endl;
 }
 
-int Genome::copy(Genome *gen) {
+Genome::Genome(Genome *gen) {
     int key;
     Node *node, *val;
     Gene* gene;
@@ -144,12 +163,19 @@ int Genome::copy(Genome *gen) {
     this->node_count=gen->node_count;
     this->global_innov=gen->global_innov;
 
-    for(n_it=this->node_map.begin(); n_it!=this->node_map.end(); n_it++) {
+    for(n_it=gen->node_map.begin(); n_it!=gen->node_map.end(); n_it++) {
 	key = n_it->first;
 	val = n_it->second;
         node=new Node(key, val->type);
+	this->node_map.insert(pair<int, Node *>(key, node));
     }
 
+    for(g_it=gen->gene_list.begin(); g_it!=gen->gene_list.end(); g_it++) {
+         gene = new Gene(*g_it);
+         gene->in  = node_map[gene->in->id];
+         gene->out = node_map[gene->out->id];
+         this->gene_list.push_back(gene);
+    }
 }
 
 void Genome::print() {
@@ -195,8 +221,8 @@ int Genome::node_mutate(void) {
     
     g_orig->enabled=false;
     
-    g1=new Gene(g_orig, true);
-    g2=new Gene(g_orig, true);
+    g1=new Gene(g_orig);
+    g2=new Gene(g_orig);
     
     cout << "created" << endl;
 
@@ -300,7 +326,7 @@ int Genome::enable_disable_mutate(bool enable) {
     list<Gene*>::iterator it;
 
     for(it=this->gene_list.begin(); it!=this->gene_list.end();it++) {
-        if((*it)->enabled== not enable)
+        if((*it)->enabled == not enable)
             candidates.push_back(*it);
     }
 
