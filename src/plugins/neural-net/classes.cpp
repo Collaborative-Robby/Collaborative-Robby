@@ -132,7 +132,7 @@ int Genome::mutate(void) {
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_BIAS)
         this->link_mutate(true); 
 
-    cout <<"mutated+bias" << endl;
+    cout << "mutated+bias" << endl;
     
     //mutate point, cambia i pesi
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_CONNECTION) {

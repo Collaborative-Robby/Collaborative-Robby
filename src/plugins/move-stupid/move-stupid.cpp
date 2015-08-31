@@ -66,3 +66,8 @@ void generate_robbies(struct robby *rl, long unsigned int robbynum,
 	 * keep the same robbies in random positions.
 	 */
 }
+
+void cleanup(struct robby *rl, int rnum)
+{
+
+}

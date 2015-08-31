@@ -53,7 +53,7 @@ void generate_robbies(struct robby *rl, long unsigned int robbynum,
 {
 	int i;
 	Genome* gen;
-    
+
 	/* initialize robbies for the next generations */
 	if (generation == 0) {
 		/* Create the genome for the robby */
@@ -88,4 +88,13 @@ void generate_robbies(struct robby *rl, long unsigned int robbynum,
 	/* Do nothing for the next generations:
 	 * keep the same robbies in random positions.
 	 */
+}
+
+void cleanup(struct robby *rl, int robbynum)
+{
+	int i;
+	for(i=0; i<robbynum; i++) {
+		if (rl[i].genome)
+			delete rl[i].genome;
+	}
 }

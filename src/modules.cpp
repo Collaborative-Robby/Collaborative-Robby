@@ -131,7 +131,7 @@ int move_dir(struct robby *r, struct world_map *m, int dirnum,  int impact,  int
 
 	if (!oob && !impact && OVER_ROBBY(m, newx, newy)) {
 		/* Give control to the robby that is over the destination cell */
-		new_over = m->innermatrix[newx][newy];
+		new_over = (struct robby *)m->innermatrix[newx][newy];
 		printf("robby %d: impact avoidance started giving control to robby %d\n",
 		       r->id, new_over->id);
 		if (!new_over->moved)

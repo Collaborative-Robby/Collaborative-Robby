@@ -13,6 +13,7 @@
 int (*move_callback)(struct world_map *, struct robby *);
 void (*generate_robbies_callback)(struct robby *, long unsigned int, long unsigned int);
 int (*update_view_callback) (struct robby *, struct world_map *, int);
+void (*plugin_cleanup_callback) (struct robby *, int rnum);
 
 void *callbacks = NULL;
 
@@ -26,17 +27,17 @@ int map_constructor(struct world_map *m, long unsigned int x, long unsigned int 
 {
 	int i;
 
-	m->innermatrix = calloc(x, sizeof(void **));
+	m->innermatrix = (void ***) calloc(x, sizeof(void **));
 
 	if (!m->innermatrix)
 		return -1;
 
-	m->rl = calloc(robbynum, sizeof(struct robby *));
+	m->rl = (struct robby **) calloc(robbynum, sizeof(struct robby *));
 	if (!m->rl)
 		return -1;
 
 	for (i = 0; i < x; i++) {
-		m->innermatrix[i] = calloc(y, sizeof(void *));
+		m->innermatrix[i] = (void **)calloc(y, sizeof(void *));
 		if (!m->innermatrix[i])
 			return -1;
 		memset(m->innermatrix[i], 0, y * sizeof(void *));
@@ -160,6 +161,15 @@ struct robby *add_robby(struct world_map *m, struct robby *r)
 		}\
 		})
 
+void load_function(void **f, void *callback, const char *name)
+{
+	*f = dlsym(callback, name);
+
+	if (!*f) {
+		fprintf(stderr, "%s loading %s\n", dlerror(), name);
+	}
+}
+
 void load_plugin(char *path)
 {
 	callbacks = dlopen(path, RTLD_LAZY);
@@ -168,12 +178,12 @@ void load_plugin(char *path)
 		exit(EXIT_FAILURE);
 	}
 
-	move_callback = dlsym(callbacks, "move");
-	generate_robbies_callback = dlsym(callbacks, "generate_robbies");
-    update_view_callback=dlsym(callbacks, "update_view");
+	load_function((void **) &move_callback, callbacks, "move");
+	load_function((void **) &generate_robbies_callback, callbacks, "generate_robbies");
+	load_function((void **) &update_view_callback, callbacks, "update_view");
+	load_function((void **) &plugin_cleanup_callback, callbacks, "cleanup");
 
 	if (!generate_robbies_callback || !move_callback || !update_view_callback) {
-		fprintf(stderr, "%s\n", dlerror());
 		exit(EXIT_FAILURE);
 	}
 }
@@ -193,6 +203,10 @@ void destroy_robbies(struct robby *rl, int robbynum)
 {
 	int i,j;
 
+	if (plugin_cleanup_callback) {
+		plugin_cleanup_callback(rl, robbynum);
+	}
+
 	if (!rl)
 		return;
 
@@ -210,8 +224,8 @@ void destroy_robbies(struct robby *rl, int robbynum)
 
 	free(rl);
 
-	//if (callbacks)
-		//dlclose(callbacks);
+	if (callbacks)
+		dlclose(callbacks);
 }
 
 int compare_eval(const void *a, const void *b)
@@ -236,7 +250,7 @@ int compare_eval(const void *a, const void *b)
 	printf("===> End of Generation %lu Best fitness: %f\n", g,\
 			(rnum > 0 ? rl[0].fitness : 0))
 
-void generational_step(long unsigned int sizex, long unsigned int sizey,
+int generational_step(long unsigned int sizex, long unsigned int sizey,
 		long unsigned int robbynum, long unsigned int cannum,
 		long unsigned int totalrounds,
 		struct robby *rl)
@@ -330,7 +344,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	rl = calloc(robbynum, sizeof(struct robby));
+	rl = (struct robby *)calloc(robbynum, sizeof(struct robby));
 
 	generation = 0;
 	for (generation = 0; generation < totalgenerations; generation++) {

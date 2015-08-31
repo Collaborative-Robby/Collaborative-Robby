@@ -125,6 +125,8 @@ void generate_robbies(struct robby *rl, long unsigned int robbynum,
 
 
 int move(struct world_map *m, struct robby *r);
+
+void cleanup(struct robby *rl, int rnum);
 }
 
 /* Moving possibilities */
