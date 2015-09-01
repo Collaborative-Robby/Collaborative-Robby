@@ -93,13 +93,11 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no) {
 
     for(i=0;i<output_no;i++) {
         NODE_INSERT(new Node(i,0), this->node_map);
-//        this->node_map.insert(std::pair<int, Node *>(i, new Node(i,0)));
     }
     this->node_count += output_no;
 
     for(i=0;i<input_no;i++) {
         NODE_INSERT(new Node(output_no + i, 2), this->node_map);
-//        this->node_map.insert(std::pair<int, Node *>(output_no+i, new Node(output_no + i,2)));
     }
     this->node_count += input_no;
 }
@@ -182,7 +180,6 @@ Genome::Genome(Genome *gen) {
 	node_key = n_it->first;
         node=new Node(node_key, val->type);
         NODE_INSERT(node, this->node_map);
-//	this->node_map.insert(pair<unsigned long int, Node *>(node_key, node));
     }
 
     for(g_it=gen->gene_map.begin(); g_it!=gen->gene_map.end(); g_it++) {
@@ -191,7 +188,6 @@ Genome::Genome(Genome *gen) {
          gene->out = node_map[gene->out->id];
          gene_key  = hash_ull_int_encode(gene->in->id, gene->out->id);
 	 GENE_INSERT(gene, this->gene_map);
-//         this->gene_map.insert(pair<unsigned long long int, Gene *>(gene_key, gene));
     }
 }
 
@@ -219,7 +215,6 @@ int Genome::node_mutate(void) {
     //TODO get id, define types
     neuron=new Node(this->node_count,1);
 
-//    this->node_map.insert(pair<unsigned long int, Node*>(node_count, neuron));
     NODE_INSERT(neuron, this->node_map);
     this->node_count++;
 
@@ -259,8 +254,6 @@ int Genome::node_mutate(void) {
 
     GENE_INSERT(g1, this->gene_map);
     GENE_INSERT(g1, this->gene_map);
-    //this->gene_list.insert(pair<unsigned long long int, Gene *>(hash_ull_int_encode(g1->in->id, g1->out->id), g1));
-    //this->gene_list.insert(pair<unsigned long long int, Gene *>(hash_ull_int_encode(g2->in->id, g2->out->id), g2));
 
     return 0;
 }
