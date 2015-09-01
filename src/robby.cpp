@@ -312,6 +312,7 @@ int main(int argc, char **argv)
 	totalgenerations = 10;
 
 	if (argc < 2) {
+		fprintf(stderr, "%s %s\n", argv[0], USAGE);
 		return EXIT_FAILURE;
 	}
 
