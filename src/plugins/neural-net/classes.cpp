@@ -21,13 +21,24 @@
 #define PERTURB_CHANCE 0.9
 #define PERTURB_STEP 0.1
 
+unsigned long long int hash_ull_int_encode(unsigned long int a, unsigned long int b);
+
+#define HASH_GET(ktype, etype, l ,nelem) ({map<ktype, etype>::iterator it=l.begin(); advance(it,nelem); it->second;})
+
 #define LIST_GET(ltype, l ,nelem) ({list<ltype>::iterator it=l.begin(); advance(it,nelem); *it;})
+
+#define NODE_KEY_TYPE unsigned long int
+#define GENE_KEY_TYPE unsigned long long int
+
+#define GENE_INSERT(cgene, refhash) (refhash.insert(pair<GENE_KEY_TYPE, Gene *>(hash_ull_int_encode((cgene)->in->id, (cgene)->out->id), (cgene))))
+
+#define NODE_INSERT(cnode, refhash) (refhash.insert(pair<NODE_KEY_TYPE, Node *>((cnode)->id, (cnode))))
 
 using namespace std;
 
 /* Node */
 
-Node::Node(int id, int type) {
+Node::Node(unsigned long int id, int type) {
    this->type=type;
    this->id=id;
 }
@@ -74,40 +85,42 @@ Gene::Gene(Gene *gen) {
 
 /* Genome */
 
-Genome::Genome(int input_no, int output_no) {
+Genome::Genome(unsigned long int input_no, unsigned long int output_no) {
     int i;
 
     this->node_count=0;
     this->global_innov=0;
 
-    for(i=0;i<input_no;i++) {
-        this->node_map.insert(std::pair<int, Node *>(i, new Node(i,0)));
-    }
-    this->node_count += input_no;
-
     for(i=0;i<output_no;i++) {
-        this->node_map.insert(std::pair<int, Node *>(input_no+i, new Node(input_no + i,2)));
+        NODE_INSERT(new Node(i,0), this->node_map);
+//        this->node_map.insert(std::pair<int, Node *>(i, new Node(i,0)));
     }
     this->node_count += output_no;
+
+    for(i=0;i<input_no;i++) {
+        NODE_INSERT(new Node(output_no + i, 2), this->node_map);
+//        this->node_map.insert(std::pair<int, Node *>(output_no+i, new Node(output_no + i,2)));
+    }
+    this->node_count += input_no;
 }
 
 Genome::~Genome(void) {
-    list<Gene*>::iterator g_it;
-    map<int, Node*>::iterator n_it;
+    map<unsigned long long, Gene*>::iterator g_it;
+    map<unsigned long int,  Node*>::iterator n_it;
 
     for(n_it=this->node_map.begin(); n_it!=this->node_map.end(); n_it++)
         delete n_it->second;
 
-    for(g_it=this->gene_list.begin(); g_it!=this->gene_list.end(); g_it++)
-        delete *g_it;
+    for(g_it=this->gene_map.begin(); g_it!=this->gene_map.end(); g_it++)
+        delete g_it->second;
 
-    this->gene_list.clear();
+    this->gene_map.clear();
     this->node_map.clear();
 }
 
 int Genome::mutate(void) {
-    list<Gene*>::iterator gene_iter;
     double mrate_link;
+    map<unsigned long long int, Gene*>::iterator gene_iter;
 
     mrate_link=MUTATION_RATE_LINK;
 
@@ -136,8 +149,8 @@ int Genome::mutate(void) {
     
     //mutate point, cambia i pesi
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_CONNECTION) {
-        for (gene_iter = this->gene_list.begin(); gene_iter != this->gene_list.end(); gene_iter++)
-            (*gene_iter)->point_mutate();
+        for (gene_iter = this->gene_map.begin(); gene_iter != this->gene_map.end(); gene_iter++)
+            gene_iter->second->point_mutate();
     } 
     
     cout << "mutate connection" << endl;
@@ -154,67 +167,69 @@ int Genome::mutate(void) {
 }
 
 Genome::Genome(Genome *gen) {
-    int key;
+    unsigned long int node_key;
+    unsigned long long int gene_key;
     Node *node, *val;
     Gene* gene;
-    map<int, Node*>::iterator n_it;
-    list<Gene*>::iterator g_it;
+    map<unsigned long int,      Node*>::iterator n_it;
+    map<unsigned long long int, Gene*>::iterator g_it;
 
     this->node_count=gen->node_count;
     this->global_innov=gen->global_innov;
 
     for(n_it=gen->node_map.begin(); n_it!=gen->node_map.end(); n_it++) {
-	key = n_it->first;
 	val = n_it->second;
-        node=new Node(key, val->type);
-	this->node_map.insert(pair<int, Node *>(key, node));
+	node_key = n_it->first;
+        node=new Node(node_key, val->type);
+        NODE_INSERT(node, this->node_map);
+//	this->node_map.insert(pair<unsigned long int, Node *>(node_key, node));
     }
 
-    for(g_it=gen->gene_list.begin(); g_it!=gen->gene_list.end(); g_it++) {
-         gene = new Gene(*g_it);
+    for(g_it=gen->gene_map.begin(); g_it!=gen->gene_map.end(); g_it++) {
+         gene = new Gene(g_it->second);
          gene->in  = node_map[gene->in->id];
          gene->out = node_map[gene->out->id];
-         this->gene_list.push_back(gene);
+         gene_key  = hash_ull_int_encode(gene->in->id, gene->out->id);
+	 GENE_INSERT(gene, this->gene_map);
+//         this->gene_map.insert(pair<unsigned long long int, Gene *>(gene_key, gene));
     }
 }
 
 void Genome::print() {
-    map<int, Node*>::iterator node_it;
-    list<Gene*>::iterator gene_it;
+    map<unsigned long int,      Node*>::iterator node_it;
+    map<unsigned long long int, Gene*>::iterator gene_it;
 
     for(node_it=this->node_map.begin(); node_it!=this->node_map.end(); node_it++) {
         node_it->second->print();
     }
 
-    for(gene_it=this->gene_list.begin(); gene_it!=this->gene_list.end(); gene_it++) {
-        (*gene_it)->print();
+    for(gene_it=this->gene_map.begin(); gene_it!=this->gene_map.end(); gene_it++) {
+        gene_it->second->print();
     }
 
 }
 
 int Genome::node_mutate(void) {
     Node *neuron;
-    int list_len;
-    int gene_index;
-    map<int, Node*>::iterator it;
+    unsigned long int list_len;
+    unsigned long int gene_index;
+    map<unsigned long int, Node*>::iterator it;
     Gene *g_orig, *g1,*g2;
     
     //TODO get id, define types
     neuron=new Node(this->node_count,1);
 
-    this->node_map.insert(pair<int, Node*>(node_count, neuron));
+//    this->node_map.insert(pair<unsigned long int, Node*>(node_count, neuron));
+    NODE_INSERT(neuron, this->node_map);
     this->node_count++;
 
-    list_len=this->gene_list.size();
+    list_len=this->gene_map.size();
     if(list_len==0)
         return 1;
 
-    gene_index=(int) round(RANDOM_DOUBLE(list_len-1)); 
+    gene_index=(unsigned long int) round(RANDOM_DOUBLE(list_len-1)); 
     
-    cout << "d1 " << gene_index << endl;
-
-    g_orig=LIST_GET(Gene*, this->gene_list, gene_index);
-    cout << "d2\n";
+    g_orig=HASH_GET(GENE_KEY_TYPE, Gene*, this->gene_map, gene_index);
     
     if(!g_orig->enabled)
         return -1;
@@ -224,8 +239,6 @@ int Genome::node_mutate(void) {
     g1=new Gene(g_orig);
     g2=new Gene(g_orig);
     
-    cout << "created" << endl;
-
     //g1->copy(g_orig);
     g1->out=neuron;
     g1->weight=1.0;
@@ -244,8 +257,10 @@ int Genome::node_mutate(void) {
     g_orig->in->output_genes.push_back(g1);
     g_orig->out->input_genes.push_back(g2);
 
-    this->gene_list.push_back(g1);
-    this->gene_list.push_back(g2);
+    GENE_INSERT(g1, this->gene_map);
+    GENE_INSERT(g1, this->gene_map);
+    //this->gene_list.insert(pair<unsigned long long int, Gene *>(hash_ull_int_encode(g1->in->id, g1->out->id), g1));
+    //this->gene_list.insert(pair<unsigned long long int, Gene *>(hash_ull_int_encode(g2->in->id, g2->out->id), g2));
 
     return 0;
 }
@@ -254,9 +269,22 @@ int Genome::next_innovation() {
 	return this->global_innov++;
 }
 
+inline unsigned long long int hash_ull_int_encode(unsigned long from, unsigned long to)
+{
+	unsigned long long a, b;
+	a = from;
+	b = to;
+
+	return (a >= b ? (a * a + a + b) : (a + b * b));
+}
+
+bool Genome::containslink(Gene *g) {
+	return this->gene_map.count(hash_ull_int_encode(g->in->id, g->out->id));
+}
+
 int Genome::link_mutate(bool force_bias) {
-    int rand1,rand2;
     unsigned int node_size;
+    unsigned long int rand1,rand2;
     Node *n1,*n2,*temp;
     Gene *new_gene;
 
@@ -269,16 +297,14 @@ int Genome::link_mutate(bool force_bias) {
     rand2=round(RANDOM_DOUBLE(node_size-1));
    
 
-    //n1=LIST_GET(Node*, this->node_list, rand1);
     n1=this->node_map[rand1];
-    //n2=LIST_GET(Node*, this->node_list, rand2);
     n2=this->node_map[rand2];
    
 
-    if(n1->type==n2->type && n1->type==0)
+    if((n1->type==n2->type && n1->type!=1) || n1->id == n2->id)
         return 1;
     
-    if(n2->type==1) {
+    if(n2->type==0) {
         temp=n2;
         n2=n1;
         n1=temp;
@@ -294,7 +320,7 @@ int Genome::link_mutate(bool force_bias) {
     }
     
     //todo contains link
-    //if(containslink) return 
+    if(this->containslink(new_gene)) return 1;
 
     new_gene->innovation=this->next_innovation();
 
@@ -304,7 +330,9 @@ int Genome::link_mutate(bool force_bias) {
     n1->print();
     n2->print();
 
-    this->gene_list.push_back(new_gene);
+    GENE_INSERT(new_gene, this->gene_map);
+
+    //this->gene_list.push_back(new_gene);
 
     n1->output_genes.push_back(new_gene);
     n2->input_genes.push_back(new_gene);
@@ -323,11 +351,11 @@ int Gene::point_mutate(void) {
 int Genome::enable_disable_mutate(bool enable) {
     Gene *selected;
     list<Gene*> candidates;
-    list<Gene*>::iterator it;
+    map<GENE_KEY_TYPE, Gene*>::iterator it;
 
-    for(it=this->gene_list.begin(); it!=this->gene_list.end();it++) {
-        if((*it)->enabled == not enable)
-            candidates.push_back(*it);
+    for(it=this->gene_map.begin(); it!=this->gene_map.end();it++) {
+        if(it->second->enabled == not enable)
+            candidates.push_back(it->second);
     }
 
     if(candidates.size()>0) {
