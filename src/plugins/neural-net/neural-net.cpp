@@ -22,6 +22,9 @@ int move(struct world_map *m, struct robby *r)
 	/* Prepare the state of the robby */
 	PREPARE_STATE(r);
 
+
+    r->genome->activate(r->view, r->viewradius);
+
 	if (r->over == CAN_DUMMY_PTR) {
 		/* Pick up a can */
 		r->over = NULL;
@@ -74,7 +77,7 @@ void generate_robbies(struct robby *rl, long unsigned int robbynum,
     rl[0].genome->mutate();
 
 	rl[0].genome->print();
-
+    
 	for(i=1; i<robbynum; i++) {
 		/* delete/garbage collecting */
 		delete rl[i].genome;
@@ -88,6 +91,7 @@ void generate_robbies(struct robby *rl, long unsigned int robbynum,
 	/* Do nothing for the next generations:
 	 * keep the same robbies in random positions.
 	 */
+
 }
 
 void cleanup(struct robby *rl, int robbynum)

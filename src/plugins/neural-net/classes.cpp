@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <float.h>
 #include <math.h>
 #include <iostream>
 #include <map>
@@ -60,6 +61,34 @@ void Node::print(void) {
     cout << "node " << this->id << " " << this->type << endl;
 }
 
+double sigmoid(double input) {
+    //TODO: controlla coefficente sigmoid
+    #define BETA 1
+    return 1/(1+pow(M_E, -input*BETA));
+}
+
+void Node::activate(double input) {
+    int i;
+    list<Gene*>::iterator it;
+    this->value=0;
+    this->activate_count++;
+    if(this->activate_count>=MAX_ACTIVATIONS) {
+        cout << "max activations" << endl;
+        return;
+    }
+    if(this->type==NODE_TYPE_INPUT)
+        this->value=input;
+    else {
+        for(it=this->input_genes.begin(); it!=this->input_genes.end(); it++) {
+            value+=(*it)->weight*(*it)->value;
+        }
+    }
+    this->value=sigmoid(this->value);
+    for(it=this->output_genes.begin(); it!=this->output_genes.end(); it++) {
+        (*it)->activate(this->value);
+    }
+}
+
 /* Gene */
 
 Gene::Gene(void) {
@@ -73,6 +102,14 @@ void Gene::print(void) {
         cout << "\tfrom: " <<  this->in->id << endl;
     if(this->out)
         cout << "\tto: " << this->out->id << endl;
+}
+
+void Gene::activate(double value) {
+    if(this->enabled) {
+        cout << "gene activate "<< this->in->id  << endl; 
+        this->value=value;
+        this->out->activate(value);
+    }
 }
 
 Gene::Gene(Gene *gen) {
@@ -92,12 +129,12 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no) {
     this->global_innov=0;
 
     for(i=0;i<output_no;i++) {
-        NODE_INSERT(new Node(i,0), this->node_map);
+        NODE_INSERT(new Node(i,NODE_TYPE_OUTPUT), this->node_map);
     }
     this->node_count += output_no;
 
     for(i=0;i<input_no;i++) {
-        NODE_INSERT(new Node(output_no + i, 2), this->node_map);
+        NODE_INSERT(new Node(output_no + i, NODE_TYPE_INPUT), this->node_map);
     }
     this->node_count += input_no;
 }
@@ -212,12 +249,6 @@ int Genome::node_mutate(void) {
     map<unsigned long int, Node*>::iterator it;
     Gene *g_orig, *g1,*g2;
     
-    //TODO get id, define types
-    neuron=new Node(this->node_count,1);
-
-    NODE_INSERT(neuron, this->node_map);
-    this->node_count++;
-
     list_len=this->gene_map.size();
     if(list_len==0)
         return 1;
@@ -228,23 +259,27 @@ int Genome::node_mutate(void) {
     
     if(!g_orig->enabled)
         return -1;
+
+    neuron=new Node(this->node_count,NODE_TYPE_HIDDEN);
+
+    NODE_INSERT(neuron, this->node_map);
+    this->node_count++;
     
     g_orig->enabled=false;
     
     g1=new Gene(g_orig);
     g2=new Gene(g_orig);
     
-    //g1->copy(g_orig);
     g1->out=neuron;
     g1->weight=1.0;
-    //TODO innovation
     g1->innovation=this->next_innovation();
     g1->enabled=true;
 
-    //g2->copy(g_orig);
     g2->in=neuron;
     g2->innovation=this->next_innovation();
     g2->enabled=true;
+
+    cout << "new node " << neuron->id << " from " << g1->in->id << " to " << g2->out->id << endl;
     
     neuron->input_genes.push_back(g1);
     neuron->output_genes.push_back(g2);
@@ -253,7 +288,7 @@ int Genome::node_mutate(void) {
     g_orig->out->input_genes.push_back(g2);
 
     GENE_INSERT(g1, this->gene_map);
-    GENE_INSERT(g1, this->gene_map);
+    GENE_INSERT(g2, this->gene_map);
 
     return 0;
 }
@@ -294,10 +329,10 @@ int Genome::link_mutate(bool force_bias) {
     n2=this->node_map[rand2];
    
 
-    if((n1->type==n2->type && n1->type!=1) || n1->id == n2->id)
+    if((n1->type==n2->type && n1->type!=NODE_TYPE_HIDDEN) || n1->id == n2->id)
         return 1;
     
-    if(n2->type==0) {
+    if(n2->type==NODE_TYPE_INPUT) {
         temp=n2;
         n2=n1;
         n1=temp;
@@ -356,4 +391,39 @@ int Genome::enable_disable_mutate(bool enable) {
         selected->enabled=enable;
     }
 
+}
+
+int Genome::activate(char **view, int viewradius) {
+    int square_size=SQUARE_AREA;
+    int i,j;
+    long unsigned int key;
+    long unsigned int max_id;
+    double max;
+    Node* in_node;
+
+    for(key=0; key<this->node_count; key++) {
+        this->node_map[key]->activate_count=0;
+    }
+
+    for(i=0; i<SQUARE_SIDE; i++) {
+        for(j=0; j<SQUARE_SIDE; j++) {
+            key=i*(SQUARE_SIDE)+j+POSSIBLE_MOVES;
+            in_node=this->node_map[key];
+            in_node->activate(view[i][j]);
+        }
+    }
+    
+    max=(-DBL_MAX);
+    for(key=0; key<POSSIBLE_MOVES; key++) {
+        if(max<this->node_map[key]->value) {
+            max=this->node_map[key]->value;
+            max_id=key;
+        }
+    }
+    
+    cout << "best move is: " << max_id << " value " << max << endl;
+
+    return max_id;
+
+    //TODO prendi gli output
 }
