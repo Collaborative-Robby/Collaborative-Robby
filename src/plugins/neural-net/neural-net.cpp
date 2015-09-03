@@ -51,54 +51,60 @@ int move(struct world_map *m, struct robby *r)
  * from the best fitting to the worst).
  * You can choose fixed parameters for every robby.
  */
-void generate_robbies(struct robby *rl, long unsigned int robbynum,
+void generate_robbies(struct robby **rl, long unsigned int couplenum,
+		long unsigned int robbynum,
 		long unsigned int generation)
 {
-	int i;
+	int i, coup;
 	Genome* gen;
 
 	/* initialize robbies for the next generations */
 	if (generation == 0) {
 		/* Create the genome for the robby */
-		rl[0].genome= new Genome(SQUARE_AREA,POSSIBLE_MOVES);
-		for (i = 0; i < robbynum; i++) {
-			/* Set the ID */
-			rl[i].id = i;
-			/* A radius of one for the view */
-			rl[i].viewradius = VIEW_RADIUS;
+		for (coup = 0; coup < couplenum; coup++) {
 
-			if (i > 0)
-				rl[i].genome = new Genome(rl[0].genome);
+			rl[coup][0].genome= new Genome(SQUARE_AREA,POSSIBLE_MOVES);
+			for (i = 0; i < robbynum; i++) {
+				/* Set the ID */
+				rl[coup][i].id = i;
+				/* A radius of one for the view */
+				rl[coup][i].viewradius = VIEW_RADIUS;
+
+				if (i > 0)
+					rl[coup][i].genome = new Genome(rl[coup][0].genome);
+			}
 		}
 	} else {
 		/* TODO Cross over */
 	}
-    gen = rl[0].genome;
-    rl[0].genome->mutate();
 
-	rl[0].genome->print();
+	for (coup = 0; coup < couplenum; coup++) {
+		gen = rl[coup][0].genome;
+		rl[coup][0].genome->mutate();
+
+		rl[coup][0].genome->print();
     
-	for(i=1; i<robbynum; i++) {
-		/* delete/garbage collecting */
-		delete rl[i].genome;
+		for(i=1; i<robbynum; i++) {
+			/* delete/garbage collecting */
+			delete rl[coup][i].genome;
 
-		cout <<"-----" << endl;
-
-		rl[i].genome = new Genome(gen);
-		rl[i].genome->print();
+			rl[coup][i].genome = new Genome(gen);
+			rl[coup][i].genome->print();
+		}
 	}
 
 	/* Do nothing for the next generations:
 	 * keep the same robbies in random positions.
 	 */
-
 }
 
-void cleanup(struct robby *rl, int robbynum)
+void cleanup(struct robby **rl, int couplenum, int robbynum)
 {
-	int i;
-	for(i=0; i<robbynum; i++) {
-		if (rl[i].genome)
-			delete rl[i].genome;
+	int i,j;
+	for(i=0; i<couplenum; i++) {
+		for(j=0; j<robbynum; j++) {
+			if (rl[i][j].genome)
+				delete rl[i][j].genome;
+		}
 	}
 }

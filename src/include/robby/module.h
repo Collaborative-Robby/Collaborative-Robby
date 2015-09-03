@@ -120,13 +120,14 @@ int move_dir(struct robby *r, struct world_map *m, int dirnum, int impact, int w
 int update_view(struct robby *r, struct world_map *m, int wraparound);
 
 
-void generate_robbies(struct robby *rl, long unsigned int robbynum,
+void generate_robbies(struct robby **rl, long unsigned int couplenum,
+		long unsigned int robbynum,
 		long unsigned int generation);
 
 
 int move(struct world_map *m, struct robby *r);
 
-void cleanup(struct robby *rl, int rnum);
+void cleanup(struct robby **rl, int couplenum, int rnum);
 }
 
 /* Moving possibilities */
