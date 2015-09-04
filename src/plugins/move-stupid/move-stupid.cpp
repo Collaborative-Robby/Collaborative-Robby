@@ -46,19 +46,21 @@ int move(struct world_map *m, struct robby *r)
  * from the best fitting to the worst).
  * You can choose fixed parameters for every robby.
  */
-void generate_robbies(struct robby *rl, long unsigned int robbynum,
+void generate_robbies(struct robby **rl, long unsigned int couplenum, long unsigned int robbynum,
 		long unsigned int generation)
 {
-	int i;
+	int i,j;
 
 	/* initialize robbies for the next generations */
 	if (generation == 0) {
 		for (i = 0; i < robbynum; i++) {
-			/* Set the ID */
-			rl[i].id = i;
+			for (j = 0; j < robbynum; j++) {
+				/* Set the ID */
+				rl[i][j].id = j;
 
-			/* A radius of one for the view */
-			rl[i].viewradius = 2;
+				/* A radius of one for the view */
+				rl[i][j].viewradius = 2;
+			}
 		}
 	}
 
@@ -67,7 +69,6 @@ void generate_robbies(struct robby *rl, long unsigned int robbynum,
 	 */
 }
 
-void cleanup(struct robby *rl, int rnum)
+void cleanup(struct robby **rl, int couplenum, int rnum)
 {
-
 }
