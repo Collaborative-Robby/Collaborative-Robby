@@ -9,11 +9,8 @@ Modellazione:
 -funzione di fitness: T per raccogliere tutte le lattine
     -internamente a roby: lattine raccolte/T (?) #3
 -grafica (canvas e robottini che si muovono) (offline?)
--gestione pool genetica #1
--gestione mappe su file (csv?)
+-gestione mappe su file (csv?) #1
 
 NNET:
--Copia dei genomi #1
--Comparare genomi (specie) #2
--gestione rete neurale (attivazione) #2
--cross over #2
+-Comparare genomi (specie) #1
+-cross over #1
