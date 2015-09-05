@@ -95,7 +95,7 @@ int update_view(struct robby *r, struct world_map *m, int wraparound)
 
 	items = get_view(r, m, wraparound);
     
-    printf("%d\n", SQUARE_SIDE);
+    printf("robby %d:\n", r->id);
 
     for(i=0; i<SQUARE_SIDE;i++) {
         printf("{");

@@ -22,21 +22,17 @@ int move(struct world_map *m, struct robby *r)
 	/* Prepare the state of the robby */
 	PREPARE_STATE(r);
 
-
-    r->genome->activate(r->view, r->viewradius);
-
-	if (r->over == CAN_DUMMY_PTR) {
-		/* Pick up a can */
-		r->over = NULL;
-		r->gathered_cans++;
-		success = 1;
-	} else {
-		/* Move in a random direction */
-		dirnum=rand() % 4;
-
-		/* Move with wraparound */
-		success = MOVE_WRAP(r, m, dirnum);
-	}
+    dirnum=r->genome->activate(r->view, r->viewradius);
+    if(dirnum<4) {
+        success=MOVE_WRAP(r,m,dirnum);
+    }
+    else if(r->over==CAN_DUMMY_PTR) {
+        r->over=NULL;
+        r->gathered_cans++;
+        success=1;
+    }
+    else
+        success=0;
 
 	/* Update the state of the robby with the new view */
 	update_view(r, m, false);
@@ -92,7 +88,6 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 			rl[coup][i].genome->print();
 		}
 	}
-
 	/* Do nothing for the next generations:
 	 * keep the same robbies in random positions.
 	 */

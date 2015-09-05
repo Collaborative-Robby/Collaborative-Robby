@@ -269,8 +269,8 @@ void destroy_robbies(struct robby **rl, int couplenum, int robbynum)
 
     free(rl);
 
-    if (callbacks)
-        dlclose(callbacks);
+    //if (callbacks)
+    //    dlclose(callbacks);
 }
 
 int compare_eval(const void *a, const void *b)
@@ -313,21 +313,81 @@ void choose_position(struct world_map *m, struct robby **rl,
 	}
 }
 
+int map_fetch_from_file(struct world_map *m, char* filename, long unsigned int robbynum) {
+    FILE* mfile;
+    int sizex, sizey,x,y,ret,cval;
+    mfile=fopen(filename, "r");
+    if(!mfile) {
+        return -1;
+    }
+    ret=fscanf(mfile, "%d %d", &sizex, &sizey);
+    if(ret!=2) {
+        return -1;
+    }
+    ret=map_constructor(m, sizex, sizey, robbynum, 0);
+    if(ret<0) {
+        return -1;
+    }
+    for(x=0;x<sizex;x++) {
+        fscanf(mfile,"[");
+        for(y=0;y<sizey-1; y++) {
+            ret=fscanf(mfile,"%d,", &cval);
+            if(ret && cval) {
+                m->innermatrix[x][y]=CAN_DUMMY_PTR;
+            }
+        }       
+        ret=fscanf(mfile, "%d]", &cval);
+        if(ret && cval) {
+            m->innermatrix[x][y]=CAN_DUMMY_PTR;
+        }
+    }
+    fclose(mfile);
+}
+
+int map_fetch_from_int(struct world_map *m, int current_num, char *dir, long unsigned int robbynum) {
+    char *filename;
+    int ret;
+    asprintf(&filename, "%s/%d", dir, current_num);
+    ret=map_fetch_from_file(m,filename,robbynum);
+    free(filename);
+    return ret;
+}
+
 int generational_step(long unsigned int sizex, long unsigned int sizey,
         long unsigned int robbynum, long unsigned int cannum,
 		long unsigned int totalrounds, long unsigned int couple_num,
-		struct robby **rl)
+		struct robby **rl,
+        char *train_dir,
+        long unsigned int training_map_set_size,
+        char *test_dir,
+        long unsigned int test_map_set_size)
 {
+    static int current_map = 0;
     long unsigned int round;
 	int i, current_pool;
 	struct world_map morig, m;
 
     round = 0;
 
-	if (map_constructor(&morig, sizex, sizey, robbynum, cannum) != 0) {
+    if (current_map < training_map_set_size) {
+        /* Get the training map */
+        if(map_fetch_from_int(&morig, current_map, train_dir, robbynum)) {
+            perror("map fetch");
+            return EXIT_FAILURE;
+        }
+    } else if (current_map < training_map_set_size + test_map_set_size) {
+        /* Get out a test map */
+        if(map_fetch_from_int(&morig, current_map - training_map_set_size, test_dir, robbynum)) {
+            perror("map fetch");
+            return EXIT_FAILURE;
+        }
+	} else if (map_constructor(&morig, sizex, sizey, robbynum, cannum) != 0) {
+        /* Create a new random map */
         perror("map construction");
         return EXIT_FAILURE;
     }
+
+    current_map++;
 
 	for (current_pool = 0; current_pool < couple_num; current_pool++) {
 		map_copy(&morig, &m, robbynum);
@@ -505,9 +565,13 @@ int main(int argc, char **argv)
         }
     }
     
-        if(!test_dir) {
-        generate_maps(test_map_num, TEST_DEFAULT_DIR, sizex, sizey, cannum);
+    if(!train_dir) {
         generate_maps(training_map_num, TRAINING_DEFAULT_DIR,sizex, sizey, cannum);
+        asprintf(&train_dir, TRAINING_DEFAULT_DIR);
+    }
+    if(!test_dir) {
+        generate_maps(test_map_num, TEST_DEFAULT_DIR, sizex, sizey, cannum);
+        asprintf(&test_dir, TEST_DEFAULT_DIR);
     }
 
 	rl = (struct robby **)calloc(couplenum, sizeof(struct robby *));
@@ -542,7 +606,7 @@ int main(int argc, char **argv)
 			zero_fitness(rl[i], robbynum);
 
 		generational_step(sizex, sizey, robbynum, cannum, totalrounds,
-		                  couplenum, rl);
+		                  couplenum, rl,train_dir, training_map_num, test_dir, test_map_num );
 
 		/* XXX change */
 //		sort_by_best_eval(rl, robbynum);
@@ -551,4 +615,6 @@ int main(int argc, char **argv)
     }
 
 	destroy_robbies(rl, couplenum, robbynum);
+    free(test_dir);
+    free(train_dir);
 }

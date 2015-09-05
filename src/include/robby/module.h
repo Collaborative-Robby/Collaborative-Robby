@@ -65,7 +65,7 @@ extern int** directions;
 		case 3:\
 			printf("robby %d: down", id);\
 			break;\
-		case -1:\
+		case 4:\
 			printf("robby %d: picked up a can", id);\
 			break;\
 		default:\
