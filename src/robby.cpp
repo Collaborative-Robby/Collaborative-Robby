@@ -58,8 +58,8 @@ int map_constructor(struct world_map *m, long unsigned int x, long unsigned int 
         long unsigned int nx, ny;
 
         do {
-            nx = (long unsigned int) random() % x;
-            ny = (long unsigned int) random() % y;
+            nx = (long unsigned int) round(RANDOM_DOUBLE(x-1));
+            ny = (long unsigned int) round(RANDOM_DOUBLE(y-1));
         } while (m->innermatrix[nx][ny]);
 
         m->innermatrix[nx][ny] = CAN_DUMMY_PTR;
@@ -320,7 +320,7 @@ int map_fetch_from_file(struct world_map *m, char* filename, long unsigned int r
     if(!mfile) {
         return -1;
     }
-    ret=fscanf(mfile, "%d %d", &sizex, &sizey);
+    ret=fscanf(mfile, "%d %d\n", &sizex, &sizey);
     if(ret!=2) {
         return -1;
     }
@@ -336,7 +336,7 @@ int map_fetch_from_file(struct world_map *m, char* filename, long unsigned int r
                 m->innermatrix[x][y]=CAN_DUMMY_PTR;
             }
         }       
-        ret=fscanf(mfile, "%d]", &cval);
+        ret=fscanf(mfile, "%d]\n", &cval);
         if(ret && cval) {
             m->innermatrix[x][y]=CAN_DUMMY_PTR;
         }
