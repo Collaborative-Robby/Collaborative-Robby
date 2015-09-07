@@ -287,7 +287,7 @@ int compare_eval(const void *a, const void *b)
     return (fitnessa > fitnessb) * 2 - 1;
 }
 
-#define sort_by_best_eval(rl, length) qsort(rl, length, sizeof(struct robby *), compare_eval);
+#define sort_by_best_eval(rl, length) qsort(rl, length, sizeof(struct robby **), compare_eval);
 
 #define print_in_generation_header(g) printf("===> Generation %lu\n", g)
 #define print_end_generation_header(g, r, rnum)\
@@ -608,8 +608,7 @@ int main(int argc, char **argv)
 		generational_step(sizex, sizey, robbynum, cannum, totalrounds,
 		                  couplenum, rl,train_dir, training_map_num, test_dir, test_map_num );
 
-		/* XXX change */
-//		sort_by_best_eval(rl, robbynum);
+		sort_by_best_eval(rl, robbynum);
 
 		print_end_generation_header(generation, rl[0][0], robbynum);
     }

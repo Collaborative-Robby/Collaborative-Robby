@@ -59,7 +59,15 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 		/* Create the genome for the robby */
 		for (coup = 0; coup < couplenum; coup++) {
 
-			rl[coup][0].genome= new Genome(SQUARE_AREA,POSSIBLE_MOVES);
+			if (!exist_genome_file(DEFAULT_GENOME_DIR, coup))
+				rl[coup][0].genome = new Genome(SQUARE_AREA,POSSIBLE_MOVES);
+			else
+				rl[coup][0].genome = new Genome(DEFAULT_GENOME_DIR, coup);
+
+	cout << "#########" << endl;
+			rl[coup][0].genome->print();
+	cout << "#########" << endl;
+
 			for (i = 0; i < robbynum; i++) {
 				/* Set the ID */
 				rl[coup][i].id = i;
@@ -87,6 +95,8 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 			rl[coup][i].genome = new Genome(gen);
 			rl[coup][i].genome->print();
 		}
+
+		rl[coup][0].genome->save_to_file(DEFAULT_GENOME_DIR, coup);
 	}
 	/* Do nothing for the next generations:
 	 * keep the same robbies in random positions.

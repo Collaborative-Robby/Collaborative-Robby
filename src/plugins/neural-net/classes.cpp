@@ -1,12 +1,19 @@
 /* Sample module for collaborative robby */
+#include <map>
+#include <list>
+#include <iostream>
+#include <fstream>
+
+#include <float.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <float.h>
-#include <math.h>
-#include <iostream>
-#include <map>
-#include <list>
+#include <dirent.h>
+
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include <robby/struct.h>
 #include <robby/module.h>
 #include <robby/dismath.h>
@@ -37,6 +44,43 @@ unsigned long long int hash_ull_int_encode(unsigned long int a, unsigned long in
 
 using namespace std;
 
+/* Utilities */
+
+inline unsigned long long int hash_ull_int_encode(unsigned long from, unsigned long to)
+{
+    unsigned long long a, b;
+    a = from;
+    b = to;
+
+    return (a >= b ? (a * a + a + b) : (a + b * b));
+}
+
+double sigmoid(double input) {
+    //TODO: controlla coefficente sigmoid
+#define BETA -4.9
+    return 1/(1+pow(M_E, -input*BETA));
+}
+
+bool exist_genome_file(char *dir, int fileno) {
+	char *path;
+	int rval;
+	FILE *f;
+
+	rval = asprintf(&path, "%s/%d.%s", dir, fileno, GENOME_EXT);
+	if (rval < 0) {
+		perror("asprintf exist_genome_file");
+		return false;
+	}
+
+	f = fopen(path, "r");
+	if (!f) {
+		free(path);
+		return false;
+	}
+	free(path);
+	return true;
+}
+
 /* Node */
 
 Node::Node(unsigned long int id, int type) {
@@ -61,12 +105,6 @@ Node::~Node(void) {
 
 void Node::print(void) {
     cout << "node " << this->id << " " << this->type << endl;
-}
-
-double sigmoid(double input) {
-    //TODO: controlla coefficente sigmoid
-#define BETA 1
-    return 1/(1+pow(M_E, -input*BETA));
 }
 
 void Node::activate(double input) {
@@ -98,6 +136,15 @@ Gene::Gene(void) {
     this->value=0;
 }
 
+Gene::Gene(Gene *gen) {
+    this->innovation=gen->innovation;
+    this->in=gen->in;
+    this->out=gen->out;
+    this->value=gen->value;
+    this->weight=gen->weight;
+    this->enabled=gen->enabled;
+}
+
 void Gene::print(void) {
     cout<< "Gene " << this->innovation << " " << (this->enabled ? "en" : "dis" ) << "abled" << endl;
     cout << "\tweight: " << this->weight << endl;
@@ -114,16 +161,40 @@ void Gene::activate(double value) {
     }
 }
 
-Gene::Gene(Gene *gen) {
-    this->innovation=gen->innovation;
-    this->in=gen->in;
-    this->out=gen->out;
-    this->value=gen->value;
-    this->weight=gen->weight;
-    this->enabled=gen->enabled;
+int Gene::point_mutate(void) {
+    if(RANDOM_DOUBLE(1)<PERTURB_CHANCE)
+        this->weight+=(RANDOM_DOUBLE(1)*PERTURB_STEP*2-PERTURB_STEP);
+    else
+        this->weight=RANDOM_DOUBLE(1)*4-2;
 }
 
 /* Genome */
+Genome::Genome(Genome *gen) {
+    unsigned long int node_key;
+    unsigned long long int gene_key;
+    Node *node, *val;
+    Gene* gene;
+    map<unsigned long int,      Node*>::iterator n_it;
+    map<unsigned long long int, Gene*>::iterator g_it;
+
+    this->node_count=gen->node_count;
+    this->global_innov=gen->global_innov;
+
+    for(n_it=gen->node_map.begin(); n_it!=gen->node_map.end(); n_it++) {
+        val = n_it->second;
+        node_key = n_it->first;
+        node=new Node(node_key, val->type);
+        NODE_INSERT(node, this->node_map);
+    }
+
+    for(g_it=gen->gene_map.begin(); g_it!=gen->gene_map.end(); g_it++) {
+        gene = new Gene(g_it->second);
+        gene->in  = node_map[gene->in->id];
+        gene->out = node_map[gene->out->id];
+        gene_key  = hash_ull_int_encode(gene->in->id, gene->out->id);
+        GENE_INSERT(gene, this->gene_map);
+    }
+}
 
 Genome::Genome(unsigned long int input_no, unsigned long int output_no) {
     int i;
@@ -143,6 +214,59 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no) {
         NODE_INSERT(curr, this->node_map);
     }
     this->node_count += input_no;
+}
+
+Genome::Genome(char *dir, int fileno) {
+	map <GENE_KEY_TYPE, Gene *>::iterator g_it;
+	map <NODE_KEY_TYPE, Node *>::iterator n_it;
+	char *path;
+	FILE *f;
+	int rval, i;
+	int node_size, gene_size;
+	int node_id, node_type;
+	Node *cur_node;
+	Gene *cur_gene;
+	int idin = -1, idout = -1;
+
+	rval = asprintf(&path, "%s/%d.%s", dir, fileno, GENOME_EXT);
+	if (rval < 0) {
+		perror("asprintf genome load");
+		return;
+	}
+
+	f = fopen(path, "r");
+	if (!f) {
+		perror("genome load");
+		return;
+	}
+	cout << "loading genome from " << path << endl;
+
+	fscanf(f, "%d %d\n{\n", &node_size, &gene_size);
+
+	for (i =0 ; i < node_size; i ++) {
+		fscanf(f, "%d %d\n", &node_id, &node_type);
+		cur_node = new Node(node_id, node_type);
+		NODE_INSERT(cur_node, this->node_map);
+	}
+	this->node_count = node_size;
+
+	fscanf(f, "}\n{\n");
+
+	for (i =0 ; i < gene_size; i ++) {
+		cur_gene = new Gene();
+		fscanf(f, "%d -> %d: %d %d %lf\n", &idin, &idout,
+			&cur_gene->innovation, &cur_gene->enabled,
+			&cur_gene->weight);
+		if (idin >= 0)
+			cur_gene->in = this->node_map[idin];
+		if (idout >= 0)
+			cur_gene->out = this->node_map[idout];
+		GENE_INSERT(cur_gene, this->gene_map);
+	}
+	this->global_innov= gene_size;
+	fclose(f);
+
+	free(path);
 }
 
 Genome::~Genome(void) {
@@ -205,33 +329,6 @@ int Genome::mutate(void) {
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_DISABLE)
         this->enable_disable_mutate(false);
     cout << "disable connection" << endl;
-}
-
-Genome::Genome(Genome *gen) {
-    unsigned long int node_key;
-    unsigned long long int gene_key;
-    Node *node, *val;
-    Gene* gene;
-    map<unsigned long int,      Node*>::iterator n_it;
-    map<unsigned long long int, Gene*>::iterator g_it;
-
-    this->node_count=gen->node_count;
-    this->global_innov=gen->global_innov;
-
-    for(n_it=gen->node_map.begin(); n_it!=gen->node_map.end(); n_it++) {
-        val = n_it->second;
-        node_key = n_it->first;
-        node=new Node(node_key, val->type);
-        NODE_INSERT(node, this->node_map);
-    }
-
-    for(g_it=gen->gene_map.begin(); g_it!=gen->gene_map.end(); g_it++) {
-        gene = new Gene(g_it->second);
-        gene->in  = node_map[gene->in->id];
-        gene->out = node_map[gene->out->id];
-        gene_key  = hash_ull_int_encode(gene->in->id, gene->out->id);
-        GENE_INSERT(gene, this->gene_map);
-    }
 }
 
 void Genome::print() {
@@ -303,15 +400,6 @@ int Genome::next_innovation() {
     return this->global_innov++;
 }
 
-inline unsigned long long int hash_ull_int_encode(unsigned long from, unsigned long to)
-{
-    unsigned long long a, b;
-    a = from;
-    b = to;
-
-    return (a >= b ? (a * a + a + b) : (a + b * b));
-}
-
 bool Genome::containslink(Gene *g) {
     return this->gene_map.count(hash_ull_int_encode(g->in->id, g->out->id));
 }
@@ -378,13 +466,6 @@ int Genome::link_mutate(bool force_bias) {
     return 0;
 }
 
-int Gene::point_mutate(void) {
-    if(RANDOM_DOUBLE(1)<PERTURB_CHANCE)
-        this->weight+=(RANDOM_DOUBLE(1)*PERTURB_STEP*2-PERTURB_STEP);
-    else
-        this->weight=RANDOM_DOUBLE(1)*4-2;
-}
-
 int Genome::enable_disable_mutate(bool enable) {
     Gene *selected;
     list<Gene*> candidates;
@@ -437,4 +518,57 @@ int Genome::activate(char **view, int viewradius) {
     return max_id;
 
     //TODO prendi gli output
+}
+
+int Genome::save_to_file(char *dir, int fileno) {
+	map <GENE_KEY_TYPE, Gene *>::iterator g_it;
+	map <NODE_KEY_TYPE, Node *>::iterator n_it;
+	int idin = -1, idout = -1;
+	char *path;
+	FILE *f;
+	DIR *d;
+	int rval;
+
+	d = opendir(dir);
+	if (!d) {
+		mkdir(dir, 0755);
+		d = opendir(dir);
+		if (!d) {
+			perror("mkdir");
+			return -1;
+		}
+	}
+
+	rval = asprintf(&path, "%s/%d.%s", dir, fileno, GENOME_EXT);
+	if (rval < 0)
+		return rval;
+
+	f = fopen(path, "w");
+	if (!f) {
+		perror("genome save");
+		return -1;
+	}
+
+	fprintf(f, "%d %d\n{\n", this->node_map.size(), this->gene_map.size());
+
+	for (n_it=this->node_map.begin(); n_it != this->node_map.end(); n_it++)
+		fprintf(f, "%d %d\n", n_it->second->id, n_it->second->type);
+
+	fprintf(f, "}\n{\n");
+
+	for (g_it=this->gene_map.begin(); g_it != this->gene_map.end(); g_it++) {
+		if (g_it->second->in)
+			idin = g_it->second->in->id;
+		if (g_it->second->out)
+			idout = g_it->second->out->id;
+
+		fprintf(f, "%d -> %d: %d %d %f\n", idin, idout,
+		        g_it->second->innovation, g_it->second->enabled,
+			g_it->second->weight);
+	}
+	fprintf(f, "}\n");
+
+	fclose(f);
+
+	free(path);
 }
