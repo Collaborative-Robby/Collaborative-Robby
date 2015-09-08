@@ -11,6 +11,8 @@
 
 list<list <Genome*> > species_lists;
 
+extern long unsigned int global_innovation;
+
 int move(struct world_map *m, struct robby *r)
 {
 	/* Dirnum = -1 means that the robby pulled up a can */
@@ -53,6 +55,7 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 {
 	int i, coup;
 	Genome* gen;
+    
 
 	/* initialize robbies for the next generations */
 	if (generation == 0) {
@@ -63,10 +66,6 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 				rl[coup][0].genome = new Genome(SQUARE_AREA,POSSIBLE_MOVES);
 			else
 				rl[coup][0].genome = new Genome(DEFAULT_GENOME_DIR, coup);
-
-	cout << "#########" << endl;
-			rl[coup][0].genome->print();
-	cout << "#########" << endl;
 
 			for (i = 0; i < robbynum; i++) {
 				/* Set the ID */
@@ -80,20 +79,27 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 		}
 	} else {
 		/* TODO Cross over */
+
+        cout << "--------------------00----------------------" << endl;
+        rl[0][0].genome->print();
+
+        cout << "--------------------01----------------------" << endl;
+        rl[1][0].genome->print();
+        cout << "--------------------new-------------------------" << endl;
+        gen=new Genome(rl[0][0].genome, rl[1][0].genome);
+        gen->print();
+        cout << "----------------------------------------------" << endl;
 	}
 
 	for (coup = 0; coup < couplenum; coup++) {
 		gen = rl[coup][0].genome;
 		rl[coup][0].genome->mutate();
 
-		rl[coup][0].genome->print();
-    
 		for(i=1; i<robbynum; i++) {
 			/* delete/garbage collecting */
 			delete rl[coup][i].genome;
 
 			rl[coup][i].genome = new Genome(gen);
-			rl[coup][i].genome->print();
 		}
 
 		rl[coup][0].genome->save_to_file(DEFAULT_GENOME_DIR, coup);

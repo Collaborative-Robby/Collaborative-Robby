@@ -42,6 +42,8 @@ unsigned long long int hash_ull_int_encode(unsigned long int a, unsigned long in
 
 #define NODE_INSERT(cnode, refhash) (refhash.insert(pair<NODE_KEY_TYPE, Node *>((cnode)->id, (cnode))))
 
+long unsigned int global_innovation=0;
+
 using namespace std;
 
 /* Utilities */
@@ -178,7 +180,6 @@ Genome::Genome(Genome *gen) {
     map<unsigned long long int, Gene*>::iterator g_it;
 
     this->node_count=gen->node_count;
-    this->global_innov=gen->global_innov;
 
     for(n_it=gen->node_map.begin(); n_it!=gen->node_map.end(); n_it++) {
         val = n_it->second;
@@ -201,7 +202,6 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no) {
     Node *curr;
 
     this->node_count=0;
-    this->global_innov=0;
 
     for(i=0;i<output_no;i++) {
         curr=new Node(i, NODE_TYPE_OUTPUT);
@@ -262,11 +262,78 @@ Genome::Genome(char *dir, int fileno) {
 		if (idout >= 0)
 			cur_gene->out = this->node_map[idout];
 		GENE_INSERT(cur_gene, this->gene_map);
+        if(cur_gene->innovation>global_innovation)
+            global_innovation=cur_gene->innovation+1;
 	}
-	this->global_innov= gene_size;
 	fclose(f);
 
 	free(path);
+}
+
+int Genome::insert_gene(Gene *g) {
+    Gene *new_gene;
+    long unsigned int id_in, id_out;
+    Node *n1,*n2;
+    
+    id_in=g->in->id;
+    id_out=g->out->id;
+    
+    if(!this->node_map.count(id_in)) {
+        n1=new Node(g->in);
+        NODE_INSERT(n1, this->node_map);
+    }
+    else {
+        n1=this->node_map[id_in];
+    }
+    
+    if(!this->node_map.count(id_out)) {
+        n2=new Node(g->out);
+        NODE_INSERT(n2, this->node_map);
+    }
+    else {
+        n2=this->node_map[id_out];
+    }
+
+
+    new_gene=new Gene(g);
+    new_gene->in=n1;
+    new_gene->out=n2;
+    n1->output_genes.push_back(new_gene);
+    n2->input_genes.push_back(new_gene);
+
+    GENE_INSERT(new_gene, this->gene_map);
+    return 0;
+}
+
+Genome::Genome(Genome *g1, Genome *g2){
+    map<unsigned long long, Gene*>::iterator g_it;
+    long unsigned int id_in,id_out;
+
+    for(g_it=g1->gene_map.begin(); g_it!=g1->gene_map.end(); g_it++) {
+        id_in=g_it->second->in->id;
+        id_out=g_it->second->out->id;
+        
+        if(!g2->gene_map.count(hash_ull_int_encode(id_in, id_out))){
+            this->insert_gene(g_it->second);
+        }
+        else {
+            if(round(RANDOM_DOUBLE(1))) {
+                this->insert_gene(g_it->second);
+            }
+            else {
+                this->insert_gene(g2->gene_map[hash_ull_int_encode(id_in, id_out)]);
+            }
+        }
+    }
+    
+    for(g_it=g2->gene_map.begin(); g_it!=g2->gene_map.end(); g_it++) {
+        id_in=g_it->second->in->id;
+        id_out=g_it->second->out->id;
+        
+        if(!this->gene_map.count(hash_ull_int_encode(id_in, id_out))){
+            this->insert_gene(g_it->second);
+        }
+    }
 }
 
 Genome::~Genome(void) {
@@ -289,13 +356,9 @@ int Genome::mutate(void) {
 
     mrate_link=MUTATION_RATE_LINK;
 
-    cout << "begin mutation" <<endl;
-
     //mutate node, spezza un arco e aggiunge un nodo
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_NODE) 
         this->node_mutate(); 
-
-    cout << "node mutation" << endl;
 
     //mutate link, aggiunge un link fra due nodi random
     while(mrate_link>0) {
@@ -304,13 +367,9 @@ int Genome::mutate(void) {
         mrate_link=mrate_link-1;
     }
 
-    cout << "mutate link" << endl;
-
     //mutate link+bias, aggiungi link con input da tutti i nodi di input
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_BIAS)
         this->link_mutate(true); 
-
-    cout << "mutated+bias" << endl;
 
     //mutate point, cambia i pesi
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_CONNECTION) {
@@ -318,17 +377,12 @@ int Genome::mutate(void) {
             gene_iter->second->point_mutate();
     } 
 
-    cout << "mutate connection" << endl;
-
     //enable/disable mutate
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_ENABLE)
         this->enable_disable_mutate(true);
 
-    cout << "enable connection" << endl;
-
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_DISABLE)
         this->enable_disable_mutate(false);
-    cout << "disable connection" << endl;
 }
 
 void Genome::print() {
@@ -375,11 +429,11 @@ int Genome::node_mutate(void) {
 
     g1->out=neuron;
     g1->weight=1.0;
-    g1->innovation=this->next_innovation();
+    g1->innovation=next_innovation();
     g1->enabled=true;
 
     g2->in=neuron;
-    g2->innovation=this->next_innovation();
+    g2->innovation=next_innovation();
     g2->enabled=true;
 
     cout << "new node " << neuron->id << " from " << g1->in->id << " to " << g2->out->id << endl;
@@ -396,8 +450,8 @@ int Genome::node_mutate(void) {
     return 0;
 }
 
-int Genome::next_innovation() {
-    return this->global_innov++;
+long unsigned int next_innovation() {
+    return global_innovation++;
 }
 
 bool Genome::containslink(Gene *g) {
@@ -447,7 +501,7 @@ int Genome::link_mutate(bool force_bias) {
         return 1;
     }
 
-    new_gene->innovation=this->next_innovation();
+    new_gene->innovation=next_innovation();
 
     new_gene->weight=RANDOM_DOUBLE(4)-2;
 

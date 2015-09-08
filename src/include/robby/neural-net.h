@@ -17,6 +17,8 @@ using namespace std;
 
 bool exist_genome_file(char *dir, int fileno);
 
+long unsigned int next_innovation(void);
+
 class Gene {
 	public:
 		unsigned long int innovation;
@@ -53,19 +55,20 @@ class Genome {
 	public:
 		map<unsigned long int, Node*> node_map;
 		map<unsigned long long int, Gene*> gene_map;
-		unsigned long int node_count, global_innov;
+		unsigned long int node_count;
 
 		Genome(unsigned long int input_no, unsigned long int output_no);
 		Genome(Genome *gen);
+        Genome(Genome *g1, Genome *g2);
 		Genome(char *dir, int fileno);
 
 		~Genome();
-
+        
+        int insert_gene(Gene *g1);
 		int mutate(void);
 		int node_mutate(void);
 		int link_mutate(bool force_bias);
 		int enable_disable_mutate(bool enable);
-		int next_innovation(void);
 		void print(void);
 		bool containslink(class Gene *g);
 		int activate(char **view, int viewradius);
