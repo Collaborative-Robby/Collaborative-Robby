@@ -9,7 +9,8 @@
 #include <robby/module.h>
 #include <robby/neural-net.h>
 
-list<list <Genome*> > species_lists;
+double pool_maxfitness = 0.0;
+list<Species *> species_list;
 
 extern long unsigned int global_innovation;
 
@@ -55,7 +56,6 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 {
 	int i, coup;
 	Genome* gen;
-    
 
 	/* initialize robbies for the next generations */
 	if (generation == 0) {
@@ -76,19 +76,14 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 				if (i > 0)
 					rl[coup][i].genome = new Genome(rl[coup][0].genome);
 			}
+
+			rl[coup][0].genome->specialize(species_list);
 		}
 	} else {
+		for (i = 0; i < couplenum; i++)
+			rl[coup][0].genome->fitness = rl[coup][0].fitness;
+
 		/* TODO Cross over */
-
-        cout << "--------------------00----------------------" << endl;
-        rl[0][0].genome->print();
-
-        cout << "--------------------01----------------------" << endl;
-        rl[1][0].genome->print();
-        cout << "--------------------new-------------------------" << endl;
-        gen=new Genome(rl[0][0].genome, rl[1][0].genome);
-        gen->print();
-        cout << "----------------------------------------------" << endl;
 	}
 
 	for (coup = 0; coup < couplenum; coup++) {
@@ -107,6 +102,15 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 	/* Do nothing for the next generations:
 	 * keep the same robbies in random positions.
 	 */
+	list <Species *>::iterator s_it;
+	list <Genome *>::iterator g_it;
+	i = 0;
+	for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
+		cout << "Species " << i++ << endl;
+		for (g_it = (*s_it)->genomes.begin(); g_it != (*s_it)->genomes.end(); g_it++) {
+			(*g_it)->print();
+		}
+	}
 }
 
 void cleanup(struct robby **rl, int couplenum, int robbynum)

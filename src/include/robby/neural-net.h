@@ -56,15 +56,17 @@ class Genome {
 		map<unsigned long int, Node*> node_map;
 		map<unsigned long long int, Gene*> gene_map;
 		unsigned long int node_count;
+		int max_innov;
+		double fitness;
 
 		Genome(unsigned long int input_no, unsigned long int output_no);
 		Genome(Genome *gen);
-        Genome(Genome *g1, Genome *g2);
+		Genome(Genome *g1, Genome *g2);
 		Genome(char *dir, int fileno);
 
 		~Genome();
-        
-        int insert_gene(Gene *g1);
+
+		int insert_gene(Gene *g1);
 		int mutate(void);
 		int node_mutate(void);
 		int link_mutate(bool force_bias);
@@ -73,6 +75,20 @@ class Genome {
 		bool containslink(class Gene *g);
 		int activate(char **view, int viewradius);
 		int save_to_file(char *dir, int fno);
+		int specialize(list <class Species *> &sl);
+};
+
+class Species {	
+	public:
+		bool dead;
+		int staleness;
+		double top_fitness;
+		double average_fitness;
+		list <Genome *> genomes;
+
+		//Species();
+		//int cull(bool onlyone);
+		//double calculate_fitness();
 };
 
 #endif

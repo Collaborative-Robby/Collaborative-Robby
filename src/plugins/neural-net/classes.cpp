@@ -33,7 +33,7 @@ unsigned long long int hash_ull_int_encode(unsigned long int a, unsigned long in
 
 #define HASH_GET(ktype, etype, l ,nelem) ({map<ktype, etype>::iterator it=l.begin(); advance(it,nelem); it->second;})
 
-#define LIST_GET(ltype, l ,nelem) ({list<ltype>::iterator it=l.begin(); advance(it,nelem); *it;})
+#define LIST_GET(ltype, l ,nelem) ({list<ltype>::iterator it=(l).begin(); advance(it,nelem); *it;})
 
 #define NODE_KEY_TYPE unsigned long int
 #define GENE_KEY_TYPE unsigned long long int
@@ -447,6 +447,8 @@ int Genome::node_mutate(void) {
     GENE_INSERT(g1, this->gene_map);
     GENE_INSERT(g2, this->gene_map);
 
+    this->max_innov = g2->innovation;
+
     return 0;
 }
 
@@ -515,6 +517,8 @@ int Genome::link_mutate(bool force_bias) {
 
     n1->output_genes.push_back(new_gene);
     n2->input_genes.push_back(new_gene);
+
+    this->max_innov = new_gene->innovation;
 
 
     return 0;
@@ -625,4 +629,95 @@ int Genome::save_to_file(char *dir, int fileno) {
 	fclose(f);
 
 	free(path);
+}
+
+#define SAME_SPECIES_TRESHOLD 1.0
+#define COEFFICIENT_DELTA_WEIGHT 0.4
+#define COEFFICIENT_EXCESS_GENES 0.0
+#define COEFFICIENT_DISJOINT_GENES 2.0
+
+inline bool same_species(Genome *g1, Genome *g2)
+{
+	int found;
+	double weight_difference;
+	double delta = 0.0, delta_excess, delta_disjoint, delta_weight = 0;
+
+	int excess_genes=0, disjoint_genes=0, gene_count, equal_genes_count = 0;
+	map<GENE_KEY_TYPE, Gene*>::iterator g_it;
+	Gene *equal_gene;
+	Genome *g, *oth_g;
+
+	g = g1;
+	oth_g = g2;
+
+	if (g1->max_innov < g2->max_innov) {
+		g = g2;
+		oth_g = g1;
+	}
+
+	gene_count = g1->gene_map.size();
+
+	if (gene_count < g2->gene_map.size())
+		gene_count = g2->gene_map.size();
+
+	for (g_it=g->gene_map.begin(); g_it!=g->gene_map.end();g_it++) {
+		found = oth_g->gene_map.count(g_it->first) &&
+		(oth_g->gene_map[g_it->first]->innovation ==
+		g_it->second->innovation);
+
+		if (!found && g_it->second->innovation > oth_g->max_innov)
+			excess_genes++;
+
+		else if (!found)
+			disjoint_genes++;
+
+		/* XXX check the same innovation number */
+		else {
+			equal_gene = oth_g->gene_map[g_it->first];
+
+			equal_genes_count++;
+
+			delta_weight += fabs(g_it->second->weight - equal_gene->weight);
+		}
+	}
+
+	for (g_it=oth_g->gene_map.begin(); g_it!=oth_g->gene_map.end();g_it++) {
+		/* Excesses genes are already counted. */
+		found = oth_g->gene_map.count(g_it->first);
+
+		if (!found)
+			disjoint_genes++;
+	}
+
+
+	delta_excess = COEFFICIENT_EXCESS_GENES * (double) excess_genes / (double) gene_count;
+	delta_disjoint = COEFFICIENT_DISJOINT_GENES * (double) disjoint_genes / (double) gene_count;
+	if (equal_genes_count)
+		delta_weight = COEFFICIENT_DELTA_WEIGHT * delta_weight / (double) equal_genes_count;
+
+	cout << "Same species? " << delta_excess << "+" << delta_disjoint << "+"
+	<< delta_weight << endl;
+
+	return ((delta_excess + delta_disjoint + delta_weight) <= SAME_SPECIES_TRESHOLD);
+}
+
+int Genome::specialize(list <Species *> &sl)
+{
+	Species *new_species;
+	bool found;
+	list <Species *>::iterator s_it;
+	
+	for (s_it=sl.begin(); s_it !=sl.end();s_it++) {
+		if (same_species(this, LIST_GET(Genome*, (*s_it)->genomes, 0))) {
+			found = true;
+			(*s_it)->genomes.push_back(this);
+			break;
+		}
+	}
+
+	if (!found) {
+		new_species = new Species();
+		sl.push_back(new_species);
+		new_species->genomes.push_back(this);
+	}
 }
