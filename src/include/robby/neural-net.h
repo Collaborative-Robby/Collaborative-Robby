@@ -75,7 +75,7 @@ class Genome {
 		bool containslink(class Gene *g);
 		int activate(char **view, int viewradius);
 		int save_to_file(char *dir, int fno);
-		int specialize(list <class Species *> &sl);
+		int specialize(list <class Species *> *sl);
 };
 
 class Species {	
@@ -87,8 +87,8 @@ class Species {
 		list <Genome *> genomes;
 
 		//Species();
-		//int cull(bool onlyone);
-		//double calculate_fitness();
+		int cull(bool onlyone);
+		double calculate_avg_fitness(void);
 };
 
 #endif

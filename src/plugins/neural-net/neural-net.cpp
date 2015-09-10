@@ -46,6 +46,46 @@ int move(struct world_map *m, struct robby *r)
 	return success;
 }
 
+static int setup_generations(struct robby **rl, long unsigned int couplenum,
+		long unsigned int robbynum)
+{
+	int coup, i;
+	/* Create the genome for the robby */
+	for (coup = 0; coup < couplenum; coup++) {
+
+		if (!exist_genome_file(DEFAULT_GENOME_DIR, coup))
+			rl[coup][0].genome = new Genome(SQUARE_AREA,POSSIBLE_MOVES);
+		else
+			rl[coup][0].genome = new Genome(DEFAULT_GENOME_DIR, coup);
+
+		for (i = 0; i < robbynum; i++) {
+			/* Set the ID */
+			rl[coup][i].id = i;
+			/* A radius of one for the view */
+			rl[coup][i].viewradius = VIEW_RADIUS;
+
+			if (i > 0)
+				rl[coup][i].genome = new Genome(rl[coup][0].genome);
+		}
+
+	}
+	return 0;
+}
+
+static int next_generation(struct robby **rl, long unsigned int couplenum,
+		long unsigned int robbynum)
+{
+	int coup;
+	list <Species *>::iterator s_it;
+	for (coup = 0; coup < couplenum; coup++)
+		rl[coup][0].genome->fitness = rl[coup][0].fitness;
+	for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
+		(*s_it)->cull(false);
+	}
+	/* TODO Cross over */
+	/* TODO assign a genome to a robby */
+}
+
 /* Generate the robbies for the next generation (the list is sorted
  * from the best fitting to the worst).
  * You can choose fixed parameters for every robby.
@@ -59,36 +99,18 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 
 	/* initialize robbies for the next generations */
 	if (generation == 0) {
-		/* Create the genome for the robby */
-		for (coup = 0; coup < couplenum; coup++) {
-
-			if (!exist_genome_file(DEFAULT_GENOME_DIR, coup))
-				rl[coup][0].genome = new Genome(SQUARE_AREA,POSSIBLE_MOVES);
-			else
-				rl[coup][0].genome = new Genome(DEFAULT_GENOME_DIR, coup);
-
-			for (i = 0; i < robbynum; i++) {
-				/* Set the ID */
-				rl[coup][i].id = i;
-				/* A radius of one for the view */
-				rl[coup][i].viewradius = VIEW_RADIUS;
-
-				if (i > 0)
-					rl[coup][i].genome = new Genome(rl[coup][0].genome);
-			}
-
-			rl[coup][0].genome->specialize(species_list);
-		}
+		setup_generations(rl, couplenum, robbynum);
 	} else {
-		for (i = 0; i < couplenum; i++)
-			rl[coup][0].genome->fitness = rl[coup][0].fitness;
-
-		/* TODO Cross over */
+		next_generation(rl, couplenum, robbynum);
 	}
 
 	for (coup = 0; coup < couplenum; coup++) {
+		cout << "Classificating genome " << coup << endl;
+		rl[coup][0].genome->print();
 		gen = rl[coup][0].genome;
 		rl[coup][0].genome->mutate();
+
+		rl[coup][0].genome->specialize(&species_list);
 
 		for(i=1; i<robbynum; i++) {
 			/* delete/garbage collecting */
@@ -109,6 +131,7 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 		cout << "Species " << i++ << endl;
 		for (g_it = (*s_it)->genomes.begin(); g_it != (*s_it)->genomes.end(); g_it++) {
 			(*g_it)->print();
+			cout << "----" << endl;
 		}
 	}
 }
