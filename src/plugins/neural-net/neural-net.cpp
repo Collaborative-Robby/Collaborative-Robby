@@ -8,6 +8,7 @@
 #include <robby/struct.h>
 #include <robby/module.h>
 #include <robby/neural-net.h>
+#include <robby/dismath.h>
 
 double pool_maxfitness = 0.0;
 list<Species *> species_list;
@@ -53,10 +54,12 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
 	/* Create the genome for the robby */
 	for (coup = 0; coup < couplenum; coup++) {
 
-		if (!exist_genome_file(DEFAULT_GENOME_DIR, coup))
+		if (true ||  !exist_genome_file(DEFAULT_GENOME_DIR, coup))
 			rl[coup][0].genome = new Genome(SQUARE_AREA,POSSIBLE_MOVES);
 		else
 			rl[coup][0].genome = new Genome(DEFAULT_GENOME_DIR, coup);
+
+        rl[coup][0].genome->specialize(&species_list);
 
 		for (i = 0; i < robbynum; i++) {
 			/* Set the ID */
@@ -75,15 +78,72 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
 static int next_generation(struct robby **rl, long unsigned int couplenum,
 		long unsigned int robbynum)
 {
-	int coup;
+	int coup,i,r,j;
+    double breed, tot_fitness;
+    Genome* gen;
+    Species *s;
+    list<Genome*> children;
+    list<Genome*>::iterator g_it;
 	list <Species *>::iterator s_it;
+
 	for (coup = 0; coup < couplenum; coup++)
 		rl[coup][0].genome->fitness = rl[coup][0].fitness;
-	for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
-		(*s_it)->cull(false);
+    for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
+		if(!(*s_it)->cull(false)) {
+            s_it=species_list.erase(s_it);
+            s_it--;
+        }
 	}
-	/* TODO Cross over */
+    remove_stale_species(&species_list);
+    //forse rank globally???
+    remove_weak_species(&species_list, couplenum);
+    
+    tot_fitness=0;
+	for (s_it = species_list.begin(); s_it != species_list.end(); s_it++)
+		tot_fitness += (*s_it)->calculate_avg_fitness();
+
+    
+	for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
+        breed=floor(((*s_it)->average_fitness / (double) tot_fitness)*(double) couplenum)-1;
+        for(i=0; i<breed; i++) {
+            gen=new Genome(*s_it);
+            children.push_back(gen);
+        }
+    }
+
+	for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
+        if(!(*s_it)->cull(true)) {
+            s_it=species_list.erase(s_it);
+            s_it--;
+        }
+    }
+
+    while(children.size()+species_list.size()<couplenum) {
+        r=round(RANDOM_DOUBLE(species_list.size()-1));
+        cout << "selecting random" << r<< endl;
+        s=LIST_GET(Species*, species_list, r);
+        cout << "s iss anurinc" <<s << endl;
+        gen=new Genome(s);
+        children.push_back(gen);
+    }
+
+    for(g_it=children.begin(); g_it!=children.end(); g_it++) {
+        (*g_it)->specialize(&species_list);
+    }
+
+    i=0;
 	/* TODO assign a genome to a robby */
+    for(s_it=species_list.begin(); s_it!=species_list.end(); s_it++){
+        for(g_it=(*s_it)->genomes.begin(); g_it!=(*s_it)->genomes.end(); g_it++) {
+            //for(j=0; j<robbynum; j++)
+                //if(rl[i][j].genome)
+                    //delete rl[i][j].genome;
+            rl[i][0].genome=(*g_it);
+            for(j=1; j<robbynum; j++)
+                rl[i][j].genome=new Genome(*g_it);
+            i++;
+        }
+    }
 }
 
 /* Generate the robbies for the next generation (the list is sorted
@@ -104,7 +164,7 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 		next_generation(rl, couplenum, robbynum);
 	}
 
-	for (coup = 0; coup < couplenum; coup++) {
+	/*for (coup = 0; coup < couplenum; coup++) {
 		cout << "Classificating genome " << coup << endl;
 		rl[coup][0].genome->print();
 		gen = rl[coup][0].genome;
@@ -112,15 +172,16 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 
 		rl[coup][0].genome->specialize(&species_list);
 
-		for(i=1; i<robbynum; i++) {
-			/* delete/garbage collecting */
+		/*for(i=1; i<robbynum; i++) {
+			/* delete/garbage collecting 
 			delete rl[coup][i].genome;
 
 			rl[coup][i].genome = new Genome(gen);
 		}
 
 		rl[coup][0].genome->save_to_file(DEFAULT_GENOME_DIR, coup);
-	}
+	}*/
+
 	/* Do nothing for the next generations:
 	 * keep the same robbies in random positions.
 	 */

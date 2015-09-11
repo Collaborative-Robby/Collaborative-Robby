@@ -33,21 +33,13 @@
 
 #define SPECIES_STALE_TRESHOLD 15
 
+#define CROSSOVER_CHANCE 0.75
+
 #define PERTURB_CHANCE 0.9
 #define PERTURB_STEP 0.1
 
 unsigned long long int hash_ull_int_encode(unsigned long int a, unsigned long int b);
 
-#define HASH_GET(ktype, etype, l ,nelem) ({map<ktype, etype>::iterator it=l.begin(); advance(it,nelem); it->second;})
-
-#define LIST_GET(ltype, l ,nelem) ({list<ltype>::iterator it=(l).begin(); advance(it,nelem); *it;})
-
-#define NODE_KEY_TYPE unsigned long int
-#define GENE_KEY_TYPE unsigned long long int
-
-#define GENE_INSERT(cgene, refhash) (refhash.insert(pair<GENE_KEY_TYPE, Gene *>(hash_ull_int_encode((cgene)->in->id, (cgene)->out->id), (cgene))))
-
-#define NODE_INSERT(cnode, refhash) (refhash.insert(pair<NODE_KEY_TYPE, Node *>((cnode)->id, (cnode))))
 
 long unsigned int global_innovation=0;
 
@@ -181,7 +173,7 @@ int remove_weak_species(list <Species *> *sl, long unsigned int couplenum)
 		breed = floor(((*s_it)->average_fitness / tot_fitness) *
 		              (double) couplenum);
 
-		if (breed >= 1) {
+		if (breed < 1) {
 			s_it = sl->erase(s_it);
 			s_it--;
 		}
@@ -309,6 +301,10 @@ int Gene::point_mutate(void) {
 
 /* Genome */
 Genome::Genome(Genome *gen) {
+    this->copy(gen);
+}
+
+void Genome::copy(Genome *gen) {
     unsigned long int node_key;
     unsigned long long int gene_key;
     Node *node, *val;
@@ -407,6 +403,25 @@ Genome::Genome(char *dir, int fileno) {
 	free(path);
 }
 
+Genome::Genome(Species *s) {
+    Genome *g1,*g2,*child;
+    long unsigned int r;
+    if(RANDOM_DOUBLE(1)<CROSSOVER_CHANCE) {
+        r=round(RANDOM_DOUBLE(s->genomes.size()-1));
+        g1=LIST_GET(Genome*, s->genomes, r);
+        r=round(RANDOM_DOUBLE(s->genomes.size()-1));
+        g2=LIST_GET(Genome*, s->genomes, r);
+        this->crossover(g1,g2);
+    }
+    else {
+        r=round(RANDOM_DOUBLE(s->genomes.size()-1));
+        g1=LIST_GET(Genome*, s->genomes, r);
+        this->copy(g1);
+    }
+    
+    this->mutate();
+}
+
 int Genome::insert_gene(Gene *g) {
     Gene *new_gene;
     long unsigned int id_in, id_out;
@@ -443,8 +458,26 @@ int Genome::insert_gene(Gene *g) {
 }
 
 Genome::Genome(Genome *g1, Genome *g2){
+    this->crossover(g1, g2);
+}
+
+void Genome::crossover(Genome *g1, Genome *g2){
     map<unsigned long long, Gene*>::iterator g_it;
+    map<NODE_KEY_TYPE, Node*>::iterator n_it;
     long unsigned int id_in,id_out;
+    Node *new_n;
+    
+    if(g1==g2) {
+        this->copy(g1);
+        return;
+    }
+    
+    for(n_it=g1->node_map.begin(); n_it!=g1->node_map.end(); n_it++) {
+        if(n_it->second->type!=NODE_TYPE_HIDDEN) {
+            new_n=new Node(n_it->second);
+            NODE_INSERT(new_n, this->node_map);
+        }
+    }
 
     for(g_it=g1->gene_map.begin(); g_it!=g1->gene_map.end(); g_it++) {
         id_in=g_it->second->in->id;
@@ -820,7 +853,7 @@ int Species::cull(bool top_only)
 
 	this->genomes.resize(cutoff);
 
-	return 0;
+	return this->genomes.size();
 }
 
 double Species::calculate_avg_fitness(void)
