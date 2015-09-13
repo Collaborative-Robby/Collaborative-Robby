@@ -28,15 +28,20 @@ int move(struct world_map *m, struct robby *r)
 
     dirnum=r->genome->activate(r->view, r->viewradius);
     if(dirnum<4) {
-        success=MOVE_WRAP(r,m,dirnum);
+        success=MOVE_NORMAL(r,m,dirnum);
     }
     else if(r->over==CAN_DUMMY_PTR) {
         r->over=NULL;
         r->gathered_cans++;
         success=1;
     }
-    else
+    else 
         success=0;
+    
+    cout << "success is: " << success<< endl;
+
+    if(success==0)
+        r->failed_moves++;
 
 	/* Update the state of the robby with the new view */
 	update_view(r, m, false);
@@ -120,9 +125,7 @@ static int next_generation(struct robby **rl, long unsigned int couplenum,
 
     while(children.size()+species_list.size()<couplenum) {
         r=round(RANDOM_DOUBLE(species_list.size()-1));
-        cout << "selecting random" << r<< endl;
         s=LIST_GET(Species*, species_list, r);
-        cout << "s iss anurinc" <<s << endl;
         gen=new Genome(s);
         children.push_back(gen);
     }
@@ -157,12 +160,19 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 	int i, coup;
 	Genome* gen;
 
+    
+
 	/* initialize robbies for the next generations */
 	if (generation == 0) {
 		setup_generations(rl, couplenum, robbynum);
 	} else {
 		next_generation(rl, couplenum, robbynum);
 	}
+
+    for(i=0; i<couplenum; i++) {
+        rl[i][0].x=0;
+        rl[i][0].y=0;
+    }
 
 	/*for (coup = 0; coup < couplenum; coup++) {
 		cout << "Classificating genome " << coup << endl;
@@ -188,6 +198,8 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 	list <Species *>::iterator s_it;
 	list <Genome *>::iterator g_it;
 	i = 0;
+
+    #ifdef SPECIES_DEBUG
 	for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
 		cout << "Species " << i++ << endl;
 		for (g_it = (*s_it)->genomes.begin(); g_it != (*s_it)->genomes.end(); g_it++) {
@@ -195,6 +207,7 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 			cout << "----" << endl;
 		}
 	}
+    #endif
 }
 
 void cleanup(struct robby **rl, int couplenum, int robbynum)

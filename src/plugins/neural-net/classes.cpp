@@ -98,9 +98,6 @@ inline bool same_species(Genome *g1, Genome *g2)
 	Gene *equal_gene;
 	Genome *g, *oth_g;
 
-	cout << "Comparing genomes " << g1 << " and " <<
-	g2<< endl;
-
 	g = g1;
 	oth_g = g2;
 
@@ -153,12 +150,7 @@ inline bool same_species(Genome *g1, Genome *g2)
 	if (!gene_count)
 		delta_excess = delta_disjoint = 0;
 
-	cout << "Same species? " << delta_excess << "+" << delta_disjoint << "+" << delta_weight << endl;
-	cout << "| parameters : gc=" << gene_count << " eg=" << equal_genes_count
-	<< endl;
-
 	double x = (delta_excess + delta_disjoint + delta_weight);
-	cout << "same species??? " << x << endl;
 	return x < SAME_SPECIES_TRESHOLD;
 }
 
@@ -681,9 +673,10 @@ int Genome::link_mutate(bool force_bias) {
 
     new_gene->weight=RANDOM_DOUBLE(4)-2;
 
-
+    #ifdef LINK_MUTATE_DEBUG
     n1->print();
     n2->print();
+    #endif
 
     GENE_INSERT(new_gene, this->gene_map);
 
@@ -824,11 +817,10 @@ int Genome::specialize(list <Species *> *sl)
 		if (same_species(this, oth_g)) {
 			found = true;
 			(*s_it)->genomes.push_back(this);
-			cout << "adding genome to species " << i << endl;
 			i++;
-		cout << "###" << endl;
-		this->print();
-		cout << "###" << endl;
+            #ifdef SPECIALIZE_DEBUG
+		    this->print();
+            #endif
 			break;
 		}
 	}
@@ -837,11 +829,10 @@ int Genome::specialize(list <Species *> *sl)
 		new_species = new Species();
 		sl->push_back(new_species);
 		new_species->genomes.push_back(this);
-		cout << "adding genome to species " << j << endl;
 		j++;
-		cout << "###" << endl;
+        #ifdef SPECIALIZE_DEBUG
 		this->print();
-		cout << "###" << endl;
+        #endif
 	}
 }
 

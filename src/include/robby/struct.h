@@ -30,6 +30,7 @@ struct robby {
 	int (*move)(struct world_map *, struct robby *);
 
 	int gathered_cans;
+    int failed_moves;
 	int last_gathered_can_time;
 
 	float fitness;

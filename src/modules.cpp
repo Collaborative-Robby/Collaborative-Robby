@@ -20,22 +20,18 @@ int get_circle_view (int viewradius, char **view) {
             
             x=viewradius+viewradius-i-1;
             y=viewradius-j-1;
-            printf("%d %d\n", x, y);
             view[x][y]=VIEW_EMPTY;
 
             x=viewradius+viewradius-i-1;
             y=viewradius+j-1;
-            printf("%d %d\n", x, y);
             view[x][y]=VIEW_EMPTY;
 
             x=i-1;
             y=viewradius+j-1;
-            printf("%d %d\n", x, y);
             view[x][y]=VIEW_EMPTY;
 
             x=i-1;
             y=viewradius-j-1;
-            printf("%d %d\n", x, y);
             view[x][y]=VIEW_EMPTY;
         }
     }

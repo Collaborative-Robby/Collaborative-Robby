@@ -70,30 +70,30 @@ int map_constructor(struct world_map *m, long unsigned int x, long unsigned int 
 
 void map_copy(struct world_map *src, struct world_map *dst, int robbynum)
 {
-	int i, j;
-	memcpy(dst, src, sizeof(*src));
+    int i, j;
+    memcpy(dst, src, sizeof(*src));
 
-	dst->innermatrix = (void ***) calloc(src->sizex, sizeof(void **));
+    dst->innermatrix = (void ***) calloc(src->sizex, sizeof(void **));
 
-	if (!dst->innermatrix)
-		return;
+    if (!dst->innermatrix)
+        return;
 
-	dst->rl = (struct robby **) calloc(robbynum, sizeof(struct robby *));
-	if (!dst->rl)
-		return;
+    dst->rl = (struct robby **) calloc(robbynum, sizeof(struct robby *));
+    if (!dst->rl)
+        return;
 
-	for (i = 0; i < src->sizex; i++) {
-		dst->innermatrix[i] = (void **)calloc(src->sizey, sizeof(void *));
-		if (!dst->innermatrix[i])
-			return;
-		memset(dst->innermatrix[i], 0, src->sizey * sizeof(void *));
-	}
+    for (i = 0; i < src->sizex; i++) {
+        dst->innermatrix[i] = (void **)calloc(src->sizey, sizeof(void *));
+        if (!dst->innermatrix[i])
+            return;
+        memset(dst->innermatrix[i], 0, src->sizey * sizeof(void *));
+    }
 
-	/* deep copy */
+    /* deep copy */
 
-	for (i = 0; i < src->sizex; i++)
-		for (j = 0; j < src->sizey; j++)
-			dst->innermatrix[i][j] = src->innermatrix[i][j];
+    for (i = 0; i < src->sizex; i++)
+        for (j = 0; j < src->sizey; j++)
+            dst->innermatrix[i][j] = src->innermatrix[i][j];
 }
 
 void map_destructor(struct world_map *m)
@@ -226,45 +226,46 @@ float eval(struct robby *r, long unsigned int totalcans)
     return r->fitness;
 }
 
-float eval_couple(struct robby *r, long unsigned int robbynum, long unsigned int totalcans)
+float eval_couple(struct robby *r, long unsigned int robbynum, long unsigned int totalcans, long unsigned int roundnum, int map_num)
 {
-	int i;
-	float sum = 0;
-	for (i=0; i < robbynum; i++)
-		sum += ((float) r[i].gathered_cans / (float) totalcans);
-	
-	r[0].fitness = sum;
+    int i;
+    float sum = 0;
+    for (i=0; i < robbynum; i++)
+        sum += (((float) r[i].gathered_cans / (float) (totalcans*map_num)) - 
+                ((float) r[i].failed_moves / (float) (roundnum*map_num)));
 
-	return r[0].fitness;
+    r[0].fitness = sum;
+
+    return r[0].fitness;
 }
 
 void destroy_robbies(struct robby **rl, int couplenum, int robbynum)
 {
-	int i,j,k;
+    int i,j,k;
 
     if (plugin_cleanup_callback) {
-		plugin_cleanup_callback(rl, couplenum, robbynum);
+        plugin_cleanup_callback(rl, couplenum, robbynum);
     }
 
     if (!rl)
         return;
 
     /* View free */
-	for (k = 0; k < couplenum; k++) {
-		if (!rl[k])
-			continue;
+    for (k = 0; k < couplenum; k++) {
+        if (!rl[k])
+            continue;
 
-		for (i = 0; i < robbynum; i++) {
-			if (!rl[k][i].view)
-				continue;
+        for (i = 0; i < robbynum; i++) {
+            if (!rl[k][i].view)
+                continue;
 
-			for (j = 0; j < 2 * (rl[k][i].viewradius - 1) + 1; j++)
-				if (rl[k][i].view[j])
-					free(rl[k][i].view[j]);
+            for (j = 0; j < 2 * (rl[k][i].viewradius - 1) + 1; j++)
+                if (rl[k][i].view[j])
+                    free(rl[k][i].view[j]);
 
-			free(rl[k][i].view);
-		}
-		free(rl[k]);
+            free(rl[k][i].view);
+        }
+        free(rl[k]);
     }
 
     free(rl);
@@ -279,44 +280,44 @@ int compare_eval(const void *a, const void *b)
     float fitnessb;
 
     if (b)
-        fitnessb = ((struct robby *)b)->fitness;
+        fitnessb = ((struct robby **)b)[0]->fitness;
     if (a)
-        fitnessa = ((struct robby *)a)->fitness;
+        fitnessa = ((struct robby **)a)[0]->fitness;
 
     /* return 1 if the first is the major, -1 if the second is the major */
-    return (fitnessa > fitnessb) * 2 - 1;
+    return (fitnessa < fitnessb) * 2 - 1;
 }
 
-#define sort_by_best_eval(rl, length) qsort(rl, length, sizeof(struct robby **), compare_eval);
+#define sort_by_best_eval(rl, length) (qsort(rl, length, sizeof(struct robby **), compare_eval))
 
 #define print_in_generation_header(g) printf("===> Generation %lu\n", g)
 #define print_end_generation_header(g, r, rnum)\
     printf("===> End of Generation %lu Best fitness: %f\n", g,\
-			(rnum > 0 ? r.fitness : 0))
+            (rnum > 0 ? r.fitness : 0))
 
 void choose_position(struct world_map *m, struct robby **rl,
-		     long unsigned int current_couple,
-		     long unsigned int robby_num)
+        long unsigned int current_couple,
+        long unsigned int robby_num)
 {
-	int i;
+    int i;
 
-	for (i = 0; i < robby_num; i++) {
-		if (current_couple == 0) {
-			do {
-				rl[0][i].x = (long unsigned int) round(RANDOM_DOUBLE(m->sizex - 1));
-				rl[0][i].y = (long unsigned int) round(RANDOM_DOUBLE(m->sizey - 1));
-			} while (m->innermatrix[rl[0][i].x][rl[0][i].y] && !(m->innermatrix[rl[0][i].x][rl[0][i].y]==CAN_DUMMY_PTR));
-		} else {
-			rl[current_couple][i].x = rl[0][i].x;
-			rl[current_couple][i].y = rl[0][i].y;
-		}
-	}
+    for (i = 0; i < robby_num; i++) {
+        if (current_couple == 0 && (rl[0][i].x==m->sizex|| rl[0][i].y==m->sizey)) {
+            do {
+                rl[0][i].x = (long unsigned int) round(RANDOM_DOUBLE(m->sizex - 1));
+                rl[0][i].y = (long unsigned int) round(RANDOM_DOUBLE(m->sizey - 1));
+            } while (m->innermatrix[rl[0][i].x][rl[0][i].y] && !(m->innermatrix[rl[0][i].x][rl[0][i].y]==CAN_DUMMY_PTR));
+        } else {
+            rl[current_couple][i].x = rl[0][i].x;
+            rl[current_couple][i].y = rl[0][i].y;
+        }
+    }
 }
 
 int map_fetch_from_file(struct world_map *m, char* filename, long unsigned int robbynum) {
     FILE* mfile;
     int sizex, sizey,x,y,ret,cval;
-    
+
     mfile=fopen(filename, "r");
     if(!mfile) {
         return -1;
@@ -360,19 +361,21 @@ int map_fetch_from_int(struct world_map *m, int current_num, char *dir, long uns
 
 int generational_step(long unsigned int sizex, long unsigned int sizey,
         long unsigned int robbynum, long unsigned int cannum,
-		long unsigned int totalrounds, long unsigned int couple_num,
-		struct robby **rl,
+        long unsigned int totalrounds, long unsigned int couple_num,
+        struct robby **rl,
         char *train_dir,
         long unsigned int training_map_set_size,
         char *test_dir,
         long unsigned int test_map_set_size)
 {
-    static int current_map = 0;
     long unsigned int round;
-	int i, current_pool;
-	struct world_map morig, m;
-
+    int i, current_pool;
+    struct world_map morig, m;
+    static int current_map=0;
     round = 0;
+
+    //TODO pensa al test
+    //for(current_map=0; current_map < training_map_set_size; current_map++) {
 
     if (current_map < training_map_set_size) {
         /* Get the training map */
@@ -386,37 +389,37 @@ int generational_step(long unsigned int sizex, long unsigned int sizey,
             perror("map fetch");
             return EXIT_FAILURE;
         }
-	} else if (map_constructor(&morig, sizex, sizey, robbynum, cannum) != 0) {
+    } else if (map_constructor(&morig, sizex, sizey, robbynum, cannum) != 0) {
         /* Create a new random map */
         perror("map construction");
         return EXIT_FAILURE;
     }
-
     current_map++;
 
-	for (current_pool = 0; current_pool < couple_num; current_pool++) {
-		map_copy(&morig, &m, robbynum);
+    for (current_pool = 0; current_pool < couple_num; current_pool++) {
+        map_copy(&morig, &m, robbynum);
 
-		choose_position(&m, rl, current_pool, robbynum);
+        choose_position(&m, rl, current_pool, robbynum);
 
-		for (i = 0; i < robbynum; i++)
-			add_robby(&m, &rl[current_pool][i]);
+        for (i = 0; i < robbynum; i++) 
+            add_robby(&m, &rl[current_pool][i]);
 
-		for (round = 0; round < totalrounds; round++) {
-			print_status(m, round);
-			print_map(&m);
-			MOVE_ALL_ROBBIES(m);
-		}
-		/* last turn print */
-		print_status(m, round);
-		print_map(&m);
+        for (round = 0; round < totalrounds; round++) {
+            print_status(m, round);
+            print_map(&m);
+            MOVE_ALL_ROBBIES(m);
+        }
+        /* last turn print */
+        print_status(m, round);
+        print_map(&m);
 
-		eval_couple(rl[current_pool], robbynum, cannum);
+        map_destructor(&m);
+    }
 
-		map_destructor(&m);
-	}
-
-	map_destructor(&morig);
+    map_destructor(&morig);
+    //}
+    for(current_pool=0; current_pool<couple_num; current_pool++)
+        eval_couple(rl[current_pool], robbynum, cannum,totalrounds,1);
 }
 
 void zero_fitness(struct robby *rl, long unsigned int robbynum)
@@ -424,6 +427,7 @@ void zero_fitness(struct robby *rl, long unsigned int robbynum)
     long unsigned int i;
     for (i = 0; i < robbynum; i++) {
         rl[i].gathered_cans = 0;
+        rl[i].failed_moves=0;
         rl[i].last_gathered_can_time = 0;
         rl[i].fitness = 0.0;
     }
@@ -504,16 +508,16 @@ int main(int argc, char **argv)
 {
     long unsigned int sizex, sizey, robbynum, cannum, totalrounds,
          totalgenerations, generation, training_map_num, test_map_num,couplenum;
-	struct robby **rl;
+    struct robby **rl;
     int opt;
-	int i, j,nargs;
+    int i, j,nargs;
     char *test_dir,*train_dir, *tmp;
 
     sizex = 10;
     sizey = 10;
     robbynum = 1;
     cannum = 1;
-	couplenum = 1;
+    couplenum = 1;
     totalrounds = 10;
     totalgenerations = 10;
     training_map_num=10;
@@ -540,9 +544,9 @@ int main(int argc, char **argv)
             case 'r':
                 robbynum = strtoul(optarg, NULL, 10);
                 break;
-			case 'C':
-				couplenum = strtoul(optarg, NULL, 10);
-				break;
+            case 'C':
+                couplenum = strtoul(optarg, NULL, 10);
+                break;
             case 'R':
                 totalrounds = strtoul(optarg, NULL, 10);
                 break;
@@ -569,7 +573,7 @@ int main(int argc, char **argv)
                 exit(0);
         }
     }
-    
+
     if(!train_dir) {
         generate_maps(training_map_num, TRAINING_DEFAULT_DIR,sizex, sizey, cannum);
         asprintf(&train_dir, TRAINING_DEFAULT_DIR);
@@ -579,19 +583,19 @@ int main(int argc, char **argv)
         asprintf(&test_dir, TEST_DEFAULT_DIR);
     }
 
-	rl = (struct robby **)calloc(couplenum, sizeof(struct robby *));
-	if (rl==NULL){
-		fprintf(stderr, "robby list malloc %s\n", strerror(errno));
-		exit(EXIT_FAILURE);
-	}
+    rl = (struct robby **)calloc(couplenum, sizeof(struct robby *));
+    if (rl==NULL){
+        fprintf(stderr, "robby list malloc %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
 
-	for (i = 0; i < couplenum; i++) {
-		rl[i] = (struct robby *)calloc(robbynum, sizeof(struct robby));
-		if (rl[i]==NULL){
-			fprintf(stderr, "robby list malloc %s on step %d\n", strerror(errno), i);
-			exit(EXIT_FAILURE);
-		}
-	}
+    for (i = 0; i < couplenum; i++) {
+        rl[i] = (struct robby *)calloc(robbynum, sizeof(struct robby));
+        if (rl[i]==NULL){
+            fprintf(stderr, "robby list malloc %s on step %d\n", strerror(errno), i);
+            exit(EXIT_FAILURE);
+        }
+    }
 
     generation = 0;
     for (generation = 0; generation < totalgenerations; generation++) {
@@ -599,26 +603,26 @@ int main(int argc, char **argv)
 
         /* Random placing */
         for (i = 0; i < robbynum; i++) {
-			for (j = 0; j < couplenum; j++ ) {
-				rl[j][i].x = sizex;
-				rl[j][i].y = sizey;
-			}
+            for (j = 0; j < couplenum; j++ ) {
+                rl[j][i].x = sizex;
+                rl[j][i].y = sizey;
+            }
         }
 
-		generate_robbies_callback(rl, couplenum, robbynum, generation);
+        generate_robbies_callback(rl, couplenum, robbynum, generation);
 
-		for (i = 0; i < couplenum; i++)
-			zero_fitness(rl[i], robbynum);
+        for (i = 0; i < couplenum; i++)
+            zero_fitness(rl[i], robbynum);
 
-		generational_step(sizex, sizey, robbynum, cannum, totalrounds,
-		                  couplenum, rl,train_dir, training_map_num, test_dir, test_map_num );
+        generational_step(sizex, sizey, robbynum, cannum, totalrounds,
+                couplenum, rl,train_dir, training_map_num, test_dir, test_map_num );
 
-		sort_by_best_eval(rl, robbynum);
+        sort_by_best_eval(rl, couplenum);
 
-		print_end_generation_header(generation, rl[0][0], robbynum);
+        print_end_generation_header(generation, rl[0][0], robbynum);
     }
 
-	destroy_robbies(rl, couplenum, robbynum);
+    destroy_robbies(rl, couplenum, robbynum);
     free(test_dir);
     free(train_dir);
 }
