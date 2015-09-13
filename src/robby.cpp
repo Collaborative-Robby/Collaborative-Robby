@@ -316,6 +316,7 @@ void choose_position(struct world_map *m, struct robby **rl,
 int map_fetch_from_file(struct world_map *m, char* filename, long unsigned int robbynum) {
     FILE* mfile;
     int sizex, sizey,x,y,ret,cval;
+    
     mfile=fopen(filename, "r");
     if(!mfile) {
         return -1;
@@ -324,21 +325,25 @@ int map_fetch_from_file(struct world_map *m, char* filename, long unsigned int r
     if(ret!=2) {
         return -1;
     }
-    ret=map_constructor(m, sizex, sizey, robbynum, 0);
+
+    ret=map_constructor(m, sizex, sizey, robbynum,0);
     if(ret<0) {
         return -1;
     }
+
     for(x=0;x<sizex;x++) {
         fscanf(mfile,"[");
         for(y=0;y<sizey-1; y++) {
             ret=fscanf(mfile,"%d,", &cval);
             if(ret && cval) {
                 m->innermatrix[x][y]=CAN_DUMMY_PTR;
+                m->n_cans++;
             }
         }       
         ret=fscanf(mfile, "%d]\n", &cval);
         if(ret && cval) {
             m->innermatrix[x][y]=CAN_DUMMY_PTR;
+            m->n_cans++;
         }
     }
     fclose(mfile);

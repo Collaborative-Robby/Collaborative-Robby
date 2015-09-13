@@ -241,12 +241,12 @@ void Node::print(void) {
 void Node::activate(double input) {
     int i;
     list<Gene*>::iterator it;
-    this->value=0;
     this->activate_count++;
-    if(this->activate_count>=MAX_ACTIVATIONS) {
+    /*if(false && this->activate_count>=MAX_ACTIVATIONS) {
         cout << "max activations" << endl;
         return;
-    }
+    }*/
+    this->value=0;
     if(this->type==NODE_TYPE_INPUT)
         this->value=input;
     else {
@@ -286,6 +286,9 @@ void Gene::print(void) {
 }
 
 void Gene::activate(double value) {
+    if(this->activate_count >= MAX_ACTIVATIONS)
+        return;
+    this->activate_count++;
     if(this->enabled) {
         this->value=value;
         this->out->activate(value);
@@ -504,6 +507,7 @@ void Genome::crossover(Genome *g1, Genome *g2){
             this->insert_gene(g_it->second);
         }
     }
+    this->node_count=this->node_map.size();
 }
 
 Genome::~Genome(void) {
@@ -720,9 +724,15 @@ int Genome::activate(char **view, int viewradius) {
     long unsigned int max_id;
     double max;
     Node* in_node;
+    map<unsigned long long int, Gene*>::iterator g_it;
+    map<unsigned long int, Node*>::iterator n_it;
 
-    for(key=0; key<this->node_count; key++) {
-        this->node_map[key]->activate_count=0;
+    for(n_it=this->node_map.begin(); n_it!=this->node_map.end(); n_it++) {
+        n_it->second->activate_count=0;
+    }
+
+    for(g_it=this->gene_map.begin(); g_it!=this->gene_map.end(); g_it++) {
+        g_it->second->activate_count=0;
     }
 
     for(i=0; i<SQUARE_SIDE; i++) {

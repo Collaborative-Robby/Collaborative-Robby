@@ -39,6 +39,7 @@ class Gene {
 		double weight;
 		bool enabled;
 		double value;
+        int activate_count;
 		int point_mutate(void);
 		void print(void);
 		Gene(Gene *gen);
