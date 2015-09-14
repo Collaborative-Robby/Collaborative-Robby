@@ -35,6 +35,8 @@ int get_circle_view (int viewradius, char **view) {
             view[x][y]=VIEW_EMPTY;
         }
     }
+
+    return 0;
 }
 
 int get_view(struct robby *r, struct world_map *m, int wraparound) {
@@ -65,6 +67,8 @@ int get_view(struct robby *r, struct world_map *m, int wraparound) {
 
         }
     }
+
+    return 0;
 }
 
 
@@ -89,7 +93,7 @@ int update_view(struct robby *r, struct world_map *m, int wraparound)
         get_circle_view(r->viewradius, r->view);
 	}
 
-	items = get_view(r, m, wraparound);
+	get_view(r, m, wraparound);
     
     printf("robby %d:\n", r->id);
 

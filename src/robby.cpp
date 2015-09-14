@@ -216,25 +216,25 @@ void load_plugin(char *path)
 }
 
 /* TODO change this thing, this is only for test... */
-float eval(struct robby *r, long unsigned int totalcans)
+double eval(struct robby *r, long unsigned int totalcans)
 {
     if (!r)
         return -1;
 
-    r->fitness = ((float)r->gathered_cans / (float)totalcans);
+    r->fitness = ((double)r->gathered_cans / (double)totalcans);
 
     return r->fitness;
 }
 
-float eval_couple(struct robby *r, long unsigned int robbynum, long unsigned int totalcans, long unsigned int roundnum, int map_num)
+double eval_couple(struct robby *r, long unsigned int robbynum, long unsigned int totalcans, long unsigned int roundnum, int map_num)
 {
     int i;
-    float sum = 0;
+    double sum = 0;
     for (i=0; i < robbynum; i++)
-        sum += (((float) r[i].gathered_cans / (float) (totalcans*map_num)) - 
-                ((float) r[i].failed_moves / (float) (roundnum*map_num)));
+        sum += (((double) r[i].gathered_cans / (double) (totalcans*map_num)) - 
+                ((double) r[i].failed_moves / (double) (roundnum*map_num)));
 
-    r[0].fitness = sum;
+    r[0].fitness = (sum + 1.0)/2.0;
 
     return r[0].fitness;
 }
@@ -276,8 +276,8 @@ void destroy_robbies(struct robby **rl, int couplenum, int robbynum)
 
 int compare_eval(const void *a, const void *b)
 {
-    float fitnessa;
-    float fitnessb;
+    double fitnessa;
+    double fitnessb;
 
     if (b)
         fitnessb = ((struct robby **)b)[0]->fitness;
@@ -317,6 +317,8 @@ void choose_position(struct world_map *m, struct robby **rl,
 int map_fetch_from_file(struct world_map *m, char* filename, long unsigned int robbynum) {
     FILE* mfile;
     int sizex, sizey,x,y,ret,cval;
+
+    fprintf(stderr, "Fetching map %s\n", filename);
 
     mfile=fopen(filename, "r");
     if(!mfile) {
@@ -371,7 +373,7 @@ int generational_step(long unsigned int sizex, long unsigned int sizey,
     long unsigned int round;
     int i, current_pool;
     struct world_map morig, m;
-    static int current_map=0;
+    int current_map=0;
     round = 0;
 
     //TODO pensa al test
@@ -419,7 +421,7 @@ int generational_step(long unsigned int sizex, long unsigned int sizey,
     map_destructor(&morig);
     //}
     for(current_pool=0; current_pool<couple_num; current_pool++)
-        eval_couple(rl[current_pool], robbynum, cannum,totalrounds,1);
+        eval_couple(rl[current_pool], robbynum, cannum, totalrounds, 1);
 }
 
 void zero_fitness(struct robby *rl, long unsigned int robbynum)

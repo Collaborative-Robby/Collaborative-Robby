@@ -49,14 +49,14 @@ int move(struct world_map *m, struct robby *r)
 void generate_robbies(struct robby **rl, long unsigned int couplenum, long unsigned int robbynum,
 		long unsigned int generation)
 {
-	int i,j;
+	long unsigned int i,j;
 
 	/* initialize robbies for the next generations */
 	if (generation == 0) {
 		for (i = 0; i < robbynum; i++) {
 			for (j = 0; j < robbynum; j++) {
 				/* Set the ID */
-				rl[i][j].id = j;
+				rl[i][j].id = (int) j;
 
 				/* A radius of one for the view */
 				rl[i][j].viewradius = 2;

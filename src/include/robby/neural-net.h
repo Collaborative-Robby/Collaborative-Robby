@@ -97,13 +97,12 @@ class Genome {
 
 class Species {	
 	public:
-		bool dead;
 		int staleness;
 		double top_fitness;
 		double average_fitness;
 		list <Genome *> genomes;
 
-		//Species();
+		Species(void);
 		int cull(bool onlyone);
 		double calculate_avg_fitness(void);
 };

@@ -26,22 +26,22 @@ int move(struct world_map *m, struct robby *r)
 	/* Prepare the state of the robby */
 	PREPARE_STATE(r);
 
-    dirnum=r->genome->activate(r->view, r->viewradius);
-    if(dirnum<4) {
-        success=MOVE_NORMAL(r,m,dirnum);
-    }
-    else if(r->over==CAN_DUMMY_PTR) {
-        r->over=NULL;
-        r->gathered_cans++;
-        success=1;
-    }
-    else 
-        success=0;
-    
-    cout << "success is: " << success<< endl;
+	dirnum=r->genome->activate(r->view, r->viewradius);
+	if(dirnum<4) {
+		success=MOVE_NORMAL(r,m,dirnum);
+	}
+	else if(r->over==CAN_DUMMY_PTR) {
+		r->over=NULL;
+		r->gathered_cans++;
+		success=1;
+	}
+	else 
+		success=0;
 
-    if(success==0)
-        r->failed_moves++;
+	cout << "success is: " << success<< endl;
+
+	if(success==0)
+		r->failed_moves++;
 
 	/* Update the state of the robby with the new view */
 	update_view(r, m, false);
@@ -55,7 +55,7 @@ int move(struct world_map *m, struct robby *r)
 static int setup_generations(struct robby **rl, long unsigned int couplenum,
 		long unsigned int robbynum)
 {
-	int coup, i;
+	unsigned int coup, i;
 	/* Create the genome for the robby */
 	for (coup = 0; coup < couplenum; coup++) {
 
@@ -64,7 +64,7 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
 		else
 			rl[coup][0].genome = new Genome(DEFAULT_GENOME_DIR, coup);
 
-        rl[coup][0].genome->specialize(&species_list);
+		rl[coup][0].genome->specialize(&species_list);
 
 		for (i = 0; i < robbynum; i++) {
 			/* Set the ID */
@@ -83,70 +83,75 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
 static int next_generation(struct robby **rl, long unsigned int couplenum,
 		long unsigned int robbynum)
 {
-	int coup,i,r,j;
-    double breed, tot_fitness;
-    Genome* gen;
-    Species *s;
-    list<Genome*> children;
-    list<Genome*>::iterator g_it;
+	long unsigned int coup;
+	int i,r,j;
+	double breed, tot_fitness;
+	Genome* gen;
+	Species *s;
+	list<Genome*> children;
+	list<Genome*>::iterator g_it;
 	list <Species *>::iterator s_it;
 
 	for (coup = 0; coup < couplenum; coup++)
 		rl[coup][0].genome->fitness = rl[coup][0].fitness;
-    for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
+
+	for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
 		if(!(*s_it)->cull(false)) {
-            s_it=species_list.erase(s_it);
-            s_it--;
-        }
+			s_it=species_list.erase(s_it);
+			s_it--;
+		}
 	}
-    remove_stale_species(&species_list);
-    //forse rank globally???
-    remove_weak_species(&species_list, couplenum);
-    
-    tot_fitness=0;
+	remove_stale_species(&species_list);
+	//forse rank globally???
+	remove_weak_species(&species_list, couplenum);
+
+	tot_fitness=0;
 	for (s_it = species_list.begin(); s_it != species_list.end(); s_it++)
 		tot_fitness += (*s_it)->calculate_avg_fitness();
 
-    
-	for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
-        breed=floor(((*s_it)->average_fitness / (double) tot_fitness)*(double) couplenum)-1;
-        for(i=0; i<breed; i++) {
-            gen=new Genome(*s_it);
-            children.push_back(gen);
-        }
-    }
 
 	for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
-        if(!(*s_it)->cull(true)) {
-            s_it=species_list.erase(s_it);
-            s_it--;
-        }
-    }
+		breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum)-1;
+		for(i=0; i<breed; i++) {
+			gen=new Genome(*s_it);
+			children.push_back(gen);
+		}
+	}
 
-    while(children.size()+species_list.size()<couplenum) {
-        r=round(RANDOM_DOUBLE(species_list.size()-1));
-        s=LIST_GET(Species*, species_list, r);
-        gen=new Genome(s);
-        children.push_back(gen);
-    }
+	for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
+		if(!(*s_it)->cull(true)) {
+			s_it=species_list.erase(s_it);
+			s_it--;
+		}
+		cout << "BEST OF SPECIES: " <<
+		(*(*s_it)->genomes.begin())->fitness << endl;
+	}
 
-    for(g_it=children.begin(); g_it!=children.end(); g_it++) {
-        (*g_it)->specialize(&species_list);
-    }
+	while(children.size()+species_list.size()<couplenum) {
+		r=(int)round(RANDOM_DOUBLE(species_list.size()-1));
+		s=LIST_GET(Species*, species_list, r);
+		gen=new Genome(s);
+		children.push_back(gen);
+	}
 
-    i=0;
+	for(g_it=children.begin(); g_it!=children.end(); g_it++) {
+		(*g_it)->specialize(&species_list);
+	}
+
+	i=0;
 	/* TODO assign a genome to a robby */
-    for(s_it=species_list.begin(); s_it!=species_list.end(); s_it++){
-        for(g_it=(*s_it)->genomes.begin(); g_it!=(*s_it)->genomes.end(); g_it++) {
-            //for(j=0; j<robbynum; j++)
-                //if(rl[i][j].genome)
-                    //delete rl[i][j].genome;
-            rl[i][0].genome=(*g_it);
-            for(j=1; j<robbynum; j++)
-                rl[i][j].genome=new Genome(*g_it);
-            i++;
-        }
-    }
+	for(s_it=species_list.begin(); s_it!=species_list.end(); s_it++){
+		for(g_it=(*s_it)->genomes.begin(); g_it!=(*s_it)->genomes.end(); g_it++) {
+			//for(j=0; j<robbynum; j++)
+			//if(rl[i][j].genome)
+			//delete rl[i][j].genome;
+			rl[i][0].genome=(*g_it);
+			for(j=1; j<robbynum; j++)
+				rl[i][j].genome=new Genome(*g_it);
+			i++;
+		}
+	}
+	cout << i << " VERSUS " << couplenum << endl;
 }
 
 /* Generate the robbies for the next generation (the list is sorted
@@ -157,39 +162,37 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 		long unsigned int robbynum,
 		long unsigned int generation)
 {
-	int i, coup;
-	Genome* gen;
-
-    
+	int i;
 
 	/* initialize robbies for the next generations */
 	if (generation == 0) {
 		setup_generations(rl, couplenum, robbynum);
 	} else {
+		cout << "BEST FIT " << rl[0][0].fitness << endl;
 		next_generation(rl, couplenum, robbynum);
 	}
 
-    for(i=0; i<couplenum; i++) {
-        rl[i][0].x=0;
-        rl[i][0].y=0;
-    }
+	for(i=0; i<couplenum; i++) {
+		rl[i][0].x=0;
+		rl[i][0].y=0;
+	}
 
 	/*for (coup = 0; coup < couplenum; coup++) {
-		cout << "Classificating genome " << coup << endl;
-		rl[coup][0].genome->print();
-		gen = rl[coup][0].genome;
-		rl[coup][0].genome->mutate();
+	  cout << "Classificating genome " << coup << endl;
+	  rl[coup][0].genome->print();
+	  gen = rl[coup][0].genome;
+	  rl[coup][0].genome->mutate();
 
-		rl[coup][0].genome->specialize(&species_list);
+	  rl[coup][0].genome->specialize(&species_list);
 
-		/*for(i=1; i<robbynum; i++) {
-			/* delete/garbage collecting 
-			delete rl[coup][i].genome;
+	/*for(i=1; i<robbynum; i++) {
+	/* delete/garbage collecting 
+	delete rl[coup][i].genome;
 
-			rl[coup][i].genome = new Genome(gen);
-		}
+	rl[coup][i].genome = new Genome(gen);
+	}
 
-		rl[coup][0].genome->save_to_file(DEFAULT_GENOME_DIR, coup);
+	rl[coup][0].genome->save_to_file(DEFAULT_GENOME_DIR, coup);
 	}*/
 
 	/* Do nothing for the next generations:
@@ -199,7 +202,7 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 	list <Genome *>::iterator g_it;
 	i = 0;
 
-    #ifdef SPECIES_DEBUG
+#ifdef SPECIES_DEBUG
 	for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
 		cout << "Species " << i++ << endl;
 		for (g_it = (*s_it)->genomes.begin(); g_it != (*s_it)->genomes.end(); g_it++) {
@@ -207,7 +210,7 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 			cout << "----" << endl;
 		}
 	}
-    #endif
+#endif
 }
 
 void cleanup(struct robby **rl, int couplenum, int robbynum)

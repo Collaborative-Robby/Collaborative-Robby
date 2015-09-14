@@ -33,7 +33,7 @@ struct robby {
     int failed_moves;
 	int last_gathered_can_time;
 
-	float fitness;
+	double fitness;
 
 	int viewradius;
 	char **view;

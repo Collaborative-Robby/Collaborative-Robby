@@ -84,14 +84,14 @@ bool exist_genome_file(char *dir, int fileno) {
 
 bool cmp_desc_genomes(Genome *g1, Genome *g2)
 {
+//	return (g1->fitness < g2->fitness);
 	return (g1->fitness > g2->fitness);
 }
 
 inline bool same_species(Genome *g1, Genome *g2)
 {
 	int found;
-	double weight_difference;
-	double delta = 0.0, delta_excess = 0, delta_disjoint = 0, delta_weight = 0;
+	double delta_excess = 0, delta_disjoint = 0, delta_weight = 0;
 
 	int excess_genes=0, disjoint_genes=0, gene_count = 0, equal_genes_count = 0;
 	map<GENE_KEY_TYPE, Gene*>::iterator g_it;
@@ -161,6 +161,9 @@ int remove_weak_species(list <Species *> *sl, long unsigned int couplenum)
 	for (s_it = sl->begin(); s_it != sl->end(); s_it++)
 		tot_fitness += (*s_it)->calculate_avg_fitness();
 
+	cout << "Tot fitness" << tot_fitness << endl;
+
+	int i = 0;
 	for (s_it = sl->begin(); s_it != sl->end(); s_it++) {
 		breed = floor(((*s_it)->average_fitness / tot_fitness) *
 		              (double) couplenum);
@@ -169,6 +172,8 @@ int remove_weak_species(list <Species *> *sl, long unsigned int couplenum)
 			s_it = sl->erase(s_it);
 			s_it--;
 		}
+
+		i++;
 	}
 }
 
@@ -190,7 +195,7 @@ int remove_stale_species(list <Species *> *sl)
 			(*s_it)->staleness++;
 		}
 
-		if (max_fitness < (*s_it)->top_fitness);
+		if (max_fitness < (*s_it)->top_fitness)
 			max_fitness = (*s_it)->top_fitness;
 
 	}
@@ -213,7 +218,6 @@ Node::Node(unsigned long int id, int type) {
 }
 
 Node::Node(Node* copy) {
-    Gene* current;
     list<Gene*>::iterator g_it;
 
     this->type=copy->type;
@@ -231,7 +235,6 @@ void Node::print(void) {
 }
 
 void Node::activate(double input) {
-    int i;
     list<Gene*>::iterator it;
     this->activate_count++;
     /*if(false && this->activate_count>=MAX_ACTIVATIONS) {
@@ -301,7 +304,6 @@ Genome::Genome(Genome *gen) {
 
 void Genome::copy(Genome *gen) {
     unsigned long int node_key;
-    unsigned long long int gene_key;
     Node *node, *val;
     Gene* gene;
     map<unsigned long int,      Node*>::iterator n_it;
@@ -320,7 +322,6 @@ void Genome::copy(Genome *gen) {
         gene = new Gene(g_it->second);
         gene->in  = node_map[gene->in->id];
         gene->out = node_map[gene->out->id];
-        gene_key  = hash_ull_int_encode(gene->in->id, gene->out->id);
         GENE_INSERT(gene, this->gene_map);
     }
 }
@@ -399,7 +400,7 @@ Genome::Genome(char *dir, int fileno) {
 }
 
 Genome::Genome(Species *s) {
-    Genome *g1,*g2,*child;
+    Genome *g1,*g2;
     long unsigned int r;
     if(RANDOM_DOUBLE(1)<CROSSOVER_CHANCE) {
         r=round(RANDOM_DOUBLE(s->genomes.size()-1));
@@ -711,7 +712,6 @@ int Genome::enable_disable_mutate(bool enable) {
 }
 
 int Genome::activate(char **view, int viewradius) {
-    int square_size=SQUARE_AREA;
     int i,j;
     long unsigned int key;
     long unsigned int max_id;
@@ -837,31 +837,54 @@ int Genome::specialize(list <Species *> *sl)
 }
 
 /* Species */
+Species::Species(void)
+{
+	this->staleness = 0;
+	this->top_fitness = 0.0;
+	this->average_fitness = 0.0;
+}
+
 int Species::cull(bool top_only)
 {
 	int cutoff = 0;
 	int size = 0;
 	list <Genome *>::iterator it;
-	Genome *g;
-	this->genomes.sort(cmp_desc_genomes);
 
+	this->genomes.sort(cmp_desc_genomes);
 	size = this->genomes.size();
+
+	/********/
+	//cerr << "BEFORE CULL" <<endl;
+	//for (it = this->genomes.begin(); it!=this->genomes.end(); it++) {
+		//cerr << (*it)->fitness << endl;
+	//}
+	//cerr << "END BEFORE CULL" <<endl;
+	/*******/
 
 	if (top_only && size > 0)
 		cutoff = 1;
 	else
-		cutoff = round(this->genomes.size() / 2.0);
+		cutoff = round((double)this->genomes.size() / 2.0);
 
 	this->genomes.resize(cutoff);
+
+	/********/
+	//cerr << "AFTER CULL" <<endl;
+	//for (it = this->genomes.begin(); it!=this->genomes.end(); it++) {
+		//cerr << (*it)->fitness << endl;
+	//}
+	//cerr << "END AFTER CULL" <<endl;
+	/*******/
 
 	return this->genomes.size();
 }
 
 double Species::calculate_avg_fitness(void)
 {
-	double avg;
+	double avg = 0.0;
 	int size = 0;
 	list <Genome *>::iterator g_it;
+
 	size = this->genomes.size();
 
 	for (g_it=this->genomes.begin(); g_it != this->genomes.end(); g_it++)
