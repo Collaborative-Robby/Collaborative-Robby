@@ -92,69 +92,74 @@ static int next_generation(struct robby **rl, long unsigned int couplenum,
 	list<Genome*>::iterator g_it;
 	list <Species *>::iterator s_it;
 
+	static int gennum = 0;
+
 	for (coup = 0; coup < couplenum; coup++)
 		rl[coup][0].genome->fitness = rl[coup][0].fitness;
 
-	for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
-		if(!(*s_it)->cull(false)) {
-			s_it=species_list.erase(s_it);
-			s_it--;
+	if (gennum) {
+		for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
+			if(!(*s_it)->cull(false)) {
+				s_it=species_list.erase(s_it);
+				s_it--;
+			}
 		}
-	}
 
-	remove_stale_species(&species_list);
-	//forse rank globally???
-	remove_weak_species(&species_list, couplenum);
+		remove_stale_species(&species_list);
+		//forse rank globally???
+		remove_weak_species(&species_list, couplenum);
 
-	tot_fitness=0;
-	for (s_it = species_list.begin(); s_it != species_list.end(); s_it++)
-		tot_fitness += (*s_it)->calculate_avg_fitness();
+		tot_fitness=0;
+		for (s_it = species_list.begin(); s_it != species_list.end(); s_it++)
+			tot_fitness += (*s_it)->calculate_avg_fitness();
 
 
-	for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
-		breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum)-1;
-		for(i=0; i<breed; i++) {
-			gen=new Genome(*s_it);
+		for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
+			breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum)-1;
+			for(i=0; i<breed; i++) {
+				gen=new Genome(*s_it);
+				children.push_back(gen);
+			}
+		}
+
+		for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
+			if(!(*s_it)->cull(true)) {
+				s_it=species_list.erase(s_it);
+				s_it--;
+			}
+			cout << "BEST OF SPECIES FITNESS: " <<
+				(*(*s_it)->genomes.begin())->fitness << endl;
+		}
+
+		while(children.size()+species_list.size()<couplenum) {
+			r=(int)round(RANDOM_DOUBLE(species_list.size()-1));
+			s=LIST_GET(Species*, species_list, r);
+			gen=new Genome(s);
 			children.push_back(gen);
 		}
-	}
 
-	for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
-		if(!(*s_it)->cull(true)) {
-			s_it=species_list.erase(s_it);
-			s_it--;
+		for(g_it=children.begin(); g_it!=children.end(); g_it++) {
+			(*g_it)->specialize(&species_list);
 		}
-		cout << "BEST OF SPECIES FITNESS: " <<
-		(*(*s_it)->genomes.begin())->fitness << endl;
-	}
 
-	while(children.size()+species_list.size()<couplenum) {
-		r=(int)round(RANDOM_DOUBLE(species_list.size()-1));
-		s=LIST_GET(Species*, species_list, r);
-		gen=new Genome(s);
-		children.push_back(gen);
-	}
+		i=0;
+		/* TODO assign a genome to a robby */
+		for(s_it=species_list.begin(); s_it!=species_list.end(); s_it++){
+			for(g_it=(*s_it)->genomes.begin(); g_it!=(*s_it)->genomes.end(); g_it++) {
+				//for(j=0; j<robbynum; j++)
+				//if(rl[i][j].genome)
+				//delete rl[i][j].genome;
 
-	for(g_it=children.begin(); g_it!=children.end(); g_it++) {
-		(*g_it)->specialize(&species_list);
-	}
-
-	i=0;
-	/* TODO assign a genome to a robby */
-	for(s_it=species_list.begin(); s_it!=species_list.end(); s_it++){
-		for(g_it=(*s_it)->genomes.begin(); g_it!=(*s_it)->genomes.end(); g_it++) {
-			//for(j=0; j<robbynum; j++)
-			//if(rl[i][j].genome)
-			//delete rl[i][j].genome;
-
-            if(i<couplenum)
-			    rl[i][0].genome=(*g_it);
-			for(j=1; j<robbynum; j++)
-				rl[i][j].genome=new Genome(*g_it);
-			i++;
+				if(i<couplenum)
+					rl[i][0].genome=(*g_it);
+				for(j=1; j<robbynum; j++)
+					rl[i][j].genome=new Genome(*g_it);
+				i++;
+			}
 		}
+
 	}
-	cout << i << " VERSUS " << couplenum << endl;
+	gennum = 1-gennum;
 }
 
 /* Generate the robbies for the next generation (the list is sorted
