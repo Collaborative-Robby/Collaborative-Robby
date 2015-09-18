@@ -157,10 +157,23 @@ inline bool same_species(Genome *g1, Genome *g2)
 int remove_weak_species(list <Species *> *sl, long unsigned int couplenum)
 {
 	list <Species *>::iterator s_it;
-	double tot_fitness = 0, breed = 0;
-	for (s_it = sl->begin(); s_it != sl->end(); s_it++)
-		tot_fitness += (*s_it)->calculate_avg_fitness();
+    Genome* cgenome;
+	double tot_fitness = 0, breed = 0, max_fitness=0;
 
+    for (s_it = sl->begin(); s_it != sl->end(); s_it++) {
+        
+		(*s_it)->genomes.sort(cmp_desc_genomes);
+		
+		cgenome = LIST_GET(Genome*, ((*s_it)->genomes), 0);
+        
+		if (cgenome->fitness > (*s_it)->top_fitness)
+			(*s_it)->top_fitness = cgenome->fitness;
+        
+        tot_fitness += (*s_it)->calculate_avg_fitness();
+
+        if(max_fitness < (*s_it)->top_fitness)
+            max_fitness=(*s_it)->top_fitness;
+    }
 	cout << "Tot fitness" << tot_fitness << endl;
 
 	int i = 0;
@@ -168,7 +181,7 @@ int remove_weak_species(list <Species *> *sl, long unsigned int couplenum)
 		breed = floor(((*s_it)->average_fitness / tot_fitness) *
 		              (double) couplenum);
 
-		if (breed < 1) {
+		if (breed < 1 && (*s_it)->top_fitness < max_fitness) {
 			s_it = sl->erase(s_it);
 			s_it--;
 		}
@@ -203,6 +216,7 @@ int remove_stale_species(list <Species *> *sl)
 	for (s_it = sl->begin(); s_it != sl->end(); s_it++) {
 		if ((*s_it)->staleness >= SPECIES_STALE_TRESHOLD &&
 		    (*s_it)->top_fitness < max_fitness) {
+            cout << "stale removing with tfitt: "<< (*s_it)->top_fitness << endl;
 			s_it = sl->erase(s_it);
 			s_it--;
 		}
@@ -854,26 +868,27 @@ int Species::cull(bool top_only)
 	size = this->genomes.size();
 
 	/********/
-	//cerr << "BEFORE CULL" <<endl;
-	//for (it = this->genomes.begin(); it!=this->genomes.end(); it++) {
-		//cerr << (*it)->fitness << endl;
-	//}
-	//cerr << "END BEFORE CULL" <<endl;
+	cout << "BEFORE CULL" <<endl;
+	for (it = this->genomes.begin(); it!=this->genomes.end(); it++) {
+		cout << "cfitt " <<(*it)->fitness << endl;
+	}
+	cout << "END BEFORE CULL" <<endl;
 	/*******/
 
-	if (top_only && size > 0)
+	if (top_only)
 		cutoff = 1;
 	else
 		cutoff = round((double)this->genomes.size() / 2.0);
-
-	this->genomes.resize(cutoff);
+    
+    if(size>0)
+	    this->genomes.resize(cutoff);
 
 	/********/
-	//cerr << "AFTER CULL" <<endl;
-	//for (it = this->genomes.begin(); it!=this->genomes.end(); it++) {
-		//cerr << (*it)->fitness << endl;
-	//}
-	//cerr << "END AFTER CULL" <<endl;
+	cout << "AFTER CULL" <<endl;
+	for (it = this->genomes.begin(); it!=this->genomes.end(); it++) {
+		cout << "end cfitt " <<(*it)->fitness << endl;
+	}
+	cout << "END AFTER CULL" <<endl;
 	/*******/
 
 	return this->genomes.size();

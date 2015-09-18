@@ -101,6 +101,7 @@ static int next_generation(struct robby **rl, long unsigned int couplenum,
 			s_it--;
 		}
 	}
+
 	remove_stale_species(&species_list);
 	//forse rank globally???
 	remove_weak_species(&species_list, couplenum);
@@ -123,7 +124,7 @@ static int next_generation(struct robby **rl, long unsigned int couplenum,
 			s_it=species_list.erase(s_it);
 			s_it--;
 		}
-		cout << "BEST OF SPECIES: " <<
+		cout << "BEST OF SPECIES FITNESS: " <<
 		(*(*s_it)->genomes.begin())->fitness << endl;
 	}
 
@@ -145,7 +146,9 @@ static int next_generation(struct robby **rl, long unsigned int couplenum,
 			//for(j=0; j<robbynum; j++)
 			//if(rl[i][j].genome)
 			//delete rl[i][j].genome;
-			rl[i][0].genome=(*g_it);
+
+            if(i<couplenum)
+			    rl[i][0].genome=(*g_it);
 			for(j=1; j<robbynum; j++)
 				rl[i][j].genome=new Genome(*g_it);
 			i++;

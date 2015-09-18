@@ -231,10 +231,10 @@ double eval_couple(struct robby *r, long unsigned int robbynum, long unsigned in
     int i;
     double sum = 0;
     for (i=0; i < robbynum; i++)
-        sum += (((double) r[i].gathered_cans / (double) (totalcans*map_num)) - 
+        sum += (((double) r[i].gathered_cans / (double) (totalcans*map_num))*2 - 
                 ((double) r[i].failed_moves / (double) (roundnum*map_num)));
 
-    r[0].fitness = (sum + 1.0)/2.0;
+    r[0].fitness = (sum + 1.0)/3.0;
 
     return r[0].fitness;
 }
