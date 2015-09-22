@@ -71,7 +71,7 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
 			rl[coup][i].id = i;
 			/* A radius of one for the view */
 			rl[coup][i].viewradius = VIEW_RADIUS;
-
+            
 			if (i > 0)
 				rl[coup][i].genome = new Genome(rl[coup][0].genome);
 		}
@@ -97,7 +97,6 @@ static int next_generation(struct robby **rl, long unsigned int couplenum,
 	for (coup = 0; coup < couplenum; coup++)
 		rl[coup][0].genome->fitness = rl[coup][0].fitness;
 
-	if (gennum) {
 		for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
 			if(!(*s_it)->cull(false)) {
 				s_it=species_list.erase(s_it);
@@ -146,11 +145,13 @@ static int next_generation(struct robby **rl, long unsigned int couplenum,
 		/* TODO assign a genome to a robby */
 		for(s_it=species_list.begin(); s_it!=species_list.end(); s_it++){
 			for(g_it=(*s_it)->genomes.begin(); g_it!=(*s_it)->genomes.end(); g_it++) {
-				//for(j=0; j<robbynum; j++)
-				//if(rl[i][j].genome)
-				//delete rl[i][j].genome;
+				
+                /*for(j=0; j<robbynum; j++) {
+				    if(rl[i][j].genome)
+				        delete rl[i][j].genome;
+                }*/
 
-				if(i<couplenum)
+				if(true || i<couplenum)
 					rl[i][0].genome=(*g_it);
 				for(j=1; j<robbynum; j++)
 					rl[i][j].genome=new Genome(*g_it);
@@ -158,8 +159,6 @@ static int next_generation(struct robby **rl, long unsigned int couplenum,
 			}
 		}
 
-	}
-	gennum = 1-gennum;
 }
 
 /* Generate the robbies for the next generation (the list is sorted
@@ -180,11 +179,6 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 		next_generation(rl, couplenum, robbynum);
 	}
 
-	for(i=0; i<couplenum; i++) {
-		rl[i][0].x=0;
-		rl[i][0].y=0;
-	}
-
 	/*for (coup = 0; coup < couplenum; coup++) {
 	  cout << "Classificating genome " << coup << endl;
 	  rl[coup][0].genome->print();
@@ -193,7 +187,7 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 
 	  rl[coup][0].genome->specialize(&species_list);
 
-	/*for(i=1; i<robbynum; i++) {
+	*for(i=1; i<robbynum; i++) {
 	/* delete/garbage collecting 
 	delete rl[coup][i].genome;
 

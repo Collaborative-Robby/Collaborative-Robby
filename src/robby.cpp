@@ -234,7 +234,7 @@ double eval_couple(struct robby *r, long unsigned int robbynum, long unsigned in
         sum += (((double) r[i].gathered_cans / (double) (totalcans*map_num))*2 - 
                 ((double) r[i].failed_moves / (double) (roundnum*map_num)));
 
-    r[0].fitness = (sum + 1.0)/3.0;
+    r[0].fitness = (sum+1)/3;
 
     return r[0].fitness;
 }
@@ -312,6 +312,8 @@ void choose_position(struct world_map *m, struct robby **rl,
             rl[current_couple][i].y = rl[0][i].y;
         }
     }
+    rl[0][0].x=0;
+    rl[0][0].y=0;
 }
 
 int map_fetch_from_file(struct world_map *m, char* filename, long unsigned int robbynum) {

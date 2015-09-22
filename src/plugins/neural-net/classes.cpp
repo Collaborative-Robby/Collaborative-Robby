@@ -262,8 +262,8 @@ void Node::activate(double input) {
         for(it=this->input_genes.begin(); it!=this->input_genes.end(); it++) {
             value+=(*it)->weight*(*it)->value;
         }
+        this->value=sigmoid(this->value);
     }
-    this->value=sigmoid(this->value);
     for(it=this->output_genes.begin(); it!=this->output_genes.end(); it++) {
         (*it)->activate(this->value);
     }
@@ -736,17 +736,19 @@ int Genome::activate(char **view, int viewradius) {
 
     for(n_it=this->node_map.begin(); n_it!=this->node_map.end(); n_it++) {
         n_it->second->activate_count=0;
+        n_it->second->value=0;
     }
 
     for(g_it=this->gene_map.begin(); g_it!=this->gene_map.end(); g_it++) {
         g_it->second->activate_count=0;
+        g_it->second->value=0;
     }
 
     for(i=0; i<SQUARE_SIDE; i++) {
         for(j=0; j<SQUARE_SIDE; j++) {
             key=i*(SQUARE_SIDE)+j+POSSIBLE_MOVES;
             in_node=this->node_map[key];
-            in_node->activate(view[i][j]);
+            in_node->activate(view[i][j]+1);
         }
     }
 
