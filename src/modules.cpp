@@ -12,9 +12,9 @@
 #define VIEW_ROBBY 2
 #define VIEW_WALL 3 
 
-int get_circle_view (int viewradius, char **view) {
-    int i,j;
-    int x,y; 
+int get_circle_view (unsigned long int viewradius, char **view) {
+    unsigned long int i,j;
+    unsigned long int x,y; 
     for(i=1; i<=viewradius; i++) {
         for(j=0; j<DISSIN(i,viewradius); j++) {
             
@@ -40,8 +40,8 @@ int get_circle_view (int viewradius, char **view) {
 }
 
 int get_view(struct robby *r, struct world_map *m, int wraparound) {
-    int i,j;
-    int x,y;
+    long unsigned int i,j;
+    long unsigned int x,y;
     for(i=0; i<SQUARE_SIDE;i++) {
         for(j=0; j<SQUARE_SIDE;j++) {
             x=r->x+(i-(r->viewradius-1)); 
@@ -49,8 +49,10 @@ int get_view(struct robby *r, struct world_map *m, int wraparound) {
             if(r->view[i][j]==VIEW_TOO_FAR)
                 continue;
             
+            if(wraparound) {
             //TODO wraparound
-            if(x>=m->sizex || x<0 || y>=m->sizey || y<0)
+            }
+            if(x>=m->sizex || y>=m->sizey)
                 r->view[i][j]=VIEW_WALL;
             else if(i==r->viewradius-1 && j==r->viewradius-1) {
                 if(r->over==CAN_DUMMY_PTR)
@@ -74,7 +76,7 @@ int get_view(struct robby *r, struct world_map *m, int wraparound) {
 
 int update_view(struct robby *r, struct world_map *m, int wraparound)
 {
-	int items,i,j;
+	long unsigned int i;
 	if (!r->view) {
 		r->view = (char **)calloc(SQUARE_SIDE, sizeof(char*));
 		if (!r->view) {
@@ -106,7 +108,7 @@ int update_view(struct robby *r, struct world_map *m, int wraparound)
         printf("}\n");
     }
     #endif 
-	return items;
+	return 0;
 }
 
 /* Move in a direction */

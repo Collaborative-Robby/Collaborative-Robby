@@ -70,7 +70,7 @@ class Genome {
 		map<unsigned long int, Node*> node_map;
 		map<unsigned long long int, Gene*> gene_map;
 		unsigned long int node_count;
-		int max_innov;
+		unsigned long int max_innov;
 		double fitness;
 
 		Genome(unsigned long int input_no, unsigned long int output_no);
@@ -90,7 +90,7 @@ class Genome {
 		int enable_disable_mutate(bool enable);
 		void print(void);
 		bool containslink(class Gene *g);
-		int activate(char **view, int viewradius);
+		int activate(char **view);
 		int save_to_file(char *dir, int fno);
 		int specialize(list <class Species *> *sl);
 };
@@ -105,7 +105,7 @@ class Species {
 		Species(void);
         ~Species(void);
 
-		int cull(bool onlyone);
+		unsigned long int cull(bool onlyone);
 		double calculate_avg_fitness(void);
 };
 

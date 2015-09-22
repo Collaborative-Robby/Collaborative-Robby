@@ -93,10 +93,15 @@ inline bool same_species(Genome *g1, Genome *g2)
 	int found;
 	double delta_excess = 0, delta_disjoint = 0, delta_weight = 0;
 
-	int excess_genes=0, disjoint_genes=0, gene_count = 0, equal_genes_count = 0;
+    long unsigned int gene_count,equal_genes_count,excess_genes,disjoint_genes;
 	map<GENE_KEY_TYPE, Gene*>::iterator g_it;
 	Gene *equal_gene;
 	Genome *g, *oth_g;
+
+    gene_count=0;
+    excess_genes=0;
+    disjoint_genes=0;
+    equal_genes_count=0;
 
 	g = g1;
 	oth_g = g2;
@@ -187,6 +192,7 @@ int remove_weak_species(list <Species *> *sl, long unsigned int couplenum)
             s_it++;
         }
 	}
+    return 0;
 }
 
 int remove_stale_species(list <Species *> *sl)
@@ -222,6 +228,7 @@ int remove_stale_species(list <Species *> *sl)
             s_it++;
         }
 	}   
+    return 0;
 }
 
 /* Node */
@@ -310,6 +317,8 @@ int Gene::point_mutate(void) {
         this->weight+=(RANDOM_DOUBLE(1)*PERTURB_STEP*2-PERTURB_STEP);
     else
         this->weight=RANDOM_DOUBLE(1)*4-2;
+    
+    return 0;
 }
 
 /* Genome */
@@ -343,7 +352,7 @@ void Genome::copy(Genome *gen) {
 }
 
 Genome::Genome(unsigned long int input_no, unsigned long int output_no) {
-    int i;
+    unsigned long int i;
     Node *curr;
 
     this->node_count=0;
@@ -370,6 +379,7 @@ Genome::Genome(char *dir, int fileno) {
 	int rval, i;
 	int node_size, gene_size;
 	int node_id, node_type;
+    int tmp;
 	Node *cur_node;
 	Gene *cur_gene;
 	int idin = -1, idout = -1;
@@ -400,9 +410,10 @@ Genome::Genome(char *dir, int fileno) {
 
 	for (i =0 ; i < gene_size; i ++) {
 		cur_gene = new Gene();
-		fscanf(f, "%d -> %d: %d %d %lf\n", &idin, &idout,
-			&cur_gene->innovation, &cur_gene->enabled,
+		fscanf(f, "%d -> %d: %lu %d %lf\n", &idin, &idout,
+			&cur_gene->innovation, &tmp,
 			&cur_gene->weight);
+        cur_gene->enabled=tmp;
 		if (idin >= 0)
 			cur_gene->in = this->node_map[idin];
 		if (idout >= 0)
@@ -422,14 +433,14 @@ Genome::Genome(Species *s) {
     Genome *g1,*g2;
     long unsigned int r;
     if(RANDOM_DOUBLE(1)<CROSSOVER_CHANCE) {
-        r=round(RANDOM_DOUBLE(s->genomes.size()-1));
+        r=(long unsigned int) round(RANDOM_DOUBLE(s->genomes.size()-1));
         g1=LIST_GET(Genome*, s->genomes, r);
-        r=round(RANDOM_DOUBLE(s->genomes.size()-1));
+        r=(long unsigned int) round(RANDOM_DOUBLE(s->genomes.size()-1));
         g2=LIST_GET(Genome*, s->genomes, r);
         this->crossover(g1,g2);
     }
     else {
-        r=round(RANDOM_DOUBLE(s->genomes.size()-1));
+        r=(long unsigned int) round(RANDOM_DOUBLE(s->genomes.size()-1));
         g1=LIST_GET(Genome*, s->genomes, r);
         this->copy(g1);
     }
@@ -482,11 +493,8 @@ void Genome::crossover(Genome *g1, Genome *g2){
     map<unsigned long long, Gene*>::iterator g_it;
     map<NODE_KEY_TYPE, Node*>::iterator n_it;
     long unsigned int id_in,id_out;
-    long unsigned int max_innov;
     Node *new_n;
     
-    max_innov=0;
-
     if(g1==g2) {
         this->copy(g1);
         return;
@@ -574,6 +582,8 @@ int Genome::mutate(void) {
 
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_DISABLE)
         this->enable_disable_mutate(false);
+    
+    return 0;
 }
 
 void Genome::print() {
@@ -650,7 +660,7 @@ bool Genome::containslink(Gene *g) {
 }
 
 int Genome::link_mutate(bool force_bias) {
-    unsigned int node_size;
+    unsigned long int node_size;
     unsigned long int rand1,rand2;
     Node *n1,*n2,*temp;
     Gene *new_gene;
@@ -660,8 +670,8 @@ int Genome::link_mutate(bool force_bias) {
     if(node_size==0) {
         return 1;
     }
-    rand1=round(RANDOM_DOUBLE(node_size-1));
-    rand2=round(RANDOM_DOUBLE(node_size-1));
+    rand1=(unsigned long int) round(RANDOM_DOUBLE(node_size-1));
+    rand2=(unsigned long int) round(RANDOM_DOUBLE(node_size-1));
 
 
     n1=this->node_map[rand1];
@@ -730,13 +740,13 @@ int Genome::enable_disable_mutate(bool enable) {
     }
 
     candidates.clear();
-
+    return 0;
 }
 
-int Genome::activate(char **view, int viewradius) {
+int Genome::activate(char **view) {
     int i,j;
-    long unsigned int key;
-    long unsigned int max_id;
+    unsigned long int key;
+    unsigned long int max_id;
     double max;
     Node* in_node;
     map<unsigned long long int, Gene*>::iterator g_it;
@@ -772,7 +782,7 @@ int Genome::activate(char **view, int viewradius) {
     cout << "best move is: " << max_id << " value " << max << endl;
     #endif
 
-    return max_id;
+    return (int)max_id;
 
     //TODO prendi gli output
 }
@@ -780,7 +790,7 @@ int Genome::activate(char **view, int viewradius) {
 int Genome::save_to_file(char *dir, int fileno) {
 	map <GENE_KEY_TYPE, Gene *>::iterator g_it;
 	map <NODE_KEY_TYPE, Node *>::iterator n_it;
-	int idin = -1, idout = -1;
+	long unsigned int idin = 0, idout = 0;
 	char *path;
 	FILE *f;
 	DIR *d;
@@ -806,10 +816,10 @@ int Genome::save_to_file(char *dir, int fileno) {
 		return -1;
 	}
 
-	fprintf(f, "%d %d\n{\n", this->node_map.size(), this->gene_map.size());
+	fprintf(f, "%lu %lu\n{\n", this->node_map.size(), this->gene_map.size());
 
 	for (n_it=this->node_map.begin(); n_it != this->node_map.end(); n_it++)
-		fprintf(f, "%d %d\n", n_it->second->id, n_it->second->type);
+		fprintf(f, "%lu %d\n", n_it->second->id, n_it->second->type);
 
 	fprintf(f, "}\n{\n");
 
@@ -819,7 +829,7 @@ int Genome::save_to_file(char *dir, int fileno) {
 		if (g_it->second->out)
 			idout = g_it->second->out->id;
 
-		fprintf(f, "%d -> %d: %d %d %f\n", idin, idout,
+		fprintf(f, "%lu -> %lu: %lu %d %f\n", idin, idout,
 		        g_it->second->innovation, g_it->second->enabled,
 			g_it->second->weight);
 	}
@@ -828,6 +838,8 @@ int Genome::save_to_file(char *dir, int fileno) {
 	fclose(f);
 
 	free(path);
+
+    return 0;
 }
 
 int Genome::specialize(list <Species *> *sl)
@@ -860,6 +872,8 @@ int Genome::specialize(list <Species *> *sl)
 		this->print();
         #endif
 	}
+
+    return 0;
 }
 
 /* Species */
@@ -881,10 +895,10 @@ Species::~Species(void)
     }
 }
 
-int Species::cull(bool top_only)
+unsigned long int Species::cull(bool top_only)
 {
 	int cutoff = 0;
-	int size = 0;
+	unsigned long int size = 0;
 	list <Genome *>::iterator it;
 
 	this->genomes.sort(cmp_desc_genomes);
@@ -893,7 +907,7 @@ int Species::cull(bool top_only)
 	if (top_only)
 		cutoff = 1;
 	else
-		cutoff = round((double)this->genomes.size() / 2.0);
+		cutoff = (int) round((double)this->genomes.size() / 2.0);
     
     if(size>0) {
         it=this->genomes.begin();
@@ -910,7 +924,7 @@ int Species::cull(bool top_only)
 double Species::calculate_avg_fitness(void)
 {
 	double avg = 0.0;
-	int size = 0;
+	unsigned long int size = 0;
 	list <Genome *>::iterator g_it;
 
 	size = this->genomes.size();

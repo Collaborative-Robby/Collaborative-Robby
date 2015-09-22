@@ -39,7 +39,7 @@ extern int** directions;
 #define DOWN directions[2]
 
 
-#define DISSIN(n, r) ((round((sin((M_PI / (2.0 * (float) r)) * (float) n) * r))))
+#define DISSIN(n, r) ((unsigned long int) (round((sin((M_PI / (2.0 * (double) r)) * (double) n) * (double) r))))
 
 //fixed view radius for every robby
 #define VIEW_RADIUS 2

@@ -18,7 +18,7 @@
 int (*move_callback)(struct world_map *, struct robby *);
 void (*generate_robbies_callback)(struct robby **, long unsigned int, long unsigned int, long unsigned int);
 int (*update_view_callback) (struct robby *, struct world_map *, int);
-void (*plugin_cleanup_callback) (struct robby **, int, int);
+void (*plugin_cleanup_callback) (struct robby **, unsigned long int, unsigned long int);
 
 void *callbacks = NULL;
 
@@ -26,11 +26,11 @@ char __can_const;
 
 #define CAN_DUMMY_PTR (void *)&__can_const
 
-int map_constructor(struct world_map *m, long unsigned int x, long unsigned int y,
-        long unsigned int robbynum,
-        long unsigned int cannum)
+int map_constructor(struct world_map *m, unsigned long int x, unsigned long int y,
+        unsigned long int robbynum,
+        unsigned long int cannum)
 {
-    int i;
+    unsigned long int i;
 
     m->innermatrix = (void ***) calloc(x, sizeof(void **));
 
@@ -68,9 +68,9 @@ int map_constructor(struct world_map *m, long unsigned int x, long unsigned int 
     return 0;
 }
 
-void map_copy(struct world_map *src, struct world_map *dst, int robbynum)
+void map_copy(struct world_map *src, struct world_map *dst, unsigned long int robbynum)
 {
-    int i, j;
+    unsigned long int i, j;
     memcpy(dst, src, sizeof(*src));
 
     dst->innermatrix = (void ***) calloc(src->sizex, sizeof(void **));
@@ -98,7 +98,7 @@ void map_copy(struct world_map *src, struct world_map *dst, int robbynum)
 
 void map_destructor(struct world_map *m)
 {
-    int i;
+    unsigned long int i;
     if (!m)
         return;
     if (m->rl)
@@ -126,7 +126,7 @@ void map_destructor(struct world_map *m)
 
 static inline void print_map(struct world_map *m)
 {
-    int i, j;
+    unsigned long int i, j;
     if (!m || !m->innermatrix)
         return;
 
@@ -179,7 +179,7 @@ struct robby *add_robby(struct world_map *m, struct robby *r)
         })
 
 #define MOVE_ALL_ROBBIES(m) ({\
-        int i;\
+        unsigned long int i;\
         for (i=0; i < m.n_robots; i++) {\
         if (!m.rl[i]->moved) m.rl[i]->move(&m, m.rl[i]);\
         }\
@@ -228,7 +228,7 @@ double eval(struct robby *r, long unsigned int totalcans)
 
 double eval_couple(struct robby *r, long unsigned int robbynum, long unsigned int totalcans, long unsigned int roundnum, int map_num)
 {
-    int i;
+    unsigned long int i;
     double sum = 0;
     for (i=0; i < robbynum; i++)
         sum += (((double) r[i].gathered_cans / (double) (totalcans*map_num))*2 - 
@@ -239,9 +239,9 @@ double eval_couple(struct robby *r, long unsigned int robbynum, long unsigned in
     return r[0].fitness;
 }
 
-void destroy_robbies(struct robby **rl, int couplenum, int robbynum)
+void destroy_robbies(struct robby **rl, long unsigned int couplenum, long unsigned int robbynum)
 {
-    int i,j,k;
+    long unsigned int i,j,k;
 
     if (plugin_cleanup_callback) {
         plugin_cleanup_callback(rl, couplenum, robbynum);
@@ -299,7 +299,7 @@ void choose_position(struct world_map *m, struct robby **rl,
         long unsigned int current_couple,
         long unsigned int robby_num)
 {
-    int i;
+    unsigned long int i;
 
     for (i = 0; i < robby_num; i++) {
         if (current_couple == 0 && (rl[0][i].x==m->sizex|| rl[0][i].y==m->sizey)) {
@@ -352,12 +352,14 @@ int map_fetch_from_file(struct world_map *m, char* filename, long unsigned int r
         }
     }
     fclose(mfile);
+
+    return 0;
 }
 
-int map_fetch_from_int(struct world_map *m, int current_num, char *dir, long unsigned int robbynum) {
+int map_fetch_from_int(struct world_map *m, unsigned long int current_num, char *dir, long unsigned int robbynum) {
     char *filename;
     int ret;
-    asprintf(&filename, "%s/%d", dir, current_num);
+    asprintf(&filename, "%s/%lu", dir, current_num);
     ret=map_fetch_from_file(m,filename,robbynum);
     free(filename);
     return ret;
@@ -374,9 +376,9 @@ int generational_step(long unsigned int sizex, long unsigned int sizey,
         bool verbose)
 {
     long unsigned int round;
-    int i, current_pool;
+    unsigned long int i, current_pool;
     struct world_map morig, m;
-    int current_map=0;
+    unsigned long int current_map=0;
     round = 0;
 
     //TODO pensa al test
@@ -428,6 +430,8 @@ int generational_step(long unsigned int sizex, long unsigned int sizey,
     //}
     for(current_pool=0; current_pool<couple_num; current_pool++)
         eval_couple(rl[current_pool], robbynum, cannum, totalrounds, 1);
+    
+    return 0;
 }
 
 void zero_fitness(struct robby *rl, long unsigned int robbynum)
@@ -444,10 +448,10 @@ void zero_fitness(struct robby *rl, long unsigned int robbynum)
 void write_map(struct world_map *m, char *filename, char *dir) {
     char* path;
     FILE* f;
-    int x,y;
+    unsigned long int x,y;
     asprintf(&path, "%s/%s", dir, filename);
     f=fopen(path, "w");
-    fprintf(f, "%d %d\n", m->sizex, m->sizey);
+    fprintf(f, "%lu %lu\n", m->sizex, m->sizey);
     for(x=0; x<m->sizex; x++) {
         fprintf(f,"[");
         for(y=0; y<m->sizey; y++) {
@@ -476,8 +480,9 @@ int count_files(char *dir) {
     return count;
 }
 
-int generate_maps(int nmaps,char* dir, long unsigned int sizex, long unsigned int sizey,long unsigned int cannum) {
-    int ret,fcount,i;
+unsigned long int generate_maps(unsigned long int nmaps,char* dir, long unsigned int sizex, long unsigned int sizey,long unsigned int cannum) {
+    int ret;
+    unsigned long int fcount,i;
     struct world_map m;
     char *map_file_name;
     errno=0;
@@ -485,40 +490,41 @@ int generate_maps(int nmaps,char* dir, long unsigned int sizex, long unsigned in
     if(!dir)
         return -1;
 
-    printf("generating %d maps in %s\n", nmaps, dir);
+    printf("generating %lu maps in %s\n", nmaps, dir);
 
     ret=mkdir(dir, 0755);
     if(ret<0 && errno==EEXIST) {
         printf("directory %s exists\n", dir);
         fcount=count_files(dir);
         if(fcount<nmaps) {
-            fprintf(stderr, "not enough maps in %s (%d of %d)\n", dir, fcount, nmaps);
-            return -1;
+            fprintf(stderr, "not enough maps in %s (%lu of %lu)\n", dir, fcount, nmaps);
+            return 0;
         }
         return fcount;
     }    
     else if(ret<0) {
         perror("dir: ");
-        return -1;
+        return 0;
     }
     for(i=0;i<nmaps;i++) {
         map_constructor(&m,sizex,sizey, 0, cannum);
-        asprintf(&map_file_name, "%d", i);
+        asprintf(&map_file_name, "%lu", i);
         write_map(&m, map_file_name , dir);
         free(map_file_name);
         map_destructor(&m);
     }
 
+    return nmaps;
 }
 
 #define USAGE "<plugin> [-h| -x <sizex>| -y <size y> | -r <#ofrobbies> | -c <#ofcans> | -R <# of rounds> | -g <# of generations> | -m <# of test_maps[,# of training maps]> | -d <dir for test maps[,dir for training maps]> ]"
 int main(int argc, char **argv)
 {
     long unsigned int sizex, sizey, robbynum, cannum, totalrounds,
-         totalgenerations, generation, training_map_num, test_map_num,couplenum;
+         totalgenerations, generation, training_map_num, test_map_num,couplenum,i,j;
     struct robby **rl;
     int opt;
-    int i, j,nargs;
+    int nargs;
     char *test_dir,*train_dir, *tmp;
     bool verbose;
 
@@ -604,7 +610,7 @@ int main(int argc, char **argv)
     for (i = 0; i < couplenum; i++) {
         rl[i] = (struct robby *)calloc(robbynum, sizeof(struct robby));
         if (rl[i]==NULL){
-            fprintf(stderr, "robby list malloc %s on step %d\n", strerror(errno), i);
+            fprintf(stderr, "robby list malloc %s on step %lu\n", strerror(errno), i);
             exit(EXIT_FAILURE);
         }
     }

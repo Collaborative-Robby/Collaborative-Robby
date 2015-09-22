@@ -35,7 +35,7 @@ struct robby {
 
 	double fitness;
 
-	int viewradius;
+	unsigned long int viewradius;
 	char **view;
 
 	int learning_algorithm;
