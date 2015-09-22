@@ -79,7 +79,7 @@ class Genome {
 		Genome(char *dir, int fileno);
         Genome(class Species *s);
 
-		~Genome();
+		~Genome(void);
         
         void copy(Genome *g);
         void crossover(Genome *g1, Genome *g2);
@@ -103,6 +103,8 @@ class Species {
 		list <Genome *> genomes;
 
 		Species(void);
+        ~Species(void);
+
 		int cull(bool onlyone);
 		double calculate_avg_fitness(void);
 };

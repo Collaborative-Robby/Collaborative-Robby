@@ -37,17 +37,17 @@ int move(struct world_map *m, struct robby *r)
 	}
 	else 
 		success=0;
-
-	cout << "success is: " << success<< endl;
-
+    
 	if(success==0)
 		r->failed_moves++;
 
 	/* Update the state of the robby with the new view */
 	update_view(r, m, false);
-
+    
+    #ifdef DEBUG_MOVE
 	/* Display some info on the current move */
 	PRINT_MOVE_INFO(dirnum, r->id, success);
+    #endif
 
 	return success;
 }
@@ -97,11 +97,14 @@ static int next_generation(struct robby **rl, long unsigned int couplenum,
 	for (coup = 0; coup < couplenum; coup++)
 		rl[coup][0].genome->fitness = rl[coup][0].fitness;
 
-		for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
+		for (s_it = species_list.begin(); s_it != species_list.end();) {
 			if(!(*s_it)->cull(false)) {
+                delete (*s_it);    
 				s_it=species_list.erase(s_it);
-				s_it--;
 			}
+            else {
+                s_it++;
+            }
 		}
 
 		remove_stale_species(&species_list);
@@ -121,13 +124,14 @@ static int next_generation(struct robby **rl, long unsigned int couplenum,
 			}
 		}
 
-		for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
+		for (s_it = species_list.begin(); s_it != species_list.end();) {
 			if(!(*s_it)->cull(true)) {
+                delete (*s_it);
 				s_it=species_list.erase(s_it);
-				s_it--;
 			}
-			cout << "BEST OF SPECIES FITNESS: " <<
-				(*(*s_it)->genomes.begin())->fitness << endl;
+            else {
+                s_it++;
+            }
 		}
 
 		while(children.size()+species_list.size()<couplenum) {
@@ -151,8 +155,7 @@ static int next_generation(struct robby **rl, long unsigned int couplenum,
 				        delete rl[i][j].genome;
                 }*/
 
-				if(true || i<couplenum)
-					rl[i][0].genome=(*g_it);
+				rl[i][0].genome=(*g_it);
 				for(j=1; j<robbynum; j++)
 					rl[i][j].genome=new Genome(*g_it);
 				i++;
@@ -175,7 +178,6 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 	if (generation == 0) {
 		setup_generations(rl, couplenum, robbynum);
 	} else {
-		cout << "BEST FIT " << rl[0][0].fitness << endl;
 		next_generation(rl, couplenum, robbynum);
 	}
 
@@ -218,10 +220,11 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 void cleanup(struct robby **rl, int couplenum, int robbynum)
 {
 	int i,j;
-	for(i=0; i<couplenum; i++) {
-		for(j=0; j<robbynum; j++) {
-			if (rl[i][j].genome)
-				delete rl[i][j].genome;
-		}
-	}
+    list<Species*>::iterator s_it;
+    
+    s_it=species_list.begin();
+    while(s_it!=species_list.end()) {
+        delete (*s_it);
+        s_it=species_list.erase(s_it);
+    }
 }

@@ -370,7 +370,8 @@ int generational_step(long unsigned int sizex, long unsigned int sizey,
         char *train_dir,
         long unsigned int training_map_set_size,
         char *test_dir,
-        long unsigned int test_map_set_size)
+        long unsigned int test_map_set_size,
+        bool verbose)
 {
     long unsigned int round;
     int i, current_pool;
@@ -409,14 +410,17 @@ int generational_step(long unsigned int sizex, long unsigned int sizey,
             add_robby(&m, &rl[current_pool][i]);
 
         for (round = 0; round < totalrounds; round++) {
-            print_status(m, round);
-            print_map(&m);
+            if(verbose) {
+                print_status(m, round);
+                print_map(&m);
+            }
             MOVE_ALL_ROBBIES(m);
         }
         /* last turn print */
-        print_status(m, round);
-        print_map(&m);
-
+        if(verbose) {
+            print_status(m, round);
+            print_map(&m);
+        }
         map_destructor(&m);
     }
 
@@ -516,6 +520,7 @@ int main(int argc, char **argv)
     int opt;
     int i, j,nargs;
     char *test_dir,*train_dir, *tmp;
+    bool verbose;
 
     sizex = 10;
     sizey = 10;
@@ -527,7 +532,7 @@ int main(int argc, char **argv)
     training_map_num=10;
     test_map_num=10;
     test_dir=train_dir=tmp=NULL;
-
+    verbose=false;
 
     if (argc < 2) {
         fprintf(stderr, "%s %s\n", argv[0], USAGE);
@@ -537,7 +542,7 @@ int main(int argc, char **argv)
     RANDOM_SEED();
     load_plugin(argv[1]);
 
-    while ((opt = getopt(argc - 1, argv + 1, "hx:y:r:c:R:g:d:m:C:")) != -1) {
+    while ((opt = getopt(argc - 1, argv + 1, "hx:y:r:c:R:g:d:m:C:v")) != -1) {
         switch (opt) {
             case 'x':
                 sizex = strtoul(optarg, NULL, 10);
@@ -570,6 +575,9 @@ int main(int argc, char **argv)
                 tmp=strtok(NULL, ",");
                 if(tmp)
                     asprintf(&train_dir, "%s", tmp);
+                break;
+            case 'v':
+                verbose=true;
                 break;
             case 'h':
             default:
@@ -619,10 +627,10 @@ int main(int argc, char **argv)
             zero_fitness(rl[i], robbynum);
 
         generational_step(sizex, sizey, robbynum, cannum, totalrounds,
-                couplenum, rl,train_dir, training_map_num, test_dir, test_map_num );
+                couplenum, rl,train_dir, training_map_num, test_dir, test_map_num,verbose);
 
         sort_by_best_eval(rl, couplenum);
-
+        
         print_end_generation_header(generation, rl[0][0], robbynum);
     }
 

@@ -174,19 +174,18 @@ int remove_weak_species(list <Species *> *sl, long unsigned int couplenum)
         if(max_fitness < (*s_it)->top_fitness)
             max_fitness=(*s_it)->top_fitness;
     }
-	cout << "Tot fitness" << tot_fitness << endl;
 
-	int i = 0;
-	for (s_it = sl->begin(); s_it != sl->end(); s_it++) {
+	for (s_it = sl->begin(); s_it != sl->end();) {
 		breed = floor(((*s_it)->average_fitness / tot_fitness) *
 		              (double) couplenum);
 
-		if (breed < 1 && (*s_it)->top_fitness < max_fitness) {
+		if (breed < 1 && sl->size()>0) {
+            delete (*s_it);
 			s_it = sl->erase(s_it);
-			s_it--;
 		}
-
-		i++;
+        else {
+            s_it++;
+        }
 	}
 }
 
@@ -213,14 +212,16 @@ int remove_stale_species(list <Species *> *sl)
 
 	}
 
-	for (s_it = sl->begin(); s_it != sl->end(); s_it++) {
+	for (s_it = sl->begin(); s_it != sl->end();) {
 		if ((*s_it)->staleness >= SPECIES_STALE_TRESHOLD &&
 		    (*s_it)->top_fitness < max_fitness) {
-            cout << "stale removing with tfitt: "<< (*s_it)->top_fitness << endl;
+            delete (*s_it);
 			s_it = sl->erase(s_it);
-			s_it--;
 		}
-	}
+        else {
+            s_it++;
+        }
+	}   
 }
 
 /* Node */
@@ -324,6 +325,7 @@ void Genome::copy(Genome *gen) {
     map<unsigned long long int, Gene*>::iterator g_it;
 
     this->node_count=gen->node_count;
+    this->max_innov=gen->max_innov;
 
     for(n_it=gen->node_map.begin(); n_it!=gen->node_map.end(); n_it++) {
         val = n_it->second;
@@ -345,6 +347,7 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no) {
     Node *curr;
 
     this->node_count=0;
+    this->max_innov=0;
 
     for(i=0;i<output_no;i++) {
         curr=new Node(i, NODE_TYPE_OUTPUT);
@@ -407,6 +410,8 @@ Genome::Genome(char *dir, int fileno) {
 		GENE_INSERT(cur_gene, this->gene_map);
         if(cur_gene->innovation>global_innovation)
             global_innovation=cur_gene->innovation+1;
+        if(cur_gene->innovation>this->max_innov)
+            this->max_innov=cur_gene->innovation;
 	}
 	fclose(f);
 
@@ -464,6 +469,8 @@ int Genome::insert_gene(Gene *g) {
     n2->input_genes.push_back(new_gene);
 
     GENE_INSERT(new_gene, this->gene_map);
+    if(new_gene->innovation>this->max_innov)
+        this->max_innov=new_gene->innovation;
     return 0;
 }
 
@@ -475,8 +482,11 @@ void Genome::crossover(Genome *g1, Genome *g2){
     map<unsigned long long, Gene*>::iterator g_it;
     map<NODE_KEY_TYPE, Node*>::iterator n_it;
     long unsigned int id_in,id_out;
+    long unsigned int max_innov;
     Node *new_n;
     
+    max_innov=0;
+
     if(g1==g2) {
         this->copy(g1);
         return;
@@ -616,9 +626,7 @@ int Genome::node_mutate(void) {
     g2->in=neuron;
     g2->innovation=next_innovation();
     g2->enabled=true;
-
-    cout << "new node " << neuron->id << " from " << g1->in->id << " to " << g2->out->id << endl;
-
+    
     neuron->input_genes.push_back(g1);
     neuron->output_genes.push_back(g2);
 
@@ -759,8 +767,10 @@ int Genome::activate(char **view, int viewradius) {
             max_id=key;
         }
     }
-
+    
+    #ifdef DEBUG_NNET
     cout << "best move is: " << max_id << " value " << max << endl;
+    #endif
 
     return max_id;
 
@@ -860,6 +870,17 @@ Species::Species(void)
 	this->average_fitness = 0.0;
 }
 
+Species::~Species(void)
+{
+    list<Genome*>::iterator it;
+
+    it=this->genomes.begin();
+    while(it!=this->genomes.end()) {
+        delete(*it);
+        it=this->genomes.erase(it);
+    }
+}
+
 int Species::cull(bool top_only)
 {
 	int cutoff = 0;
@@ -869,29 +890,19 @@ int Species::cull(bool top_only)
 	this->genomes.sort(cmp_desc_genomes);
 	size = this->genomes.size();
 
-	/********/
-	cout << "BEFORE CULL" <<endl;
-	for (it = this->genomes.begin(); it!=this->genomes.end(); it++) {
-		cout << "cfitt " <<(*it)->fitness << endl;
-	}
-	cout << "END BEFORE CULL" <<endl;
-	/*******/
-
 	if (top_only)
 		cutoff = 1;
 	else
 		cutoff = round((double)this->genomes.size() / 2.0);
     
-    if(size>0)
-	    this->genomes.resize(cutoff);
-
-	/********/
-	cout << "AFTER CULL" <<endl;
-	for (it = this->genomes.begin(); it!=this->genomes.end(); it++) {
-		cout << "end cfitt " <<(*it)->fitness << endl;
-	}
-	cout << "END AFTER CULL" <<endl;
-	/*******/
+    if(size>0) {
+        it=this->genomes.begin();
+        advance(it,cutoff);
+        while(it!=this->genomes.end()) {
+            delete (*it);
+            it=this->genomes.erase(it);
+        }
+    }
 
 	return this->genomes.size();
 }
