@@ -38,7 +38,7 @@
 #define PERTURB_CHANCE 0.9
 #define PERTURB_STEP 0.1
 
-#define ROBBY_CLOCK true
+#define ROBBY_CLOCK false
 
 unsigned long long int hash_ull_int_encode(unsigned long int a, unsigned long int b);
 

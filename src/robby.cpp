@@ -231,10 +231,13 @@ double eval_couple(struct robby *r, long unsigned int robbynum, long unsigned in
     unsigned long int i;
     double sum = 0;
     for (i=0; i < robbynum; i++)
-        sum += (((double) r[i].gathered_cans / (double) (totalcans*map_num))*2 - 
-                ((double) r[i].failed_moves / (double) (roundnum*map_num)));
+        sum += (((double) r[i].gathered_cans / (double) (totalcans*map_num))*9+
+               ((double) (roundnum-r[i].failed_moves)/(double) (roundnum)));
 
-    r[0].fitness = (sum+1)/3;
+    /*if(r[0].failed_moves>20)
+        r[0].fitness=0;
+    else*/
+    r[0].fitness = (sum)/10;
 
     return r[0].fitness;
 }
@@ -292,8 +295,8 @@ int compare_eval(const void *a, const void *b)
 
 #define print_in_generation_header(g) printf("===> Generation %lu\n", g)
 #define print_end_generation_header(g, r, rnum)\
-    printf("===> End of Generation %lu Best fitness: %f\n", g,\
-            (rnum > 0 ? r.fitness : 0))
+    printf("===> End of Generation %lu Best fitness: %f failed: %d gathered: %d\n", g,\
+            (rnum > 0 ? r.fitness : 0),r.failed_moves, r.gathered_cans)
 
 void choose_position(struct world_map *m, struct robby **rl,
         long unsigned int current_couple,
