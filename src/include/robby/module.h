@@ -39,7 +39,7 @@ extern int** directions;
 #define DOWN directions[2]
 
 
-#define DISSIN(n, r) ((unsigned long int) (round((sin((M_PI / (2.0 * (double) r)) * (double) n) * (double) r))))
+#define DISSIN(n, r) ((unsigned long int) (floor((sin((M_PI / (2.0 * (double) r)) * (double) n) * (double) r))))
 
 //fixed view radius for every robby
 #define VIEW_RADIUS 2
@@ -111,6 +111,8 @@ extern int** directions;
 
 /* Prepare the robby for the moving phase (avoid pre-move looping)*/
 #define PREPARE_STATE(r) (r->moved = 1)
+
+unsigned long int get_dis_circle_area(unsigned long int viewradius);
 
 extern "C" {
 /* Move in a direction */

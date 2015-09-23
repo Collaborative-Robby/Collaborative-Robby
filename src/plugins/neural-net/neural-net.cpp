@@ -58,11 +58,15 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
         long unsigned int robbynum)
 {
     unsigned int coup, i;
+    unsigned long int real_view;
+
+    real_view = get_dis_circle_area(VIEW_RADIUS);
+
     /* Create the genome for the robby */
     for (coup = 0; coup < couplenum; coup++) {
 
         if (true ||  !exist_genome_file(DEFAULT_GENOME_DIR, coup))
-            rl[coup][0].genome = new Genome(SQUARE_AREA,POSSIBLE_MOVES);
+            rl[coup][0].genome = new Genome(real_view,POSSIBLE_MOVES);
         else
             rl[coup][0].genome = new Genome(DEFAULT_GENOME_DIR, coup);
 

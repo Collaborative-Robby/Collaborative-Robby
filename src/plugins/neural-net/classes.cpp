@@ -786,17 +786,20 @@ int Genome::activate(struct robby *r) {
         g_it->second->value=0;
     }
 
+    key = POSSIBLE_MOVES;
     for(i=0; i<SQUARE_SIDE; i++) {
         for(j=0; j<SQUARE_SIDE; j++) {
-            key=i*(SQUARE_SIDE)+j+POSSIBLE_MOVES;
-            in_node=this->node_map[key];
-            in_node->activate(r->view[i][j]+1);
+            if (r->view[i][j] != -1) {
+                  in_node=this->node_map[key];
+                  in_node->activate(r->view[i][j]+1);
+                  key++;
+            }
         }
     }
 
     /* TODO check this thing. if key is reassigned it explodes. */
     if (ROBBY_CLOCK) {
-        this->node_map[key+1]->activate((double)r->clock);
+        this->node_map[key]->activate((double)r->clock);
     }
 
     max=(-DBL_MAX);

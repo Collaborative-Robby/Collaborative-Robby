@@ -12,6 +12,17 @@
 #define VIEW_ROBBY 2
 #define VIEW_WALL 3 
 
+unsigned long int get_dis_circle_area(unsigned long int viewradius) {
+    unsigned long int i;
+    unsigned long int retval;
+    retval = 0;
+
+    for(i=1; i<=viewradius; i++)
+        retval += DISSIN(i,viewradius) - 1;
+
+    return retval * 4 + 1;
+}
+
 int get_circle_view (unsigned long int viewradius, char **view) {
     unsigned long int i,j;
     unsigned long int x,y; 
@@ -73,7 +84,6 @@ int get_view(struct robby *r, struct world_map *m, int wraparound) {
     return 0;
 }
 
-
 int update_view(struct robby *r, struct world_map *m, int wraparound)
 {
 	long unsigned int i;
@@ -98,6 +108,7 @@ int update_view(struct robby *r, struct world_map *m, int wraparound)
 	get_view(r, m, wraparound);
     
     #ifdef DEBUG_VIEW
+    unsigned long int j;
     printf("robby %d:\n", r->id);
     
     for(i=0; i<SQUARE_SIDE;i++) {
