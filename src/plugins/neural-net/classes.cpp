@@ -38,6 +38,8 @@
 #define PERTURB_CHANCE 0.9
 #define PERTURB_STEP 0.1
 
+#define ROBBY_CLOCK true
+
 unsigned long long int hash_ull_int_encode(unsigned long int a, unsigned long int b);
 
 
@@ -373,6 +375,13 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no) {
         NODE_INSERT(curr, this->node_map);
     }
     this->node_count += input_no;
+
+    if (ROBBY_CLOCK) {
+        curr=new Node(output_no+input_no, NODE_TYPE_INPUT);
+        NODE_INSERT(curr, this->node_map);
+
+	this->node_count += 1;
+    }
 }
 
 Genome::Genome(char *dir, int fileno) {
@@ -486,9 +495,7 @@ int Genome::insert_gene(Gene *g) {
     n2->input_genes.push_back(new_gene);
 
     /* Update activation count */
-    if (new_gene->enabled) {
-	    new_gene->out->active_in_genes++;
-    }
+    new_gene->out->active_in_genes++;
 
     GENE_INSERT(new_gene, this->gene_map);
     if(new_gene->innovation>this->max_innov)
@@ -662,7 +669,7 @@ int Genome::node_mutate(void) {
     this->max_innov = g2->innovation;
 
     /* Update the active genes count */
-    neuron->active_in_genes++;
+    neuron->active_in_genes = 1;
 
     return 0;
 }
@@ -729,8 +736,6 @@ int Genome::link_mutate(bool force_bias) {
 
     GENE_INSERT(new_gene, this->gene_map);
 
-    //this->gene_list.push_back(new_gene);
-
     n1->output_genes.push_back(new_gene);
     n2->input_genes.push_back(new_gene);
 
@@ -763,7 +768,7 @@ int Genome::enable_disable_mutate(bool enable) {
     return 0;
 }
 
-int Genome::activate(char **view) {
+int Genome::activate(struct robby *r) {
     int i,j;
     unsigned long int key;
     unsigned long int max_id;
@@ -785,8 +790,13 @@ int Genome::activate(char **view) {
         for(j=0; j<SQUARE_SIDE; j++) {
             key=i*(SQUARE_SIDE)+j+POSSIBLE_MOVES;
             in_node=this->node_map[key];
-            in_node->activate(view[i][j]+1);
+            in_node->activate(r->view[i][j]+1);
         }
+    }
+
+    /* TODO check this thing. if key is reassigned it explodes. */
+    if (ROBBY_CLOCK) {
+        this->node_map[key+1]->activate((double)r->clock);
     }
 
     max=(-DBL_MAX);
@@ -866,15 +876,12 @@ int Genome::specialize(list <Species *> *sl)
 	Species *new_species;
 	bool found = false;
 	list <Species *>::iterator s_it;
-	int i = 0;
-	static int j = 0;
 
 	for (s_it=sl->begin(); s_it !=sl->end();s_it++) {
 		Genome *oth_g = LIST_GET(Genome*, (*s_it)->genomes, 0);
 		if (same_species(this, oth_g)) {
 			found = true;
 			(*s_it)->genomes.push_back(this);
-			i++;
             #ifdef SPECIALIZE_DEBUG
 		    this->print();
             #endif
@@ -886,7 +893,6 @@ int Genome::specialize(list <Species *> *sl)
 		new_species = new Species();
 		sl->push_back(new_species);
 		new_species->genomes.push_back(this);
-		j++;
         #ifdef SPECIALIZE_DEBUG
 		this->print();
         #endif

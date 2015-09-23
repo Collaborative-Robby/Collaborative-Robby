@@ -12,8 +12,8 @@ CORE:
 
 NNET:
 - gestione differenze training e test #1
-- cross over #1
 - Da finire: Gestione pool
+- FORSE: file di configurazione
 
 - come gestire la storia delle percezioni dei robot?
     - manteniamo info sull'intera mappa, anche se non sappiamo niente

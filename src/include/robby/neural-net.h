@@ -90,7 +90,7 @@ class Genome {
 		int enable_disable_mutate(bool enable);
 		void print(void);
 		bool containslink(class Gene *g);
-		int activate(char **view);
+		int activate(struct robby *r);
 		int save_to_file(char *dir, int fno);
 		int specialize(list <class Species *> *sl);
 };

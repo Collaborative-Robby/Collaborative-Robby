@@ -44,6 +44,8 @@ struct robby {
 
 	class Genome *genome;
     char *dna;
+
+    long unsigned int clock;
 };
 
 #endif

@@ -26,7 +26,7 @@ int move(struct world_map *m, struct robby *r)
     /* Prepare the state of the robby */
     PREPARE_STATE(r);
 
-    dirnum=r->genome->activate(r->view);
+    dirnum=r->genome->activate(r);
     if(dirnum<4) {
         success=MOVE_NORMAL(r,m,dirnum);
     }
@@ -43,6 +43,8 @@ int move(struct world_map *m, struct robby *r)
 
     /* Update the state of the robby with the new view */
     update_view(r, m, false);
+
+    r->clock++;
 
 #ifdef DEBUG_MOVE
     /* Display some info on the current move */
@@ -172,11 +174,18 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
         long unsigned int robbynum,
         long unsigned int generation)
 {
+    unsigned long int i, j;
+
     if (generation == 0) {
         setup_generations(rl, couplenum, robbynum);
     } else {
         next_generation(rl, couplenum, robbynum);
     }
+
+    for (i = 0; i < couplenum; i++)
+        for (j = 0; j < robbynum; j++)
+            rl[i][j].clock = 0;
+
 
 #ifdef SPECIES_DEBUG
     list <Species *>::iterator s_it;
