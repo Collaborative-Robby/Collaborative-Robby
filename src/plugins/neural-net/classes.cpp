@@ -237,6 +237,7 @@ Node::Node(unsigned long int id, int type) {
     this->type=type;
     this->id=id;
     this->value=0;
+    this->active_in_genes = 0;
 }
 
 Node::Node(Node* copy) {
@@ -245,6 +246,8 @@ Node::Node(Node* copy) {
     this->type=copy->type;
     this->value=copy->value;
     this->id=copy->id;
+
+    this->active_in_genes = copy->active_in_genes;
 }
 
 Node::~Node(void) {
@@ -259,14 +262,15 @@ void Node::print(void) {
 void Node::activate(double input) {
     list<Gene*>::iterator it;
     this->activate_count++;
-    /*if(false && this->activate_count>=MAX_ACTIVATIONS) {
-        cout << "max activations" << endl;
-        return;
-    }*/
+
     this->value=0;
-    if(this->type==NODE_TYPE_INPUT)
+    if(this->type==NODE_TYPE_INPUT) {
         this->value=input;
-    else {
+    } else {
+        /* Check if we are over the relative max_activation */
+        if(this->activate_count >= this->active_in_genes + MAX_REACTIVATIONS)
+            return;
+
         for(it=this->input_genes.begin(); it!=this->input_genes.end(); it++) {
             value+=(*it)->weight*(*it)->value;
         }
@@ -303,9 +307,6 @@ void Gene::print(void) {
 }
 
 void Gene::activate(double value) {
-    if(this->activate_count >= MAX_ACTIVATIONS)
-        return;
-    this->activate_count++;
     if(this->enabled) {
         this->value=value;
         this->out->activate(value);
@@ -348,6 +349,9 @@ void Genome::copy(Genome *gen) {
         gene->in  = node_map[gene->in->id];
         gene->out = node_map[gene->out->id];
         GENE_INSERT(gene, this->gene_map);
+
+	if (gene->enabled)
+		gene->out->active_in_genes++;
     }
 }
 
@@ -427,6 +431,8 @@ Genome::Genome(char *dir, int fileno) {
 	fclose(f);
 
 	free(path);
+
+	/* XXX active_in_count update */
 }
 
 Genome::Genome(Species *s) {
@@ -479,6 +485,11 @@ int Genome::insert_gene(Gene *g) {
     n1->output_genes.push_back(new_gene);
     n2->input_genes.push_back(new_gene);
 
+    /* Update activation count */
+    if (new_gene->enabled) {
+	    new_gene->out->active_in_genes++;
+    }
+
     GENE_INSERT(new_gene, this->gene_map);
     if(new_gene->innovation>this->max_innov)
         this->max_innov=new_gene->innovation;
@@ -503,6 +514,8 @@ void Genome::crossover(Genome *g1, Genome *g2){
     for(n_it=g1->node_map.begin(); n_it!=g1->node_map.end(); n_it++) {
         if(n_it->second->type!=NODE_TYPE_HIDDEN) {
             new_n=new Node(n_it->second);
+
+	    new_n->active_in_genes = 0;
             NODE_INSERT(new_n, this->node_map);
         }
     }
@@ -648,6 +661,9 @@ int Genome::node_mutate(void) {
 
     this->max_innov = g2->innovation;
 
+    /* Update the active genes count */
+    neuron->active_in_genes++;
+
     return 0;
 }
 
@@ -720,6 +736,7 @@ int Genome::link_mutate(bool force_bias) {
 
     this->max_innov = new_gene->innovation;
 
+    new_gene->out->active_in_genes++;
 
     return 0;
 }
@@ -737,6 +754,9 @@ int Genome::enable_disable_mutate(bool enable) {
     if(candidates.size()>0) {
         selected=LIST_GET(Gene*, candidates, round(RANDOM_DOUBLE(candidates.size()-1)));
         selected->enabled=enable;
+
+	/* Increment or decrement active genes */
+	selected->out->active_in_genes += ((2 * selected->enabled) - 1);
     }
 
     candidates.clear();
@@ -758,7 +778,6 @@ int Genome::activate(char **view) {
     }
 
     for(g_it=this->gene_map.begin(); g_it!=this->gene_map.end(); g_it++) {
-        g_it->second->activate_count=0;
         g_it->second->value=0;
     }
 

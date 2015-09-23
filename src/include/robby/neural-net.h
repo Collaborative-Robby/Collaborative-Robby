@@ -8,7 +8,7 @@
 #define NODE_TYPE_HIDDEN 1
 #define NODE_TYPE_OUTPUT 2
 
-#define MAX_ACTIVATIONS 1
+#define MAX_REACTIVATIONS 0
 
 #define DEFAULT_GENOME_DIR ((char *)"genomes")
 #define GENOME_EXT ((char *)"genome")
@@ -39,7 +39,6 @@ class Gene {
 		double weight;
 		bool enabled;
 		double value;
-        int activate_count;
 		int point_mutate(void);
 		void print(void);
 		Gene(Gene *gen);
@@ -52,7 +51,8 @@ class Node{
 	public:
 		int type;
 		unsigned long int id;
-		int activate_count;
+		unsigned long int active_in_genes;
+		unsigned long int activate_count;
 		double value;
 		list<Gene*> input_genes;
 		list<Gene*> output_genes;
