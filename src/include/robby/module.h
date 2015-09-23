@@ -127,7 +127,7 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 
 int move(struct world_map *m, struct robby *r);
 
-void cleanup(struct robby **rl, int couplenum, int rnum);
+void cleanup(struct robby **rl, unsigned long int couplenum, unsigned long  int rnum);
 }
 
 /* Moving possibilities */
