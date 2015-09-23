@@ -176,16 +176,15 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 {
     unsigned long int i, j;
 
+    for (i = 0; i < couplenum; i++)
+        for (j = 0; j < robbynum; j++)
+            rl[i][j].clock = 0;
+
     if (generation == 0) {
         setup_generations(rl, couplenum, robbynum);
     } else {
         next_generation(rl, couplenum, robbynum);
     }
-
-    for (i = 0; i < couplenum; i++)
-        for (j = 0; j < robbynum; j++)
-            rl[i][j].clock = 0;
-
 
 #ifdef SPECIES_DEBUG
     list <Species *>::iterator s_it;
