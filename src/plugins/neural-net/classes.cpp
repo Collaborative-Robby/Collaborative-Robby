@@ -380,8 +380,14 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no) {
         curr=new Node(output_no+input_no, NODE_TYPE_INPUT);
         NODE_INSERT(curr, this->node_map);
 
-	this->node_count += 1;
+	this->node_count++;
     }
+
+    /* Bias node */
+    curr = new Node(this->node_count, NODE_TYPE_INPUT);
+    NODE_INSERT(curr, this->node_map);
+
+    this->node_count++;
 }
 
 Genome::Genome(char *dir, int fileno) {
@@ -684,9 +690,11 @@ bool Genome::containslink(Gene *g) {
 
 int Genome::link_mutate(bool force_bias) {
     unsigned long int node_size;
+    unsigned long int input_size;
     unsigned long int rand1,rand2;
     Node *n1,*n2,*temp;
     Gene *new_gene;
+    NODE_KEY_TYPE key;
 
     node_size=this->node_map.size();
 
@@ -716,10 +724,11 @@ int Genome::link_mutate(bool force_bias) {
     new_gene->out=n2;
 
     if(force_bias) {
-        //DO SOMETHING
+	input_size = get_dis_circle_area(VIEW_RADIUS);
+	key = POSSIBLE_MOVES + input_size + ROBBY_CLOCK;
+        new_gene->in = this->node_map[key];
     }
 
-    //todo contains link
     if(this->containslink(new_gene)) {
         delete new_gene;
         return 1;
@@ -797,10 +806,16 @@ int Genome::activate(struct robby *r) {
         }
     }
 
-    /* TODO check this thing. if key is reassigned it explodes. */
+    /* ALERT check this thing. if key is reassigned it explodes. */
     if (ROBBY_CLOCK) {
         this->node_map[key]->activate((double)r->clock);
+	key++;
     }
+
+    /* Bias (input node with value 1.0) activation */
+    /* ALERT check this thing. if key is reassigned it explodes. */
+    in_node = this->node_map[key];
+    in_node->activate(1.0);
 
     max=(-DBL_MAX);
     for(key=0; key<POSSIBLE_MOVES; key++) {
@@ -815,8 +830,6 @@ int Genome::activate(struct robby *r) {
     #endif
 
     return (int)max_id;
-
-    //TODO prendi gli output
 }
 
 int Genome::save_to_file(char *dir, int fileno) {
