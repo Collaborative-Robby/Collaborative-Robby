@@ -185,15 +185,26 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
         long unsigned int robbynum,
         long unsigned int generation)
 {
+    FILE *f;
     unsigned long int i, j;
 
     for (i = 0; i < couplenum; i++)
         for (j = 0; j < robbynum; j++)
             rl[i][j].clock = 0;
+    
 
     if (generation == 0) {
         setup_generations(rl, couplenum, robbynum);
+        f=fopen("fitvalues", "w");
+        fclose(f);
     } else {
+        f=fopen("fitvalues","a");
+        for(i=0;i<couplenum;i++) {
+            fprintf(f,"%lu %f %lu\n",i, rl[i][0].fitness,generation);
+            fprintf(f,"0 %f %lu\n\n", rl[i][0].fitness, generation);
+        }
+        fprintf(f,"\n");
+        fclose(f);
         next_generation(rl, couplenum, robbynum);
     }
 
