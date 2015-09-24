@@ -90,7 +90,7 @@ bool cmp_desc_genomes(Genome *g1, Genome *g2)
 	return (g1->fitness > g2->fitness);
 }
 
-inline bool same_species(Genome *g1, Genome *g2)
+inline double delta_species(Genome *g1, Genome *g2)
 {
 	int found;
 	double delta_excess = 0, delta_disjoint = 0, delta_weight = 0;
@@ -158,7 +158,7 @@ inline bool same_species(Genome *g1, Genome *g2)
 		delta_excess = delta_disjoint = 0;
 
 	double x = (delta_excess + delta_disjoint + delta_weight);
-	return x < SAME_SPECIES_TRESHOLD;
+	return x;
 }
 
 int remove_weak_species(list <Species *> *sl, long unsigned int couplenum)
@@ -388,6 +388,8 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no) {
     NODE_INSERT(curr, this->node_map);
 
     this->node_count++;
+
+    this->mutate();
 }
 
 Genome::Genome(char *dir, int fileno) {
@@ -650,6 +652,8 @@ int Genome::node_mutate(void) {
     this->node_count++;
 
     g_orig->enabled=false;
+    g_orig->in->output_genes.remove(g_orig);
+    g_orig->out->input_genes.remove(g_orig);
 
     g1=new Gene(g_orig);
     g2=new Gene(g_orig);
@@ -768,6 +772,15 @@ int Genome::enable_disable_mutate(bool enable) {
     if(candidates.size()>0) {
         selected=LIST_GET(Gene*, candidates, round(RANDOM_DOUBLE(candidates.size()-1)));
         selected->enabled=enable;
+        
+        if(enable) {
+            selected->in->output_genes.push_back(selected);
+            selected->out->input_genes.push_back(selected);
+        }
+        else {
+            selected->in->output_genes.remove(selected);
+            selected->out->input_genes.remove(selected);
+        }
 
 	/* Increment or decrement active genes */
 	selected->out->active_in_genes += ((2 * selected->enabled) - 1);
@@ -890,22 +903,26 @@ int Genome::save_to_file(char *dir, int fileno) {
 int Genome::specialize(list <Species *> *sl)
 {
 	Species *new_species;
-	bool found = false;
 	list <Species *>::iterator s_it;
+    double min_distance,curr_distance;
+    Species *found_species;
+
+    min_distance=SAME_SPECIES_TRESHOLD;
+    found_species=NULL;
 
 	for (s_it=sl->begin(); s_it !=sl->end();s_it++) {
 		Genome *oth_g = LIST_GET(Genome*, (*s_it)->genomes, 0);
-		if (same_species(this, oth_g)) {
-			found = true;
-			(*s_it)->genomes.push_back(this);
+        curr_distance=delta_species(this,oth_g);
+		if (curr_distance<min_distance) {
+            found_species=(*s_it);
+            min_distance=curr_distance;
             #ifdef SPECIALIZE_DEBUG
 		    this->print();
             #endif
-			break;
 		}
 	}
 
-	if (!found) {
+	if (!found_species) {
 		new_species = new Species();
 		sl->push_back(new_species);
 		new_species->genomes.push_back(this);
@@ -913,6 +930,8 @@ int Genome::specialize(list <Species *> *sl)
 		this->print();
         #endif
 	}
+    else
+        found_species->genomes.push_back(this);
 
     return 0;
 }

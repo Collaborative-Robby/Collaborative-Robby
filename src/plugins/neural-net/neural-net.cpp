@@ -50,7 +50,7 @@ int move(struct world_map *m, struct robby *r)
     /* Display some info on the current move */
     PRINT_MOVE_INFO(dirnum, r->id, success);
 #endif
-
+    
     return success;
 }
 
@@ -86,6 +86,11 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
     return 0;
 }
 
+bool cmp_average_fitness(Species *s1, Species *s2) 
+{
+    return s1->average_fitness > s2->average_fitness;
+}
+
 static int next_generation(struct robby **rl, unsigned long int couplenum,
         unsigned long int robbynum)
 {
@@ -111,15 +116,17 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
             s_it++;
         }
     }
-
+    
     remove_stale_species(&species_list);
     //forse rank globally???
     remove_weak_species(&species_list, couplenum);
+    
 
     tot_fitness=0;
     for (s_it = species_list.begin(); s_it != species_list.end(); s_it++)
         tot_fitness += (*s_it)->calculate_avg_fitness();
 
+    species_list.sort(cmp_average_fitness);
 
     for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
         breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum)-1;
@@ -189,6 +196,8 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
     } else {
         next_generation(rl, couplenum, robbynum);
     }
+
+    cout << "species list size: " << species_list.size() << endl;
 
 #ifdef SPECIES_DEBUG
     list <Species *>::iterator s_it;
