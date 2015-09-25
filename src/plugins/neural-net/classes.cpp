@@ -19,24 +19,24 @@
 #include <robby/dismath.h>
 #include <robby/neural-net.h>
 
-#define MUTATION_RATE_NODE 0.5
-#define MUTATION_RATE_CONNECTION 0.25
+#define MUTATION_RATE_NODE 0.75
+#define MUTATION_RATE_CONNECTION 0.75
 #define MUTATION_RATE_LINK 2.0
-#define MUTATION_RATE_BIAS 0.4
-#define MUTATION_RATE_ENABLE 0.2
-#define MUTATION_RATE_DISABLE 0.4
+#define MUTATION_RATE_BIAS 0.6
+#define MUTATION_RATE_ENABLE 0.4
+#define MUTATION_RATE_DISABLE 0.6
 
-#define SAME_SPECIES_TRESHOLD 1.0
+#define SAME_SPECIES_TRESHOLD 0.5
 #define COEFFICIENT_DELTA_WEIGHT 0.4
 #define COEFFICIENT_EXCESS_GENES 2.0
-#define COEFFICIENT_DISJOINT_GENES 2.0
+#define COEFFICIENT_DISJOINT_GENES 0.2
 
 #define SPECIES_STALE_TRESHOLD 15
 
 #define CROSSOVER_CHANCE 0.75
 
 #define PERTURB_CHANCE 0.9
-#define PERTURB_STEP 0.1
+#define PERTURB_STEP 0.05
 
 #define ROBBY_CLOCK false
 
@@ -186,7 +186,7 @@ int remove_weak_species(list <Species *> *sl, long unsigned int couplenum)
 		breed = floor(((*s_it)->average_fitness / tot_fitness) *
 		              (double) couplenum);
 
-		if (breed < 1 && sl->size()>0) {
+		if (breed < 1) {
             delete (*s_it);
 			s_it = sl->erase(s_it);
 		}
@@ -325,7 +325,10 @@ int Gene::point_mutate(void) {
 }
 
 /* Genome */
+long unsigned int genome_count=0;
+
 Genome::Genome(Genome *gen) {
+    this->id=genome_count++;
     this->copy(gen);
 }
 
@@ -360,7 +363,8 @@ void Genome::copy(Genome *gen) {
 Genome::Genome(unsigned long int input_no, unsigned long int output_no) {
     unsigned long int i;
     Node *curr;
-
+    
+    this->id=genome_count++;
     this->node_count=0;
     this->max_innov=0;
 
@@ -455,6 +459,9 @@ Genome::Genome(char *dir, int fileno) {
 Genome::Genome(Species *s) {
     Genome *g1,*g2;
     long unsigned int r;
+
+    this->id=genome_count++;
+
     if(RANDOM_DOUBLE(1)<CROSSOVER_CHANCE) {
         r=(long unsigned int) round(RANDOM_DOUBLE(s->genomes.size()-1));
         g1=LIST_GET(Genome*, s->genomes, r);
@@ -512,7 +519,9 @@ int Genome::insert_gene(Gene *g) {
 }
 
 Genome::Genome(Genome *g1, Genome *g2){
+    this->id=genome_count++;
     this->crossover(g1, g2);
+    this->mutate();
 }
 
 void Genome::crossover(Genome *g1, Genome *g2){

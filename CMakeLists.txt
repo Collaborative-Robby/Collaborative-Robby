@@ -9,6 +9,32 @@ set(PLUGINS_SOURCE_DIR "${CORE_SOURCE_PROJECT_DIR}/plugins")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wconversion -Wall -Wextra -Wno-unused-parameter")
 
+if (DEFINED DEBUG_GENOMES AND DEBUG_GENOMES)
+    MESSAGE(STATUS "Compiling with debug genomes")
+    ADD_DEFINITIONS(-DDEBUG_GENOMES)
+else()
+    MESSAGE(STATUS "Compiling without debug genomes")
+    REMOVE_DEFINITIONS(-DDEBUG_GENOMES)
+endif()
+
+if (DEFINED DEBUG_SPECIES AND DEBUG_SPECIES)
+    MESSAGE(STATUS "Compiling with debug species")
+    ADD_DEFINITIONS(-DDEBUG_SPECIES)
+else()
+    MESSAGE(STATUS "Compiling without debug species")
+    REMOVE_DEFINITIONS(-DDEBUG_SPECIES)
+endif()
+
+if (DEFINED DEBUG_MOVE AND DEBUG_MOVE)
+    MESSAGE(STATUS "Compiling with debug move")
+    ADD_DEFINITIONS(-DDEBUG_MOVE)
+else()
+    MESSAGE(STATUS "Compiling without debug move")
+    REMOVE_DEFINITIONS(-DDEBUG_MOVE)
+endif()
+
+
+
 if (DEFINED ROBBY_DEBUG AND ROBBY_DEBUG)
 	MESSAGE(STATUS "Compiling with debug flag.")
 	ADD_DEFINITIONS(-D DEBUG)

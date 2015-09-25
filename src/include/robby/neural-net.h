@@ -71,6 +71,7 @@ class Genome {
 		map<unsigned long long int, Gene*> gene_map;
 		unsigned long int node_count;
 		unsigned long int max_innov;
+        unsigned long int id;
 		double fitness;
 
 		Genome(unsigned long int input_no, unsigned long int output_no);

@@ -26,6 +26,10 @@ int move(struct world_map *m, struct robby *r)
     /* Prepare the state of the robby */
     PREPARE_STATE(r);
 
+#ifdef DEBUG_MOVE
+    cout << "position BEFORE " << r->x << "," << r->y << endl;
+    cout << "over BEFORE " << r->over << "vs"<< (int)(r->over==CAN_DUMMY_PTR) << endl;
+#endif
     dirnum=r->genome->activate(r);
     if(dirnum<4) {
         success=MOVE_NORMAL(r,m,dirnum);
@@ -48,7 +52,9 @@ int move(struct world_map *m, struct robby *r)
 
 #ifdef DEBUG_MOVE
     /* Display some info on the current move */
-    PRINT_MOVE_INFO(dirnum, r->id, success);
+    PRINT_MOVE_INFO(dirnum, r->genome->id, success);
+    cout << "position AFTER" << r->x << " , " << r->y << endl;
+    cout << "over AFTER " << r->over << "vs"<< (int) (r->over==CAN_DUMMY_PTR) << endl;
 #endif
     
     return success;
@@ -121,7 +127,6 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
     //forse rank globally???
     remove_weak_species(&species_list, couplenum);
     
-
     tot_fitness=0;
     for (s_it = species_list.begin(); s_it != species_list.end(); s_it++)
         tot_fitness += (*s_it)->calculate_avg_fitness();
@@ -191,13 +196,33 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
     for (i = 0; i < couplenum; i++)
         for (j = 0; j < robbynum; j++)
             rl[i][j].clock = 0;
-    
+   
+    //FIXME roba stampe brutta cacca
+    if(generation>0)
+        for (i = 0; i < couplenum; i++)
+            rl[i][0].genome->fitness = rl[i][0].fitness;
 
+#ifdef DEBUG_GENOMES
+    list <Species *>::iterator s_it;
+    list <Genome *>::iterator g_it;
+    
+    i=0;
+    for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
+        cout << "Species BEFORE " << i++ << endl;
+        for (g_it = (*s_it)->genomes.begin(); g_it != (*s_it)->genomes.end(); g_it++) {
+            //(*g_it)->print();
+            cout <<"fitness is: "  <<(*g_it)->fitness <<" >> "<< (*g_it)->id << endl;
+            cout << "----" << endl;
+        }
+    }
+#endif
+    
     if (generation == 0) {
         setup_generations(rl, couplenum, robbynum);
         f=fopen("fitvalues", "w");
         fclose(f);
     } else {
+    #ifdef DEBUG_SPECIES
         f=fopen("fitvalues","a");
         for(i=0;i<couplenum;i++) {
             fprintf(f,"%lu %f %lu\n",i, rl[i][0].fitness,generation);
@@ -205,19 +230,20 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
         }
         fprintf(f,"\n");
         fclose(f);
+    #endif
         next_generation(rl, couplenum, robbynum);
     }
 
     cout << "species list size: " << species_list.size() << endl;
 
-#ifdef SPECIES_DEBUG
-    list <Species *>::iterator s_it;
-    list <Genome *>::iterator g_it;
-
+#ifdef DEBUG_GENOMES
+    
+    i=0;
     for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
-        cout << "Species " << i++ << endl;
+        cout << "Species AFTER " << i++ << endl;
         for (g_it = (*s_it)->genomes.begin(); g_it != (*s_it)->genomes.end(); g_it++) {
-            (*g_it)->print();
+            //(*g_it)->print();
+            cout <<"fitness is: "  <<(*g_it)->fitness <<" >> "<< (*g_it)->id << endl;
             cout << "----" << endl;
         }
     }

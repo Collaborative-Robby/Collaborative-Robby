@@ -7,10 +7,10 @@
 
 
 #define VIEW_TOO_FAR -1
-#define VIEW_EMPTY 0
-#define VIEW_CAN 1
-#define VIEW_ROBBY 2
-#define VIEW_WALL 3 
+#define VIEW_WALL 0
+#define VIEW_ROBBY 1
+#define VIEW_EMPTY 2
+#define VIEW_CAN 3
 
 unsigned long int get_dis_circle_area(unsigned long int viewradius) {
     unsigned long int i;
