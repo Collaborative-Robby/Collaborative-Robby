@@ -228,16 +228,20 @@ double eval_couple(struct robby *r, long unsigned int robbynum, long unsigned in
 {
     unsigned long int i;
     double sum = 0;
-    for (i=0; i < robbynum; i++)
+    /*for (i=0; i < robbynum; i++)
         sum += (((double) r[i].gathered_cans / (double) (totalcans*map_num))*99+
                ((double) (roundnum-r[i].failed_moves)/(double) (roundnum)));
-    
+    */
+
+
+    for (i=0; i < robbynum; i++)
+        sum+= (double)r[i].gathered_cans/(double)r[i].num_moves;
     //printf("total cans %lu, number rounds: %lu\n", totalcans, roundnum);
 
     /*if(r[0].failed_moves>20)
         r[0].fitness=0;
     else*/
-    r[0].fitness = (sum)/100.0;
+    r[0].fitness = (sum);
 
     return r[0].fitness;
 }
@@ -316,8 +320,8 @@ void choose_position(struct world_map *m, struct robby **rl,
         }
     }
     //FIXME posizione sbagliaterrima
-    rl[0][0].x=1;
-    rl[0][0].y=1;
+    rl[current_couple][0].x=1;
+    rl[current_couple][0].y=1;
 }
 
 int map_fetch_from_file(struct world_map *m, char* filename, long unsigned int robbynum) {
@@ -446,6 +450,7 @@ void zero_fitness(struct robby *rl, long unsigned int robbynum)
         rl[i].failed_moves=0;
         rl[i].last_gathered_can_time = 0;
         rl[i].fitness = 0.0;
+        rl[i].num_moves=0;
     }
 }
 

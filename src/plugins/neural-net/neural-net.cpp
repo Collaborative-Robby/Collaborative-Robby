@@ -30,6 +30,9 @@ int move(struct world_map *m, struct robby *r)
     cout << "position BEFORE " << r->x << "," << r->y << endl;
     cout << "over BEFORE " << r->over << "vs"<< (int)(r->over==CAN_DUMMY_PTR) << endl;
 #endif
+    if(r->gathered_cans >= m->n_cans)
+        return 2;
+    
     dirnum=r->genome->activate(r);
     if(dirnum<4) {
         success=MOVE_NORMAL(r,m,dirnum);
@@ -42,8 +45,9 @@ int move(struct world_map *m, struct robby *r)
     else 
         success=0;
 
-    if(success==0)
-        r->failed_moves++;
+    /*if(success==0)
+        r->failed_moves++;*/
+    r->num_moves++;
 
     /* Update the state of the robby with the new view */
     update_view(r, m, false);
@@ -195,7 +199,7 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 
     for (i = 0; i < couplenum; i++)
         for (j = 0; j < robbynum; j++)
-            rl[i][j].clock = 0;
+            rl[i][j].num_moves = 0;
    
     //FIXME roba stampe brutta cacca
     if(generation>0)

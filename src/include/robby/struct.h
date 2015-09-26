@@ -32,6 +32,7 @@ struct robby {
 	int gathered_cans;
     int failed_moves;
 	int last_gathered_can_time;
+    long unsigned int num_moves;
 
 	double fitness;
 

@@ -186,7 +186,7 @@ int remove_weak_species(list <Species *> *sl, long unsigned int couplenum)
 		breed = floor(((*s_it)->average_fitness / tot_fitness) *
 		              (double) couplenum);
 
-		if (breed < 1) {
+		if (breed < 1 && sl->size()>1) {
             delete (*s_it);
 			s_it = sl->erase(s_it);
 		}
