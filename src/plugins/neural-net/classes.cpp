@@ -38,7 +38,7 @@
 #define PERTURB_CHANCE 0.9
 #define PERTURB_STEP 0.05
 
-#define ROBBY_CLOCK false
+#define ROBBY_NNET_POSITION true
 
 unsigned long long int hash_ull_int_encode(unsigned long int a, unsigned long int b);
 
@@ -380,11 +380,14 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no) {
     }
     this->node_count += input_no;
 
-    if (ROBBY_CLOCK) {
+    if (ROBBY_NNET_POSITION) {
         curr=new Node(output_no+input_no, NODE_TYPE_INPUT);
         NODE_INSERT(curr, this->node_map);
 
-	this->node_count++;
+        curr=new Node(output_no+input_no+1, NODE_TYPE_INPUT);
+        NODE_INSERT(curr, this->node_map);
+
+	this->node_count+=2;
     }
 
     /* Bias node */
@@ -738,7 +741,7 @@ int Genome::link_mutate(bool force_bias) {
 
     if(force_bias) {
 	input_size = get_dis_circle_area(VIEW_RADIUS);
-	key = POSSIBLE_MOVES + input_size + ROBBY_CLOCK;
+	key = POSSIBLE_MOVES + input_size + (ROBBY_NNET_POSITION * 2);
         new_gene->in = this->node_map[key];
     }
 
@@ -829,8 +832,11 @@ int Genome::activate(struct robby *r) {
     }
 
     /* ALERT check this thing. if key is reassigned it explodes. */
-    if (ROBBY_CLOCK) {
-        this->node_map[key]->activate((double)r->clock);
+    if (ROBBY_NNET_POSITION) {
+        this->node_map[key]->activate((double)r->x);
+	key++;
+
+        this->node_map[key]->activate((double)r->y);
 	key++;
     }
 
