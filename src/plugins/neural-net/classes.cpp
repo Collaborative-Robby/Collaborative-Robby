@@ -26,10 +26,10 @@
 #define MUTATION_RATE_ENABLE 0.4
 #define MUTATION_RATE_DISABLE 0.6
 
-#define SAME_SPECIES_TRESHOLD 0.5
+#define SAME_SPECIES_TRESHOLD 1.5
 #define COEFFICIENT_DELTA_WEIGHT 0.4
 #define COEFFICIENT_EXCESS_GENES 2.0
-#define COEFFICIENT_DISJOINT_GENES 0.2
+#define COEFFICIENT_DISJOINT_GENES 2.0
 
 #define SPECIES_STALE_TRESHOLD 15
 
@@ -38,7 +38,7 @@
 #define PERTURB_CHANCE 0.9
 #define PERTURB_STEP 0.05
 
-#define ROBBY_NNET_POSITION true
+#define ROBBY_NNET_POSITION false
 
 unsigned long long int hash_ull_int_encode(unsigned long int a, unsigned long int b);
 
@@ -353,6 +353,10 @@ void Genome::copy(Genome *gen) {
         gene = new Gene(g_it->second);
         gene->in  = node_map[gene->in->id];
         gene->out = node_map[gene->out->id];
+
+        gene->in->output_genes.push_back(gene);
+        gene->out->input_genes.push_back(gene);
+
         GENE_INSERT(gene, this->gene_map);
 
 	if (gene->enabled)
@@ -361,8 +365,9 @@ void Genome::copy(Genome *gen) {
 }
 
 Genome::Genome(unsigned long int input_no, unsigned long int output_no) {
-    unsigned long int i;
+    unsigned long int i,j;
     Node *curr;
+    Gene *cgene;
     
     this->id=genome_count++;
     this->node_count=0;
@@ -395,6 +400,21 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no) {
     NODE_INSERT(curr, this->node_map);
 
     this->node_count++;
+
+    for(i=output_no;i<node_count;i++) {
+	    for (j = 0; j < output_no; j++) {
+		    cgene = new Gene();
+		    cgene->in  = this->node_map[i];
+		    cgene->out = this->node_map[j];
+
+		    this->node_map[i]->output_genes.push_back(cgene);
+		    this->node_map[j]->input_genes.push_back(cgene);
+
+		    cgene->out->active_in_genes++;
+
+		    GENE_INSERT(cgene, this->gene_map);
+	    }
+    }
 
     this->mutate();
 }
