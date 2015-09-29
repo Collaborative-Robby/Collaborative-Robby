@@ -26,12 +26,12 @@
 #define MUTATION_RATE_ENABLE 0.4
 #define MUTATION_RATE_DISABLE 0.6
 
-#define SAME_SPECIES_TRESHOLD 1.5
+#define SAME_SPECIES_TRESHOLD 1.0
 #define COEFFICIENT_DELTA_WEIGHT 0.4
 #define COEFFICIENT_EXCESS_GENES 2.0
 #define COEFFICIENT_DISJOINT_GENES 2.0
 
-#define SPECIES_STALE_TRESHOLD 15
+#define SPECIES_STALE_TRESHOLD 60
 
 #define CROSSOVER_CHANCE 0.75
 
@@ -184,7 +184,7 @@ int remove_weak_species(list <Species *> *sl, long unsigned int couplenum)
 
 	for (s_it = sl->begin(); s_it != sl->end();) {
 		breed = floor(((*s_it)->average_fitness / tot_fitness) *
-		              (double) couplenum);
+		              (double) couplenum)-1;
 
 		if (breed < 1 && sl->size()>1) {
             delete (*s_it);
@@ -288,6 +288,7 @@ void Node::activate(double input) {
 Gene::Gene(void) {
     this->enabled = true;
     this->value=0;
+    this->weight=RANDOM_DOUBLE(4)-2;
 }
 
 Gene::Gene(Gene *gen) {
@@ -845,7 +846,7 @@ int Genome::activate(struct robby *r) {
         for(j=0; j<SQUARE_SIDE; j++) {
             if (r->view[i][j] != -1) {
                   in_node=this->node_map[key];
-                  in_node->activate(r->view[i][j]+1);
+                  in_node->activate(r->view[i][j]);
                   key++;
             }
         }
@@ -999,9 +1000,11 @@ unsigned long int Species::cull(bool top_only)
 	this->genomes.sort(cmp_desc_genomes);
 	size = this->genomes.size();
 
-	if (top_only)
-		cutoff = 1;
-	else
+	if (top_only && size>=2)
+		cutoff = 2;
+	else if (top_only)
+        cutoff=1;
+    else 
 		cutoff = (int) round((double)this->genomes.size() / 2.0);
     
     if(size>0) {

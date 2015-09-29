@@ -30,8 +30,8 @@ int move(struct world_map *m, struct robby *r)
     cout << "position BEFORE " << r->x << "," << r->y << endl;
     cout << "over BEFORE " << r->over << "vs"<< (int)(r->over==CAN_DUMMY_PTR) << endl;
 #endif
-    if(r->gathered_cans >= m->n_cans)
-        return 2;
+    //if(r->gathered_cans >= m->n_cans)
+    //    return 2;
     
     dirnum=r->genome->activate(r);
     if(dirnum<4) {
@@ -45,8 +45,8 @@ int move(struct world_map *m, struct robby *r)
     else 
         success=0;
 
-    /*if(success==0)
-        r->failed_moves++;*/
+    if(success==0)
+        r->failed_moves++;
     r->num_moves++;
 
     /* Update the state of the robby with the new view */
@@ -104,7 +104,7 @@ bool cmp_average_fitness(Species *s1, Species *s2)
 static int next_generation(struct robby **rl, unsigned long int couplenum,
         unsigned long int robbynum)
 {
-    unsigned long int coup;
+    unsigned long int coup,size;
     int i,r;
     unsigned long int j;
     double breed, tot_fitness;
@@ -126,24 +126,28 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
             s_it++;
         }
     }
+
+    species_list.sort(cmp_average_fitness);
     
-    remove_stale_species(&species_list);
+    //remove_stale_species(&species_list);
     //forse rank globally???
     remove_weak_species(&species_list, couplenum);
     
     tot_fitness=0;
     for (s_it = species_list.begin(); s_it != species_list.end(); s_it++)
-        tot_fitness += (*s_it)->calculate_avg_fitness();
+        tot_fitness += (*s_it)->average_fitness;
 
     species_list.sort(cmp_average_fitness);
 
     for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
-        breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum)-1;
+        breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum)-2;
         for(i=0; i<breed; i++) {
             gen=new Genome(*s_it);
             children.push_back(gen);
         }
     }
+
+    size=children.size();
 
     for (s_it = species_list.begin(); s_it != species_list.end();) {
         if(!(*s_it)->cull(true)) {
@@ -151,15 +155,18 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
             s_it=species_list.erase(s_it);
         }
         else {
+            size+=(*s_it)->genomes.size();
             s_it++;
         }
     }
 
-    while(children.size()+species_list.size()<couplenum) {
+
+    while(size<couplenum) {
         r=(int)round(RANDOM_DOUBLE(species_list.size()-1));
         s=LIST_GET(Species*, species_list, r);
         gen=new Genome(s);
         children.push_back(gen);
+        size++;
     }
 
     for(g_it=children.begin(); g_it!=children.end(); g_it++) {

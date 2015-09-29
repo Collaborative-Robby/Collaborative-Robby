@@ -228,20 +228,20 @@ double eval_couple(struct robby *r, long unsigned int robbynum, long unsigned in
 {
     unsigned long int i;
     double sum = 0;
-    /*for (i=0; i < robbynum; i++)
-        sum += (((double) r[i].gathered_cans / (double) (totalcans*map_num))*99+
-               ((double) (roundnum-r[i].failed_moves)/(double) (roundnum)));
-    */
-
-
     for (i=0; i < robbynum; i++)
-        sum+= (double)r[i].gathered_cans/(double)r[i].num_moves;
+        sum += (((double) r[i].gathered_cans / (double) (totalcans*map_num))*999+1);
+               //((double) (roundnum-r[i].failed_moves)/(double) (roundnum)));
+    
+
+
+    //for (i=0; i < robbynum; i++)
+    //    sum+= (double)r[i].gathered_cans/(double)r[i].num_moves;
     //printf("total cans %lu, number rounds: %lu\n", totalcans, roundnum);
 
     /*if(r[0].failed_moves>20)
         r[0].fitness=0;
     else*/
-    r[0].fitness = (sum);
+    r[0].fitness = (sum)/1000.0;
 
     return r[0].fitness;
 }
