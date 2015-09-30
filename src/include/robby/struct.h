@@ -25,6 +25,7 @@ struct robby {
 	int type;
 	int id;
 	long unsigned int x, y;
+	long unsigned int original_x, original_y;
 	char moved;
 	void *over;
 	int (*move)(struct world_map *, struct robby *);

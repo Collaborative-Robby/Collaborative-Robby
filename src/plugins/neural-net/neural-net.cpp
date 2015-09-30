@@ -64,6 +64,20 @@ int move(struct world_map *m, struct robby *r)
     return success;
 }
 
+static inline void setup_positions(struct robby **rl, long unsigned int robbynum)
+{
+    rl[0][0].original_x = 0;
+    rl[0][0].original_y = 0;
+    if (robbynum > 1) {
+       /* original_ values contains sizex and sizey */
+       rl[0][1].original_x--;
+       rl[0][1].original_y--;
+    }
+    /* Random placing for the other robbies. */
+
+    cout << "POS DIO" << endl;
+}
+
 static int setup_generations(struct robby **rl, long unsigned int couplenum,
         long unsigned int robbynum)
 {
@@ -71,6 +85,9 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
     unsigned long int real_view;
 
     real_view = get_dis_circle_area(VIEW_RADIUS);
+
+    /* Setup robby positions. */
+    setup_positions(rl, robbynum);
 
     /* Create the genome for the robby */
     for (coup = 0; coup < couplenum; coup++) {
