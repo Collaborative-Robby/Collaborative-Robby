@@ -27,13 +27,14 @@ struct robby {
 	long unsigned int x, y;
 	long unsigned int original_x, original_y;
 	char moved;
+	int old_move;
 	void *over;
 	int (*move)(struct world_map *, struct robby *);
 
 	int gathered_cans;
-    int failed_moves;
+	int failed_moves;
 	int last_gathered_can_time;
-    long unsigned int num_moves;
+	long unsigned int num_moves;
 
 	double fitness;
 
@@ -45,9 +46,15 @@ struct robby {
 	char **known_map;
 
 	class Genome *genome;
-    char *dna;
+	char *dna;
 
-    long unsigned int clock;
+	long unsigned int clock;
+};
+
+struct robby_msg {
+	long unsigned int id;
+	char **view;
+	int old_move;
 };
 
 #endif

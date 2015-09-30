@@ -823,7 +823,7 @@ int Genome::enable_disable_mutate(bool enable) {
     return 0;
 }
 
-int Genome::activate(struct robby *r) {
+int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
     int i,j;
     unsigned long int key;
     unsigned long int max_id;
@@ -831,6 +831,13 @@ int Genome::activate(struct robby *r) {
     Node* in_node;
     map<unsigned long long int, Gene*>::iterator g_it;
     map<unsigned long int, Node*>::iterator n_it;
+
+    #ifdef DEBUG_MSG
+    list <struct robby_msg>::iterator m_it;
+    for (m_it=msg_list->begin(); m_it!=msg_list->end(); m_it++) {
+          cout << "From: " << (*m_it).id << " Move: " << (*m_it).old_move << endl;
+    }
+    #endif
 
     for(n_it=this->node_map.begin(); n_it!=this->node_map.end(); n_it++) {
         n_it->second->activate_count=0;

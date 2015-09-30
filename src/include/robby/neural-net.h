@@ -71,19 +71,19 @@ class Genome {
 		map<unsigned long long int, Gene*> gene_map;
 		unsigned long int node_count;
 		unsigned long int max_innov;
-        unsigned long int id;
+		unsigned long int id;
 		double fitness;
 
 		Genome(unsigned long int input_no, unsigned long int output_no);
 		Genome(Genome *gen);
 		Genome(Genome *g1, Genome *g2);
 		Genome(char *dir, int fileno);
-        Genome(class Species *s);
+		Genome(class Species *s);
 
 		~Genome(void);
-        
-        void copy(Genome *g);
-        void crossover(Genome *g1, Genome *g2);
+
+		void copy(Genome *g);
+		void crossover(Genome *g1, Genome *g2);
 		int insert_gene(Gene *g1);
 		int mutate(void);
 		int node_mutate(void);
@@ -91,7 +91,7 @@ class Genome {
 		int enable_disable_mutate(bool enable);
 		void print(void);
 		bool containslink(class Gene *g);
-		int activate(struct robby *r);
+		int activate(struct robby *r, list <struct robby_msg> *ml);
 		int save_to_file(char *dir, int fno);
 		int specialize(list <class Species *> *sl);
 };
@@ -104,7 +104,7 @@ class Species {
 		list <Genome *> genomes;
 
 		Species(void);
-        ~Species(void);
+		~Species(void);
 
 		unsigned long int cull(bool onlyone);
 		double calculate_avg_fitness(void);

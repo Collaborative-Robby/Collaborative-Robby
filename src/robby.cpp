@@ -19,6 +19,7 @@ int (*move_callback)(struct world_map *, struct robby *);
 void (*generate_robbies_callback)(struct robby **, long unsigned int, long unsigned int, long unsigned int);
 int (*update_view_callback) (struct robby *, struct world_map *, int);
 void (*plugin_cleanup_callback) (struct robby **, unsigned long int, unsigned long int);
+int (*update_view_and_send_callback) (struct world_map *, struct robby *, long unsigned int);
 
 void *callbacks = NULL;
 
@@ -207,8 +208,10 @@ void load_plugin(char *path)
     load_function((void **) &generate_robbies_callback, callbacks, "generate_robbies");
     load_function((void **) &update_view_callback, callbacks, "update_view");
     load_function((void **) &plugin_cleanup_callback, callbacks, "cleanup");
+    load_function((void **) &update_view_and_send_callback, callbacks, "update_view_and_send");
 
-    if (!generate_robbies_callback || !move_callback || !update_view_callback) {
+    if (!generate_robbies_callback || !move_callback || !update_view_callback ||
+	    !update_view_and_send_callback) {
         exit(EXIT_FAILURE);
     }
 }
@@ -432,6 +435,7 @@ int generational_step(long unsigned int sizex, long unsigned int sizey,
                 print_status(m, round);
                 print_map(&m);
             }
+	    update_view_and_send_callback(&m, rl[current_pool], robbynum);
             MOVE_ALL_ROBBIES(m);
         }
         /* last turn print */

@@ -15,6 +15,27 @@ list<Species *> species_list;
 
 extern long unsigned int global_innovation;
 
+list <struct robby_msg> msg_list;
+
+int update_view_and_send(struct world_map *m, struct robby *rl, long unsigned int robbynum)
+{
+	unsigned long int i;
+	struct robby_msg newmsg;
+	msg_list.clear();
+
+	for (i = 0; i < robbynum; i++) {
+		/* Update the state of the robby with the new view */
+		update_view(&(rl[i]), m, false);
+		newmsg.id = rl[i].id;
+		newmsg.view = rl[i].view;
+		newmsg.old_move = rl[i].old_move;
+
+		msg_list.push_back(newmsg);
+	}
+
+	return 0;
+}
+
 int move(struct world_map *m, struct robby *r)
 {
     /* Dirnum = -1 means that the robby pulled up a can */
@@ -33,7 +54,7 @@ int move(struct world_map *m, struct robby *r)
     //if(r->gathered_cans >= m->n_cans)
     //    return 2;
     
-    dirnum=r->genome->activate(r);
+    dirnum=r->genome->activate(r, &msg_list);
     if(dirnum<4) {
         success=MOVE_NORMAL(r,m,dirnum);
     }
@@ -49,9 +70,6 @@ int move(struct world_map *m, struct robby *r)
         r->failed_moves++;
     r->num_moves++;
 
-    /* Update the state of the robby with the new view */
-    update_view(r, m, false);
-
     r->clock++;
 
 #ifdef DEBUG_MOVE
@@ -60,7 +78,7 @@ int move(struct world_map *m, struct robby *r)
     cout << "position AFTER" << r->x << " , " << r->y << endl;
     cout << "over AFTER " << r->over << "vs"<< (int) (r->over==CAN_DUMMY_PTR) << endl;
 #endif
-    
+    r->old_move = dirnum;
     return success;
 }
 
@@ -74,8 +92,6 @@ static inline void setup_positions(struct robby **rl, long unsigned int robbynum
        rl[0][1].original_y--;
     }
     /* Random placing for the other robbies. */
-
-    cout << "POS DIO" << endl;
 }
 
 static int setup_generations(struct robby **rl, long unsigned int couplenum,
