@@ -3,6 +3,9 @@
 
 #include<robby/neural-net.h>
 
+#define POSSIBLE_MOVES 5
+#define NOP_MOVE (POSSIBLE_MOVES+1)
+
 enum types {
 	ROBBY,
 };
@@ -52,9 +55,10 @@ struct robby {
 };
 
 struct robby_msg {
-	long unsigned int id;
+	int id;
 	char **view;
 	int old_move;
+    long unsigned int x,y;
 };
 
 #endif

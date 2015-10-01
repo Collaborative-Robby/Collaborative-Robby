@@ -48,7 +48,6 @@ extern int** directions;
 
 #define SQUARE_AREA (SQUARE_SIDE*SQUARE_SIDE)
 
-#define POSSIBLE_MOVES 5
 
 /* Print the last move status */
 #define PRINT_MOVE_INFO(move, id, s) ({\

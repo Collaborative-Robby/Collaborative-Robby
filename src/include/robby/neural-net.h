@@ -74,7 +74,7 @@ class Genome {
 		unsigned long int id;
 		double fitness;
 
-		Genome(unsigned long int input_no, unsigned long int output_no);
+		Genome(unsigned long int input_no, unsigned long int output_no, unsigned long robbynum);
 		Genome(Genome *gen);
 		Genome(Genome *g1, Genome *g2);
 		Genome(char *dir, int fileno);

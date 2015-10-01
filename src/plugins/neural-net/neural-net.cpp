@@ -29,6 +29,8 @@ int update_view_and_send(struct world_map *m, struct robby *rl, long unsigned in
 		newmsg.id = rl[i].id;
 		newmsg.view = rl[i].view;
 		newmsg.old_move = rl[i].old_move;
+        newmsg.x=rl[i].x;
+        newmsg.y=rl[i].y;
 
 		msg_list.push_back(newmsg);
 	}
@@ -109,7 +111,7 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
     for (coup = 0; coup < couplenum; coup++) {
 
         if (true ||  !exist_genome_file(DEFAULT_GENOME_DIR, coup))
-            rl[coup][0].genome = new Genome(real_view,POSSIBLE_MOVES);
+            rl[coup][0].genome = new Genome(real_view,POSSIBLE_MOVES,robbynum);
         else
             rl[coup][0].genome = new Genome(DEFAULT_GENOME_DIR, coup);
 
@@ -217,8 +219,11 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
               }*/
 
             rl[i][0].genome=(*g_it);
-            for(j=1; j<robbynum; j++)
+            for(j=1; j<robbynum; j++) {
+                if(rl[i][j].genome)
+                    delete rl[i][j].genome;
                 rl[i][j].genome=new Genome(*g_it);
+            }
             i++;
         }
     }
@@ -295,7 +300,8 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 }
 
 void cleanup(struct robby **rl, long unsigned int couplenum, long unsigned int robbynum)
-{
+{ 
+    int i,j;
     list<Species*>::iterator s_it;
 
     s_it=species_list.begin();
@@ -303,4 +309,8 @@ void cleanup(struct robby **rl, long unsigned int couplenum, long unsigned int r
         delete (*s_it);
         s_it=species_list.erase(s_it);
     }
+
+    for(i=0; i<couplenum; i++) 
+        for(j=1; j<robbynum; j++)
+            delete(rl[i][j].genome);
 }

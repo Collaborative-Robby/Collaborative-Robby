@@ -365,7 +365,7 @@ void Genome::copy(Genome *gen) {
     }
 }
 
-Genome::Genome(unsigned long int input_no, unsigned long int output_no) {
+Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned long int robbynum) {
     unsigned long int i,j;
     Node *curr;
     Gene *cgene;
@@ -396,11 +396,33 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no) {
 	this->node_count+=2;
     }
 
+    
+
     /* Bias node */
     curr = new Node(this->node_count, NODE_TYPE_INPUT);
     NODE_INSERT(curr, this->node_map);
-
     this->node_count++;
+    
+    for(i=1; i<robbynum; i++) {
+        for(j=0; j<input_no; j++) {
+            curr=new Node(this->node_count, NODE_TYPE_INPUT);
+            NODE_INSERT(curr, this->node_map);
+            this->node_count++;
+        }
+        if(ROBBY_NNET_POSITION) {
+            curr=new Node(this->node_count, NODE_TYPE_INPUT);
+            NODE_INSERT(curr, this->node_map);
+            this->node_count++;
+            
+            curr=new Node(this->node_count, NODE_TYPE_INPUT);
+            NODE_INSERT(curr, this->node_map);
+            this->node_count++;
+        }
+        /*old move node*/
+        curr=new Node(this->node_count, NODE_TYPE_INPUT);
+        NODE_INSERT(curr, this->node_map);
+        this->node_count++;
+    }
 
     for(i=output_no;i<node_count;i++) {
 	    for (j = 0; j < output_no; j++) {
@@ -831,9 +853,9 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
     Node* in_node;
     map<unsigned long long int, Gene*>::iterator g_it;
     map<unsigned long int, Node*>::iterator n_it;
+    list<struct robby_msg>::iterator m_it;
 
     #ifdef DEBUG_MSG
-    list <struct robby_msg>::iterator m_it;
     for (m_it=msg_list->begin(); m_it!=msg_list->end(); m_it++) {
           cout << "From: " << (*m_it).id << " Move: " << (*m_it).old_move << endl;
     }
@@ -872,6 +894,28 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
     /* ALERT check this thing. if key is reassigned it explodes. */
     in_node = this->node_map[key];
     in_node->activate(1.0);
+    
+
+    for(m_it=msg_list->begin(); m_it!=msg_list->end(); m_it++) {
+        if((*m_it).id!=r->id) {
+            for(i=0; i<SQUARE_SIDE; i++) {
+                for(j=0; j<SQUARE_SIDE;j++)
+                    if((*m_it).view[i][j]!=-1) {
+                        this->node_map[key]->activate((*m_it).view[i][j]);
+                        key++;
+                    
+                    }
+            }
+            if(ROBBY_NNET_POSITION) {
+                this->node_map[key]->activate(m_it->x);
+                key++;
+                this->node_map[key]->activate(m_it->y);
+                key++;
+            }
+            this->node_map[key]->activate((*m_it).old_move);
+            key++;
+        }
+    }
 
     max=(-DBL_MAX);
     for(key=0; key<POSSIBLE_MOVES; key++) {

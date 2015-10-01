@@ -232,7 +232,7 @@ double eval_couple(struct robby *r, long unsigned int robbynum, long unsigned in
     unsigned long int i;
     double sum = 0;
     for (i=0; i < robbynum; i++)
-        sum += (((double) r[i].gathered_cans / (double) (totalcans*map_num))*999+1);
+        sum += (((double) r[i].gathered_cans / (double) (totalcans*map_num)));
                //((double) (roundnum-r[i].failed_moves)/(double) (roundnum)));
     
 
@@ -244,7 +244,7 @@ double eval_couple(struct robby *r, long unsigned int robbynum, long unsigned in
     /*if(r[0].failed_moves>20)
         r[0].fitness=0;
     else*/
-    r[0].fitness = (sum)/1000.0;
+    r[0].fitness = (sum);
 
     return r[0].fitness;
 }
@@ -302,8 +302,8 @@ int compare_eval(const void *a, const void *b)
 
 #define print_in_generation_header(g) printf("===> Generation %lu\n", g)
 #define print_end_generation_header(g, r, rnum)\
-    printf("===> End of Generation %lu Best fitness: %f failed: %d gathered: %d\n", g,\
-            (rnum > 0 ? r.fitness : 0),r.failed_moves, r.gathered_cans)
+    printf("===> End of Generation %lu Best fitness: %f\n",g,(rnum>0 ? r[0].fitness:0)); \
+    for(int i=0; i<rnum; i++) printf("failed: %d gathered: %d\n", r[i].failed_moves, r[i].gathered_cans);
 
 void choose_position(struct world_map *m, struct robby **rl,
         long unsigned int current_couple,
@@ -332,7 +332,7 @@ void choose_position(struct world_map *m, struct robby **rl,
             rl[current_couple][i].original_y = rl[0][i].original_y;
         }
     }
-
+    
 }
 
 int map_fetch_from_file(struct world_map *m, char* filename, long unsigned int robbynum) {
@@ -463,6 +463,7 @@ void zero_fitness(struct robby *rl, long unsigned int robbynum)
         rl[i].last_gathered_can_time = 0;
         rl[i].fitness = 0.0;
         rl[i].num_moves=0;
+        rl[i].old_move=NOP_MOVE;
     }
 }
 
@@ -658,7 +659,7 @@ int main(int argc, char **argv)
 
 		sort_by_best_eval(rl, couplenum);
 
-		print_end_generation_header(generation, rl[0][0], robbynum);
+		print_end_generation_header(generation, rl[0], robbynum);
 	}
 
 	destroy_robbies(rl, couplenum, robbynum);
