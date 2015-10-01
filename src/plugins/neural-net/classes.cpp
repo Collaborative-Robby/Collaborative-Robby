@@ -104,6 +104,7 @@ inline double delta_species(Genome *g1, Genome *g2)
     excess_genes=0;
     disjoint_genes=0;
     equal_genes_count=0;
+    found=0;
 
 	g = g1;
 	oth_g = g2;
@@ -373,6 +374,7 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
     this->id=genome_count++;
     this->node_count=0;
     this->max_innov=0;
+    this->fitness=0.0;
 
     for(i=0;i<output_no;i++) {
         curr=new Node(i, NODE_TYPE_OUTPUT);
@@ -427,6 +429,8 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
     for(i=output_no;i<node_count;i++) {
 	    for (j = 0; j < output_no; j++) {
 		    cgene = new Gene();
+            cgene->innovation=0;
+
 		    cgene->in  = this->node_map[i];
 		    cgene->out = this->node_map[j];
 
@@ -507,6 +511,8 @@ Genome::Genome(Species *s) {
     long unsigned int r;
 
     this->id=genome_count++;
+    this->max_innov=0;
+    this->fitness=0;
 
     if(RANDOM_DOUBLE(1)<CROSSOVER_CHANCE) {
         r=(long unsigned int) round(RANDOM_DOUBLE(s->genomes.size()-1));
