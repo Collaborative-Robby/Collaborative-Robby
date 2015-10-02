@@ -177,15 +177,15 @@ struct robby *add_robby(struct world_map *m, struct robby *r)
                 m.sizex, m.sizey, r, m.n_robots, m.n_cans);\
         })
 
-#define MOVE_ALL_ROBBIES(m) ({\
-        unsigned long int i;\
-        for (i=0; i < m.n_robots; i++) {\
-        if (!m.rl[i]->moved) m.rl[i]->move(&m, m.rl[i]);\
-        }\
-        for (i=0; i < m.n_robots; i++) {\
-        m.rl[i]->moved = 0;\
-        }\
-        })
+#define MOVE_ALL_ROBBIES(m,train) ({\
+	unsigned long int i;\
+	for (i=0; i < m.n_robots; i++) {\
+		if (!m.rl[i]->moved) m.rl[i]->move(&m, m.rl[i]);\
+	}\
+	for (i=0; i < m.n_robots; i++) {\
+		m.rl[i]->moved = 0;\
+	}\
+})
 
 void load_function(void **f, void *callback, const char *name)
 {
@@ -227,7 +227,8 @@ double eval(struct robby *r, long unsigned int totalcans)
     return r->fitness;
 }
 
-double eval_couple(struct robby *r, long unsigned int robbynum, long unsigned int totalcans, long unsigned int roundnum, int map_num)
+double eval_couple(struct robby *r, long unsigned int robbynum, long unsigned
+int totalcans, long unsigned int roundnum, long unsigned int map_num)
 {
     unsigned long int i;
     double sum = 0;
@@ -303,7 +304,13 @@ int compare_eval(const void *a, const void *b)
 #define print_in_generation_header(g) printf("===> Generation %lu\n", g)
 #define print_end_generation_header(g, r, rnum)\
     printf("===> End of Generation %lu Best fitness: %f\n",g,(rnum>0 ? r[0].fitness:0)); \
-    for(int i=0; i<rnum; i++) printf("failed: %d gathered: %d\n", r[i].failed_moves, r[i].gathered_cans);
+    for(long unsigned int i=0; i<rnum; i++) printf("failed: %d gathered: %d\n", r[i].failed_moves, r[i].gathered_cans);
+
+#define print_test_generation_header(g) printf("===> Test Generation\n")
+#define print_end_test_generation_header(r, rnum)\
+    printf("===> End of Test Generation fitness: %f\n", (rnum>0 ? r[0].fitness:0)); \
+    for(long unsigned int i=0; i<rnum; i++) printf("failed: %d gathered: %d\n", r[i].failed_moves, r[i].gathered_cans);
+
 
 void choose_position(struct world_map *m, struct robby **rl,
         long unsigned int current_couple,
@@ -388,70 +395,60 @@ int generational_step(long unsigned int sizex, long unsigned int sizey,
         long unsigned int robbynum, long unsigned int cannum,
         long unsigned int totalrounds, long unsigned int couple_num,
         struct robby **rl,
-        char *train_dir,
-        long unsigned int training_map_set_size,
-        char *test_dir,
-        long unsigned int test_map_set_size,
-        bool verbose)
+        char *map_dir,
+        long unsigned int map_set_size,
+        bool training, bool verbose)
 {
-    long unsigned int round;
-    unsigned long int i, current_pool;
-    struct world_map morig, m;
-    unsigned long int current_map=0;
-    round = 0;
+	long unsigned int round;
+	unsigned long int i, current_pool;
+	struct world_map morig, m;
+	unsigned long int current_map=0;
+	round = 0;
 
-    //TODO pensa al test
-    //for(current_map=0; current_map < training_map_set_size; current_map++) {
+	//TODO pensa al test
+	for(current_map=0; current_map < map_set_size; current_map++) {
 
-    if (current_map < training_map_set_size) {
-        /* Get the training map */
-        if(map_fetch_from_int(&morig, current_map, train_dir, robbynum)) {
-            perror("map fetch");
-            return EXIT_FAILURE;
-        }
-    } else if (current_map < training_map_set_size + test_map_set_size) {
-        /* Get out a test map */
-        if(map_fetch_from_int(&morig, current_map - training_map_set_size, test_dir, robbynum)) {
-            perror("map fetch");
-            return EXIT_FAILURE;
-        }
-    } else if (map_constructor(&morig, sizex, sizey, robbynum, cannum) != 0) {
-        /* Create a new random map */
-        perror("map construction");
-        return EXIT_FAILURE;
-    }
-    current_map++;
+		/* Get the training map */
+		if(map_fetch_from_int(&morig, current_map, map_dir, robbynum)) {
+			perror("map fetch");
+			return EXIT_FAILURE;
+		}
+		//} else if (map_constructor(&morig, sizex, sizey, robbynum, cannum) != 0) {
+		//[> Create a new random map <]
+		//perror("map construction");
+		//return EXIT_FAILURE;
 
-    for (current_pool = 0; current_pool < couple_num; current_pool++) {
-        map_copy(&morig, &m, robbynum);
+	for (current_pool = 0; current_pool < couple_num; current_pool++) {
+		map_copy(&morig, &m, robbynum);
 
-        choose_position(&m, rl, current_pool, robbynum);
+		choose_position(&m, rl, current_pool, robbynum);
 
-        for (i = 0; i < robbynum; i++) 
-            add_robby(&m, &rl[current_pool][i]);
+		for (i = 0; i < robbynum; i++) 
+			add_robby(&m, &rl[current_pool][i]);
 
-        for (round = 0; round < totalrounds; round++) {
-            if(verbose) {
-                print_status(m, round);
-                print_map(&m);
-            }
-	    update_view_and_send_callback(&m, rl[current_pool], robbynum);
-            MOVE_ALL_ROBBIES(m);
-        }
-        /* last turn print */
-        if(verbose) {
-            print_status(m, round);
-            print_map(&m);
-        }
-        map_destructor(&m);
-    }
+		for (round = 0; round < totalrounds; round++) {
+			if(verbose) {
+				print_status(m, round);
+				print_map(&m);
+			}
+			update_view_and_send_callback(&m, rl[current_pool], robbynum);
+			MOVE_ALL_ROBBIES(m,training);
+		}
+		/* last turn print */
+		if(verbose) {
+			print_status(m, round);
+			print_map(&m);
+		}
+		map_destructor(&m);
+	}
 
-    map_destructor(&morig);
-    //}
-    for(current_pool=0; current_pool<couple_num; current_pool++)
-        eval_couple(rl[current_pool], robbynum, cannum, totalrounds, 1);
-    
-    return 0;
+	map_destructor(&morig);
+}
+for(current_pool=0; current_pool<couple_num; current_pool++)
+eval_couple(rl[current_pool], robbynum, cannum, totalrounds,
+		map_set_size);
+
+return 0;
 }
 
 void zero_fitness(struct robby *rl, long unsigned int robbynum)
@@ -655,12 +652,24 @@ int main(int argc, char **argv)
 			zero_fitness(rl[i], robbynum);
 
 		generational_step(sizex, sizey, robbynum, cannum, totalrounds,
-				couplenum, rl,train_dir, training_map_num, test_dir, test_map_num,verbose);
+				couplenum, rl, train_dir, training_map_num,
+				true, verbose);
 
 		sort_by_best_eval(rl, couplenum);
 
 		print_end_generation_header(generation, rl[0], robbynum);
 	}
+
+	/* Test generation */
+	print_test_generation_header();
+	for (i = 0; i < couplenum; i++)
+		zero_fitness(rl[0], robbynum);
+
+	generational_step(sizex, sizey, robbynum, cannum, totalrounds,
+			couplenum, rl, test_dir, test_map_num,
+			false, verbose);
+
+	print_end_test_generation_header(rl[0], robbynum);
 
 	destroy_robbies(rl, couplenum, robbynum);
 	free(test_dir);
