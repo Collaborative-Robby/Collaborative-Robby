@@ -1,16 +1,7 @@
-Modellazione:
-
-- rete neurale
-- algoritmo genetico
-
 CORE:
 - windows
-- messaggi
 - grafica (canvas e robottini che si muovono) (fltk)
-- funzione di fitness: T per raccogliere tutte le lattine
-    - internamente a robby: lattine raccolte/T (?) #3
 
 NNET:
-- Known Map
 - Pulire codice
 - Cicli rete neurale
