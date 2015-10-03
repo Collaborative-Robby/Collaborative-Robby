@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
+#include <string.h>
 #include <iostream>
 #include <list>
 #include <robby/struct.h>
@@ -16,6 +17,30 @@ list<Species *> species_list;
 extern long unsigned int global_innovation;
 
 list <struct robby_msg> msg_list;
+
+int update_known_map(struct robby_msg *msg, struct robby *r, struct world_map *m) {
+    int i,j;
+    long int kmap_x, kmap_y;
+    long unsigned int basex, basey;
+
+    basex=r->x;
+    basey=r->y;
+
+    kmap_x=-(VIEW_RADIUS-1);
+    kmap_y=-(VIEW_RADIUS-1);
+
+    for(i=0; i<SQUARE_SIDE; i++,kmap_x++) 
+        
+        if(basex+kmap_x < m->sizex) 
+            for(j=0;j<SQUARE_SIDE;j++,kmap_y++) 
+                
+                if(basey+kmap_y < m->sizey) 
+                    if(r->view[i][j]!=VIEW_ROBBY && r->view[i][j]!=VIEW_TOO_FAR ) 
+                        r->known_map[basex+kmap_x][basey+kmap_y]=r->view[i][j];
+
+
+
+}
 
 int update_view_and_send(struct world_map *m, struct robby *rl, long unsigned int robbynum)
 {
@@ -33,8 +58,12 @@ int update_view_and_send(struct world_map *m, struct robby *rl, long unsigned in
         newmsg.y=rl[i].y;
 
 		msg_list.push_back(newmsg);
-	}
 
+#ifdef KNOWN_MAP
+        update_known_map(&newmsg, &rl[0],m);
+#endif
+	}
+    
 	return 0;
 }
 
@@ -100,9 +129,14 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
         long unsigned int robbynum)
 {
     unsigned int coup, i;
-    unsigned long int real_view;
+    unsigned long int input_no;
+    char **k_map;
 
-    real_view = get_dis_circle_area(VIEW_RADIUS);
+#ifdef KNOWN_MAP
+   input_no = rl[0][0].m_sizex*rl[0][0].m_sizey; 
+#else
+    input_no = get_dis_circle_area(VIEW_RADIUS);
+#endif
 
     /* Setup robby positions. */
     setup_positions(rl, robbynum);
@@ -111,17 +145,35 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
     for (coup = 0; coup < couplenum; coup++) {
 
         if (true ||  !exist_genome_file(DEFAULT_GENOME_DIR, coup))
-            rl[coup][0].genome = new Genome(real_view,POSSIBLE_MOVES,robbynum);
+            rl[coup][0].genome = new Genome(input_no,POSSIBLE_MOVES,robbynum);
         else
             rl[coup][0].genome = new Genome(DEFAULT_GENOME_DIR, coup);
 
         rl[coup][0].genome->specialize(&species_list);
+       
+      #ifdef KNOWN_MAP 
+        k_map=(char**) calloc(rl[coup][0].m_sizex, sizeof(char*));
+        if(!k_map) {
+            perror("calloc known map");
+            exit(-1);
+        }
+
+        for(i=0; i<rl[coup][0].m_sizex; i++) {
+            k_map[i]=(char*) calloc(rl[coup][0].m_sizey, sizeof(char));
+            if(!k_map[i]) {
+                perror("calloc known map");
+                exit(-1);
+            }
+        }
+        #endif
 
         for (i = 0; i < robbynum; i++) {
             /* Set the ID */
             rl[coup][i].id = i;
             /* A radius of one for the view */
             rl[coup][i].viewradius = VIEW_RADIUS;
+            
+            rl[coup][i].known_map=k_map;    
 
             if (i > 0)
                 rl[coup][i].genome = new Genome(rl[coup][0].genome);
@@ -149,9 +201,15 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
     list<Genome*>::iterator g_it;
     list <Species *>::iterator s_it;
 
-    for (coup = 0; coup < couplenum; coup++)
-        rl[coup][0].genome->fitness = rl[coup][0].fitness;
 
+    for (coup = 0; coup < couplenum; coup++) {
+        rl[coup][0].genome->fitness = rl[coup][0].fitness;
+#ifdef KNOWN_MAP
+    for(i=0; i<rl[coup][0].m_sizex; i++) {
+        memset(rl[coup][0].known_map[i], -1, rl[coup][0].m_sizey);
+    }
+#endif
+    }
     for (s_it = species_list.begin(); s_it != species_list.end();) {
         if(!(*s_it)->cull(false)) {
             delete (*s_it);    

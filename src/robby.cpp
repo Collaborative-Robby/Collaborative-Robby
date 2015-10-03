@@ -640,6 +640,9 @@ int main(int argc, char **argv)
 		for (j = 0; j < couplenum; j++ ) {
 			rl[j][i].original_x = sizex;
 			rl[j][i].original_y = sizey;
+
+            rl[j][i].m_sizex=sizex;
+            rl[j][i].m_sizey=sizey;
 		}
 	}
 

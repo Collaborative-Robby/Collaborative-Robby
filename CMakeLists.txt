@@ -43,12 +43,12 @@ endif()
 
 
 
-if (DEFINED ROBBY_DEBUG AND ROBBY_DEBUG)
-	MESSAGE(STATUS "Compiling with debug flag.")
-	ADD_DEFINITIONS(-D DEBUG)
+if (DEFINED KNOWN_MAP AND KNOWN_MAP)
+	MESSAGE(STATUS "Compiling with known map.")
+	ADD_DEFINITIONS(-D KNOWN_MAP)
 else()
-	MESSAGE(STATUS "Compiling without debug flag.")
-	REMOVE_DEFINITIONS(-D DEBUG)
+	MESSAGE(STATUS "Compiling without known map.")
+	REMOVE_DEFINITIONS(-D KNOWN_MAP)
 endif()
 
 include_directories("${CORE_SOURCE_PROJECT_DIR}/include")

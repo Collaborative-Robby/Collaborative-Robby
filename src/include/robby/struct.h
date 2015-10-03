@@ -45,7 +45,8 @@ struct robby {
 	char **view;
 
 	int learning_algorithm;
-
+    
+    long unsigned int m_sizex, m_sizey;
 	char **known_map;
 
 	class Genome *genome;

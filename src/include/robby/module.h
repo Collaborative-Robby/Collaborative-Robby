@@ -26,6 +26,12 @@
 #include <stdio.h>
 #include <robby/struct.h>
 
+#define VIEW_TOO_FAR -1
+#define VIEW_WALL 0
+#define VIEW_ROBBY 1
+#define VIEW_EMPTY 2
+#define VIEW_CAN 3
+
 /* Extern (got from the main engine) dummy variable to recognize
    the cans on the map */
 extern char __can_const;

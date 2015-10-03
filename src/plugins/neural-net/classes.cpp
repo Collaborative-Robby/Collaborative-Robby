@@ -406,11 +406,13 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
     this->node_count++;
     
     for(i=1; i<robbynum; i++) {
+    #ifndef KNOWN_MAP
         for(j=0; j<input_no; j++) {
             curr=new Node(this->node_count, NODE_TYPE_INPUT);
             NODE_INSERT(curr, this->node_map);
             this->node_count++;
         }
+    #endif
         if(ROBBY_NNET_POSITION) {
             curr=new Node(this->node_count, NODE_TYPE_INPUT);
             NODE_INSERT(curr, this->node_map);
@@ -420,10 +422,12 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
             NODE_INSERT(curr, this->node_map);
             this->node_count++;
         }
+    #ifndef KNOWN_MAP
         /*old move node*/
         curr=new Node(this->node_count, NODE_TYPE_INPUT);
         NODE_INSERT(curr, this->node_map);
         this->node_count++;
+    #endif
     }
 
     for(i=output_no;i<node_count;i++) {
@@ -877,6 +881,16 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
     }
 
     key = POSSIBLE_MOVES;
+
+#ifdef KNOWN_MAP
+    for(i=0; i<r->m_sizex; i++) {
+        for(j=0; j<r->m_sizey; j++) {
+            in_node=this->node_map[key];
+            in_node->activate(r->known_map[i][j]);
+            key++;
+        }
+    }
+#else
     for(i=0; i<SQUARE_SIDE; i++) {
         for(j=0; j<SQUARE_SIDE; j++) {
             if (r->view[i][j] != -1) {
@@ -886,6 +900,8 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
             }
         }
     }
+#endif
+
 
     /* ALERT check this thing. if key is reassigned it explodes. */
     if (ROBBY_NNET_POSITION) {
@@ -904,6 +920,7 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
 
     for(m_it=msg_list->begin(); m_it!=msg_list->end(); m_it++) {
         if((*m_it).id!=r->id) {
+            #ifndef KNOWN_MAP
             for(i=0; i<SQUARE_SIDE; i++) {
                 for(j=0; j<SQUARE_SIDE;j++)
                     if((*m_it).view[i][j]!=-1) {
@@ -912,6 +929,7 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
                     
                     }
             }
+            #endif
             if(ROBBY_NNET_POSITION) {
                 this->node_map[key]->activate(m_it->x);
                 key++;
