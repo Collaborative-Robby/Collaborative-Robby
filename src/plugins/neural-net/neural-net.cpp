@@ -23,23 +23,44 @@ int update_known_map(struct robby_msg *msg, struct robby *r, struct world_map *m
     long int kmap_x, kmap_y;
     long unsigned int basex, basey;
 
-    basex=r->x;
-    basey=r->y;
+    basex=msg->x;
+    basey=msg->y;
 
+    /* Map relative positions (message positions)
+     * to absolute positions (map positions) and populate known map
+     */
     kmap_x=-(VIEW_RADIUS-1);
-    kmap_y=-(VIEW_RADIUS-1);
+    for (i = 0;
+         i < SQUARE_SIDE;
+         i++, kmap_x++) {
 
-    for(i=0; i<SQUARE_SIDE; i++,kmap_x++) 
-        
-        if(basex+kmap_x < m->sizex) 
-            for(j=0;j<SQUARE_SIDE;j++,kmap_y++) 
-                
-                if(basey+kmap_y < m->sizey) 
-                    if(r->view[i][j]!=VIEW_ROBBY && r->view[i][j]!=VIEW_TOO_FAR ) 
-                        r->known_map[basex+kmap_x][basey+kmap_y]=r->view[i][j];
+        if (basex + kmap_x >= m->sizex)
+		continue;
 
+	kmap_y = -(VIEW_RADIUS-1);
 
+	for (j = 0;
+	     j < SQUARE_SIDE;
+	     j++, kmap_y++) {
 
+		if (basey + kmap_y >= m->sizey)
+			continue;
+		if(msg->view[i][j]!=VIEW_ROBBY && msg->view[i][j]!=VIEW_TOO_FAR)
+			r->known_map[basex+kmap_x][basey+kmap_y]=msg->view[i][j];
+	}
+    }
+
+#ifdef DEBUG_KNOWN_MAP
+	cout << "=====" << endl;
+	cout << "Known map: " << r->id << endl;
+	for (i=0;i<m->sizex;i++) {
+		printf("[");
+		for (j=0;j<m->sizey;j++)
+			printf("%3d", r->known_map[i][j]);
+		printf("]\n");
+	}
+	cout << "=====" << endl;
+#endif
 }
 
 int update_view_and_send(struct world_map *m, struct robby *rl, long unsigned int robbynum)
