@@ -54,9 +54,12 @@ class Node{
 		unsigned long int active_in_genes;
 		unsigned long int activate_count;
 		double value;
-		list<Gene*> input_genes;
+		unsigned long int level_numerator, level_denom;
+        list<Gene*> input_genes;
 		list<Gene*> output_genes;
-		Node(unsigned long id, int type);
+        list< list<Node*> >::iterator level_it;
+
+		Node(unsigned long id, int type, unsigned long int l_num, unsigned long int l_den);
 		Node(Node *copy);
 		~Node(void);
 		void activate(double input);
@@ -73,6 +76,7 @@ class Genome {
 		unsigned long int max_innov;
 		unsigned long int id;
 		double fitness;
+        list< list <Node*> > level_list;
 
 		Genome(unsigned long int input_no, unsigned long int output_no, unsigned long robbynum);
 		Genome(Genome *gen);
