@@ -98,6 +98,7 @@ class Genome {
 		int activate(struct robby *r, list <struct robby_msg> *ml);
 		int save_to_file(char *dir, int fno);
 		int specialize(list <class Species *> *sl);
+		void insert_level_list(Node *n);
 };
 
 class Species {	

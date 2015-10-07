@@ -49,6 +49,18 @@ using namespace std;
 
 /* Utilities */
 
+static inline int compare_level(Node* n1, Node *n2) {
+    unsigned long long int v1,v2;
+    v1=n1->level_numerator*n2->level_denom;
+    v2=n2->level_numerator*n1->level_denom;
+    if(v1<v2)
+        return -1;
+    if(v1>v2)
+        return 1;
+        
+    return 0;
+}
+
 inline unsigned long long int hash_ull_int_encode(unsigned long from, unsigned long to)
 {
     unsigned long long a, b;
@@ -317,7 +329,10 @@ void Gene::print(void) {
 void Gene::activate(double value) {
     if(this->enabled) {
         this->value=value;
+#if 0
+/* FIXME Non abbiamo piu' la dfs. */
         this->out->activate(value);
+#endif
     }
 }
 
@@ -353,6 +368,8 @@ void Genome::copy(Genome *gen) {
         node_key = n_it->first;
         node=new Node(node_key, val->type, val->level_numerator, val->level_denom);
         NODE_INSERT(node, this->node_map);
+
+	this->insert_level_list(node);
     }
 
     for(g_it=gen->gene_map.begin(); g_it!=gen->gene_map.end(); g_it++) {
@@ -375,6 +392,8 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
     Node *curr;
     Gene *cgene;
     list<Node*> in_list, out_list;
+    list <Node*>::iterator inner_level_it;
+    list < list <Node*> >::iterator l_it;
 
     this->id=genome_count++;
     this->node_count=0;
@@ -406,8 +425,6 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
 
 	this->node_count+=2;
     }
-
-    
 
     /* Bias node */
     curr = new Node(this->node_count, NODE_TYPE_INPUT,0,1);
@@ -446,6 +463,10 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
 
     this->level_list.push_back(in_list);
     this->level_list.push_back(out_list);
+
+    for (l_it = this->level_list.begin(); l_it!=this->level_list.end(); l_it++)
+        for (inner_level_it = l_it->begin(); inner_level_it != l_it->end(); inner_level_it++)
+             (*inner_level_it)->level_it = l_it;
 
     for(i=output_no;i<node_count;i++) {
 	    for (j = 0; j < output_no; j++) {
@@ -564,6 +585,8 @@ int Genome::insert_gene(Gene *g) {
     if(!this->node_map.count(id_in)) {
         n1=new Node(g->in);
         NODE_INSERT(n1, this->node_map);
+
+	this->insert_level_list(n1);
     }
     else {
         n1=this->node_map[id_in];
@@ -572,13 +595,14 @@ int Genome::insert_gene(Gene *g) {
     if(!this->node_map.count(id_out)) {
         n2=new Node(g->out);
         NODE_INSERT(n2, this->node_map);
+	this->insert_level_list(n2);
     }
     else {
         n2=this->node_map[id_out];
     }
     
     if(compare_level(n1,n2)>=0) {
-        //FIXME    
+	    return 0;
     }
 
     new_gene=new Gene(g);
@@ -593,6 +617,7 @@ int Genome::insert_gene(Gene *g) {
     GENE_INSERT(new_gene, this->gene_map);
     if(new_gene->innovation>this->max_innov)
         this->max_innov=new_gene->innovation;
+
     return 0;
 }
 
@@ -602,11 +627,64 @@ Genome::Genome(Genome *g1, Genome *g2){
     this->mutate();
 }
 
-void Genome::crossover(Genome *g1, Genome *g2){
+void Genome::insert_level_list(Node *n) {
+	list <Node *> l;
+	list < list <Node *> >::iterator l_it;
+
+	if (this->level_list.size() < 2) {
+		/* Input list */
+		this->level_list.push_back(l);
+		/* Output list */
+		this->level_list.push_back(l);
+	}
+	if (n->type == NODE_TYPE_INPUT) {
+		l_it = this->level_list.begin();
+		n->level_it = l_it;
+		l_it->push_back(n);
+	}
+
+	else if (n->type == NODE_TYPE_OUTPUT) {
+		l_it = this->level_list.end();
+		/* Last element */
+		l_it--;
+
+		n->level_it = l_it;
+		l_it->push_back(n);
+	}
+	else {
+		l_it = this->level_list.begin();
+		l_it++;
+
+		/* Advance the list to our level */
+		while(compare_level(*(l_it->begin()), n) < 0)
+			l_it++;
+
+		n->level_it = l_it;
+		if(compare_level(*(l_it->begin()), n) == 0) {
+			/* Push the node in the existent level */
+			l_it->push_back(n);
+		} else {
+			/* Create a new level and insert the node in that */
+			l.push_back(n);
+			this->level_list.insert(l_it, l);
+		}
+	}
+}
+
+void Genome::crossover(Genome *rg1, Genome *rg2){
     map<unsigned long long, Gene*>::iterator g_it;
     map<NODE_KEY_TYPE, Node*>::iterator n_it;
     long unsigned int id_in,id_out;
+    Genome *g1, *g2;
     Node *new_n;
+
+	if (round(RANDOM_DOUBLE(1))) {
+		g1 = rg2;
+		g2 = rg1;
+	} else {
+		g1 = rg1;
+		g2 = rg2;
+	}
     
     if(g1==g2) {
         this->copy(g1);
@@ -619,6 +697,8 @@ void Genome::crossover(Genome *g1, Genome *g2){
 
 	    new_n->active_in_genes = 0;
             NODE_INSERT(new_n, this->node_map);
+
+	    this->insert_level_list(new_n);
         }
     }
 
@@ -647,6 +727,7 @@ void Genome::crossover(Genome *g1, Genome *g2){
             this->insert_gene(g_it->second);
         }
     }
+
     this->node_count=this->node_map.size();
 }
 
@@ -715,18 +796,6 @@ void Genome::print() {
 
 }
 
-static inline int compare_level(Node* n1, Node *n2) {
-    unsigned long long int v1,v2;
-    v1=n1->level_numerator*n2->level_denom;
-    v2=n2->level_numerator*n1->level_denom;
-    if(v1<v2)
-        return -1;
-    if(v1>v2)
-        return 1;
-        
-    return 0;
-}
-
 static inline void get_level_num(long unsigned int n1, long unsigned int d1, long unsigned int n2, long unsigned int d2, long unsigned int *new_n, long unsigned int *new_d) {
    if(d1>=d2) {
         *new_d=d1*2;
@@ -769,6 +838,7 @@ int Genome::node_mutate(void) {
     
     lv_it=g_orig->out->level_it;
     lv_it--;
+
     tmp1=(*(*lv_it).begin());
     tmp2=g_orig->in;
     //if the input level and the level preceding output are the same, create a new level
@@ -929,6 +999,7 @@ int Genome::enable_disable_mutate(bool enable) {
     return 0;
 }
 
+/* FIXME BFS */
 int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
     int i,j;
     unsigned long int key;
@@ -938,6 +1009,8 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
     map<unsigned long long int, Gene*>::iterator g_it;
     map<unsigned long int, Node*>::iterator n_it;
     list<struct robby_msg>::iterator m_it;
+    list < list <Node *> >::iterator l_it;
+    list <Node *>::iterator level_it;
 
     #ifdef DEBUG_MSG
     for (m_it=msg_list->begin(); m_it!=msg_list->end(); m_it++) {
@@ -990,7 +1063,6 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
     /* ALERT check this thing. if key is reassigned it explodes. */
     in_node = this->node_map[key];
     in_node->activate(1.0);
-    
 
     for(m_it=msg_list->begin(); m_it!=msg_list->end(); m_it++) {
         if((*m_it).id!=r->id) {
@@ -1000,7 +1072,6 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
                     if((*m_it).view[i][j]!=-1) {
                         this->node_map[key]->activate((*m_it).view[i][j]);
                         key++;
-                    
                     }
             }
             #endif
@@ -1013,6 +1084,17 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
             this->node_map[key]->activate((*m_it).old_move);
             key++;
         }
+    }
+
+    /* BFS activation */
+    l_it = this->level_list.begin();
+    /* We already done with the input layer */
+    l_it++;
+
+    for (; l_it != this->level_list.end(); l_it++) {
+        for (level_it = l_it->begin(); level_it != l_it->end(); level_it++) {
+             (*level_it)->activate(0.0);
+	}
     }
 
     max=(-DBL_MAX);
