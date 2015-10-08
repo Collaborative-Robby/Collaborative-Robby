@@ -378,6 +378,13 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 #endif
 }
 
+static inline void free_kmap(struct robby *r) {
+    long unsigned int i;
+    for(i=0;i<r->m_sizex;i++)
+        free(r->known_map[i]);
+    free(r->known_map);
+}
+
 void cleanup(struct robby **rl, long unsigned int couplenum, long unsigned int robbynum)
 { 
     int i,j;
@@ -389,7 +396,9 @@ void cleanup(struct robby **rl, long unsigned int couplenum, long unsigned int r
         s_it=species_list.erase(s_it);
     }
 
-    for(i=0; i<couplenum; i++) 
+    for(i=0; i<couplenum; i++) { 
+        free_kmap(&rl[i][0]);
         for(j=1; j<robbynum; j++)
             delete(rl[i][j].genome);
+    }
 }

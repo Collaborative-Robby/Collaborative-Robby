@@ -734,6 +734,7 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
 Genome::~Genome(void) {
     map<unsigned long long, Gene*>::iterator g_it;
     map<unsigned long int,  Node*>::iterator n_it;
+    list< list <Node*> >::iterator lev_it;
 
     for(n_it=this->node_map.begin(); n_it!=this->node_map.end(); n_it++)
         delete n_it->second;
@@ -743,6 +744,10 @@ Genome::~Genome(void) {
 
     this->gene_map.clear();
     this->node_map.clear();
+    for(lev_it=this->level_list.begin(); lev_it!=this->level_list.end(); lev_it++) {
+        lev_it->clear();
+    }
+    this->level_list.clear();
 }
 
 int Genome::mutate(void) {
