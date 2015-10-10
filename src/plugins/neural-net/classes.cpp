@@ -369,7 +369,7 @@ void Genome::copy(Genome *gen) {
         node=new Node(node_key, val->type, val->level_numerator, val->level_denom);
         NODE_INSERT(node, this->node_map);
 
-	this->insert_level_list(node);
+	    this->insert_level_list(node);
     }
 
     for(g_it=gen->gene_map.begin(); g_it!=gen->gene_map.end(); g_it++) {
@@ -585,8 +585,8 @@ int Genome::insert_gene(Gene *g) {
     if(!this->node_map.count(id_in)) {
         n1=new Node(g->in);
         NODE_INSERT(n1, this->node_map);
-
-	this->insert_level_list(n1);
+	    this->insert_level_list(n1);
+        this->node_count++;
     }
     else {
         n1=this->node_map[id_in];
@@ -595,7 +595,8 @@ int Genome::insert_gene(Gene *g) {
     if(!this->node_map.count(id_out)) {
         n2=new Node(g->out);
         NODE_INSERT(n2, this->node_map);
-	this->insert_level_list(n2);
+        this->node_count++;
+	    this->insert_level_list(n2);
     }
     else {
         n2=this->node_map[id_out];
@@ -666,7 +667,8 @@ void Genome::insert_level_list(Node *n) {
 		} else {
 			/* Create a new level and insert the node in that */
 			l.push_back(n);
-			this->level_list.insert(l_it, l);
+			l_it=this->level_list.insert(l_it, l);
+            n->level_it=l_it;
 		}
 	}
 }
@@ -690,15 +692,15 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
         this->copy(g1);
         return;
     }
-    
+    this->node_count=0; 
     for(n_it=g1->node_map.begin(); n_it!=g1->node_map.end(); n_it++) {
         if(n_it->second->type!=NODE_TYPE_HIDDEN) {
             new_n=new Node(n_it->second);
 
-	    new_n->active_in_genes = 0;
+	        new_n->active_in_genes = 0;
             NODE_INSERT(new_n, this->node_map);
-
-	    this->insert_level_list(new_n);
+            this->node_count++;
+	        this->insert_level_list(new_n);
         }
     }
 
@@ -728,7 +730,6 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
         }
     }
 
-    this->node_count=this->node_map.size();
 }
 
 Genome::~Genome(void) {

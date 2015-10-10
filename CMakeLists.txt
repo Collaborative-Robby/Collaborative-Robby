@@ -8,6 +8,8 @@ set(CORE_SOURCE_PROJECT_DIR "${PROJECT_SOURCE_DIR}/src")
 set(PLUGINS_SOURCE_DIR "${CORE_SOURCE_PROJECT_DIR}/plugins")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wconversion -Wall -Wextra -Wno-unused-parameter")
+set(CMAKE_CXX_DEBUG_FLAGS "${CMAKE_CXX_DEBUG_FLAGS} -fsanitize=address")
+
 
 if (DEFINED DEBUG_GENOMES AND DEBUG_GENOMES)
     MESSAGE(STATUS "Compiling with debug genomes")
