@@ -51,13 +51,14 @@ using namespace std;
 
 static inline int compare_level(Node* n1, Node *n2) {
     unsigned long long int v1,v2;
+
     v1=n1->level_numerator*n2->level_denom;
     v2=n2->level_numerator*n1->level_denom;
+
     if(v1<v2)
         return -1;
     if(v1>v2)
         return 1;
-        
     return 0;
 }
 
@@ -401,29 +402,10 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
     this->fitness=0.0;
 
     for(i=0;i<output_no;i++) {
-        curr=new Node(i, NODE_TYPE_OUTPUT,1,1);
+        curr=new Node(this->node_count, NODE_TYPE_OUTPUT,1,1);
         NODE_INSERT(curr, this->node_map);
         out_list.push_back(curr);
-    }
-    this->node_count += output_no;
-
-    for(i=0;i<input_no;i++) {
-        curr=new Node(output_no+i, NODE_TYPE_INPUT, 0,1);
-        NODE_INSERT(curr, this->node_map);
-        in_list.push_back(curr);
-    }
-    this->node_count += input_no;
-
-    if (ROBBY_NNET_POSITION) {
-        curr=new Node(output_no+input_no, NODE_TYPE_INPUT,0,1);
-        NODE_INSERT(curr, this->node_map);
-        in_list.push_back(curr);
-
-        curr=new Node(output_no+input_no+1, NODE_TYPE_INPUT,0,1);
-        NODE_INSERT(curr, this->node_map);
-        in_list.push_back(curr);
-
-	this->node_count+=2;
+        this->node_count++;
     }
 
     /* Bias node */
@@ -431,7 +413,26 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
     NODE_INSERT(curr, this->node_map);
     in_list.push_back(curr);
     this->node_count++;
-    
+
+    for(i=0;i<input_no;i++) {
+        curr=new Node(this->node_count, NODE_TYPE_INPUT, 0,1);
+        NODE_INSERT(curr, this->node_map);
+        in_list.push_back(curr);
+        this->node_count++;
+    }
+
+    if (ROBBY_NNET_POSITION) {
+        curr=new Node(this->node_count, NODE_TYPE_INPUT,0,1);
+        NODE_INSERT(curr, this->node_map);
+        in_list.push_back(curr);
+	this->node_count++;
+
+        curr=new Node(this->node_count, NODE_TYPE_INPUT,0,1);
+        NODE_INSERT(curr, this->node_map);
+        in_list.push_back(curr);
+	this->node_count++;
+    }
+
     for(i=1; i<robbynum; i++) {
     #ifndef KNOWN_MAP
         for(j=0; j<input_no; j++) {
@@ -446,7 +447,7 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
             NODE_INSERT(curr, this->node_map);
             in_list.push_back(curr);
             this->node_count++;
-            
+
             curr=new Node(this->node_count, NODE_TYPE_INPUT,0,1);
             NODE_INSERT(curr, this->node_map);
             in_list.push_back(curr);
@@ -471,7 +472,7 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
     for(i=output_no;i<node_count;i++) {
 	    for (j = 0; j < output_no; j++) {
 		    cgene = new Gene();
-            cgene->innovation=0;
+		    cgene->innovation=0;
 
 		    cgene->in  = this->node_map[i];
 		    cgene->out = this->node_map[j];
@@ -915,7 +916,8 @@ int Genome::link_mutate(bool force_bias) {
     Gene *new_gene;
     NODE_KEY_TYPE key;
 
-    node_size=this->node_map.size();
+    //node_size=this->node_map.size();
+    node_size=this->node_count;
 
     if(node_size==0) {
         return 1;
@@ -944,7 +946,8 @@ int Genome::link_mutate(bool force_bias) {
 
     if(force_bias) {
 	input_size = get_dis_circle_area(VIEW_RADIUS);
-	key = POSSIBLE_MOVES + input_size + (ROBBY_NNET_POSITION * 2);
+	key = POSSIBLE_MOVES;
+	cout << "bias id: " << key << endl;
         new_gene->in = this->node_map[key];
     }
 
@@ -1033,7 +1036,12 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
         g_it->second->value=0;
     }
 
+    /* Bias (input node with value 1.0) activation */
+    /* ALERT check this thing. if key is reassigned it explodes. */
     key = POSSIBLE_MOVES;
+    in_node = this->node_map[key];
+    in_node->activate(1.0);
+    key++;
 
 #ifdef KNOWN_MAP
     for(i=0; i<r->m_sizex; i++) {
@@ -1064,11 +1072,6 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
         this->node_map[key]->activate((double)r->y);
 	key++;
     }
-
-    /* Bias (input node with value 1.0) activation */
-    /* ALERT check this thing. if key is reassigned it explodes. */
-    in_node = this->node_map[key];
-    in_node->activate(1.0);
 
     for(m_it=msg_list->begin(); m_it!=msg_list->end(); m_it++) {
         if((*m_it).id!=r->id) {
