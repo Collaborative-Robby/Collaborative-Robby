@@ -14,7 +14,8 @@
 double pool_maxfitness = 0.0;
 list<Species *> species_list;
 
-extern long unsigned int global_innovation;
+long unsigned int genome_count = 0;
+long unsigned int global_innovation = 0;
 
 list <struct robby_msg> msg_list;
 
