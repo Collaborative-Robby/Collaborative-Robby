@@ -6,10 +6,13 @@
 #include <string.h>
 #include <iostream>
 #include <list>
+
 #include <robby/struct.h>
 #include <robby/module.h>
-#include <robby/neural-net.h>
 #include <robby/dismath.h>
+#include <robby/neural-net.h>
+
+#include <robby/neural-net-utils.h>
 
 double pool_maxfitness = 0.0;
 list<Species *> species_list;
@@ -19,7 +22,8 @@ long unsigned int global_innovation = 0;
 
 list <struct robby_msg> msg_list;
 
-int update_known_map(struct robby_msg *msg, struct robby *r, struct world_map *m) {
+int update_known_map(struct robby_msg *msg, struct robby *r, struct world_map *m)
+{
     int i,j;
     long int kmap_x, kmap_y;
     long unsigned int basex, basey;
@@ -62,6 +66,7 @@ int update_known_map(struct robby_msg *msg, struct robby *r, struct world_map *m
 	}
 	cout << "=====" << endl;
 #endif
+	return 0;
 }
 
 int update_view_and_send(struct world_map *m, struct robby *rl, long unsigned int robbynum)
@@ -135,18 +140,6 @@ int move(struct world_map *m, struct robby *r)
     return success;
 }
 
-static inline void setup_positions(struct robby **rl, long unsigned int robbynum)
-{
-    rl[0][0].original_x = 0;
-    rl[0][0].original_y = 0;
-    if (robbynum > 1) {
-       /* original_ values contains sizex and sizey */
-       rl[0][1].original_x--;
-       rl[0][1].original_y--;
-    }
-    /* Random placing for the other robbies. */
-}
-
 static int setup_generations(struct robby **rl, long unsigned int couplenum,
         long unsigned int robbynum)
 {
@@ -155,7 +148,7 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
     char **k_map;
 
 #ifdef KNOWN_MAP
-   input_no = rl[0][0].m_sizex*rl[0][0].m_sizey; 
+   input_no = rl[0][0].m_sizex*rl[0][0].m_sizey;
 #else
     input_no = get_dis_circle_area(VIEW_RADIUS);
 #endif
@@ -166,14 +159,16 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
     /* Create the genome for the robby */
     for (coup = 0; coup < couplenum; coup++) {
 
+	/* Get genome from file or generate a new genome. */
+        /* FIXME: Gestione file genoma. */
         if (true ||  !exist_genome_file(DEFAULT_GENOME_DIR, coup))
             rl[coup][0].genome = new Genome(input_no,POSSIBLE_MOVES,robbynum);
         else
             rl[coup][0].genome = new Genome(DEFAULT_GENOME_DIR, coup);
 
         rl[coup][0].genome->specialize(&species_list);
-       
-      #ifdef KNOWN_MAP 
+
+#ifdef KNOWN_MAP
         k_map=(char**) calloc(rl[coup][0].m_sizex, sizeof(char*));
         if(!k_map) {
             perror("calloc known map");
@@ -187,16 +182,18 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
                 exit(-1);
             }
         }
-        #endif
+#endif
 
         for (i = 0; i < robbynum; i++) {
             /* Set the ID */
             rl[coup][i].id = i;
-            /* A radius of one for the view */
-            rl[coup][i].viewradius = VIEW_RADIUS;
-            
-            rl[coup][i].known_map=k_map;    
 
+            rl[coup][i].viewradius = VIEW_RADIUS;
+            rl[coup][i].known_map=k_map;
+
+            /* Copy the genomes from the first of the couple (same genome for
+	     * every robby on the map).
+	     */
             if (i > 0)
                 rl[coup][i].genome = new Genome(rl[coup][0].genome);
         }
@@ -205,16 +202,12 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
     return 0;
 }
 
-bool cmp_average_fitness(Species *s1, Species *s2) 
-{
-    return s1->average_fitness > s2->average_fitness;
-}
-
 static int next_generation(struct robby **rl, unsigned long int couplenum,
         unsigned long int robbynum)
 {
     unsigned long int coup,size;
-    int i,r;
+    unsigned long int i;
+    int r;
     unsigned long int j;
     double breed, tot_fitness;
     Genome* gen;
@@ -222,7 +215,6 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
     list<Genome*> children;
     list<Genome*>::iterator g_it;
     list <Species *>::iterator s_it;
-
 
     for (coup = 0; coup < couplenum; coup++) {
         rl[coup][0].genome->fitness = rl[coup][0].fitness;
@@ -242,17 +234,15 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
         }
     }
 
-    species_list.sort(cmp_average_fitness);
-    
+    species_list.sort(species_desc_cmp);
+
+    /* FIXME: guarda se e' davvero necessaria */
     //remove_stale_species(&species_list);
-    //forse rank globally???
     remove_weak_species(&species_list, couplenum);
-    
+
     tot_fitness=0;
     for (s_it = species_list.begin(); s_it != species_list.end(); s_it++)
         tot_fitness += (*s_it)->average_fitness;
-
-    species_list.sort(cmp_average_fitness);
 
     for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
         breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum)-2;
@@ -268,8 +258,7 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
         if(!(*s_it)->cull(true)) {
             delete (*s_it);
             s_it=species_list.erase(s_it);
-        }
-        else {
+        } else {
             size+=(*s_it)->genomes.size();
             s_it++;
         }
@@ -277,10 +266,14 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
 
 
     while(size<couplenum) {
+        /* Add a remaining children */
         r=(int)round(RANDOM_DOUBLE(species_list.size()-1));
+
         s=LIST_GET(Species*, species_list, r);
+
         gen=new Genome(s);
         children.push_back(gen);
+
         size++;
     }
 
@@ -289,23 +282,20 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
     }
 
     i=0;
-    /* TODO assign a genome to a robby */
     for(s_it=species_list.begin(); s_it!=species_list.end(); s_it++){
+
         for(g_it=(*s_it)->genomes.begin(); g_it!=(*s_it)->genomes.end(); g_it++) {
-
-            /*for(j=0; j<robbynum; j++) {
-              if(rl[i][j].genome)
-              delete rl[i][j].genome;
-              }*/
-
             rl[i][0].genome=(*g_it);
+
             for(j=1; j<robbynum; j++) {
                 if(rl[i][j].genome)
                     delete rl[i][j].genome;
                 rl[i][j].genome=new Genome(*g_it);
             }
+
             i++;
         }
+
     }
 
     return 0;
@@ -319,14 +309,8 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
         long unsigned int robbynum,
         long unsigned int generation)
 {
-    FILE *f;
-    unsigned long int i, j;
+    unsigned long int i;
 
-    for (i = 0; i < couplenum; i++)
-        for (j = 0; j < robbynum; j++)
-            rl[i][j].num_moves = 0;
-   
-    //FIXME roba stampe brutta cacca
     if(generation>0)
         for (i = 0; i < couplenum; i++)
             rl[i][0].genome->fitness = rl[i][0].fitness;
@@ -334,24 +318,26 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 #ifdef DEBUG_GENOMES
     list <Species *>::iterator s_it;
     list <Genome *>::iterator g_it;
-    
+
     i=0;
     for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
         cout << "Species BEFORE " << i++ << endl;
         for (g_it = (*s_it)->genomes.begin(); g_it != (*s_it)->genomes.end(); g_it++) {
-            //(*g_it)->print();
             cout <<"fitness is: "  <<(*g_it)->fitness <<" >> "<< (*g_it)->id << endl;
             cout << "----" << endl;
         }
     }
 #endif
-    
+
     if (generation == 0) {
         setup_generations(rl, couplenum, robbynum);
+#ifdef DEBUG_SPECIES
+        FILE *f;
         f=fopen("fitvalues", "w");
         fclose(f);
+#endif
     } else {
-    #ifdef DEBUG_SPECIES
+#ifdef DEBUG_SPECIES
         f=fopen("fitvalues","a");
         for(i=0;i<couplenum;i++) {
             fprintf(f,"%lu %f %lu\n",i, rl[i][0].fitness,generation);
@@ -359,19 +345,17 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
         }
         fprintf(f,"\n");
         fclose(f);
-    #endif
+#endif
         next_generation(rl, couplenum, robbynum);
     }
 
     cout << "species list size: " << species_list.size() << endl;
 
 #ifdef DEBUG_GENOMES
-    
     i=0;
     for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
         cout << "Species AFTER " << i++ << endl;
         for (g_it = (*s_it)->genomes.begin(); g_it != (*s_it)->genomes.end(); g_it++) {
-            //(*g_it)->print();
             cout <<"fitness is: "  <<(*g_it)->fitness <<" >> "<< (*g_it)->id << endl;
             cout << "----" << endl;
         }
@@ -388,7 +372,7 @@ static inline void free_kmap(struct robby *r) {
 
 void cleanup(struct robby **rl, long unsigned int couplenum, long unsigned int robbynum)
 { 
-    int i,j;
+    unsigned long int i, j;
     list<Species*>::iterator s_it;
 
     s_it=species_list.begin();

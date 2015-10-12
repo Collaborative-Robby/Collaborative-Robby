@@ -574,7 +574,6 @@ bool Genome::containslink(Gene *g) {
 
 int Genome::link_mutate(bool force_bias) {
     unsigned long int node_size;
-    unsigned long int input_size;
     unsigned long int rand1,rand2;
     Node *n1,*n2,*temp;
     Gene *new_gene;
@@ -609,7 +608,6 @@ int Genome::link_mutate(bool force_bias) {
     new_gene->out=n2;
 
     if(force_bias) {
-	input_size = get_dis_circle_area(VIEW_RADIUS);
 	key = POSSIBLE_MOVES;
         new_gene->in = this->node_map[key];
     }
@@ -673,7 +671,7 @@ int Genome::enable_disable_mutate(bool enable) {
 
 /* FIXME BFS */
 int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
-    int i,j;
+    unsigned long int i,j;
     unsigned long int key;
     unsigned long int max_id;
     double max;
@@ -748,9 +746,9 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
             }
             #endif
             if(ROBBY_NNET_POSITION) {
-                this->node_map[key]->activate(m_it->x);
+                this->node_map[key]->activate((double)m_it->x);
                 key++;
-                this->node_map[key]->activate(m_it->y);
+                this->node_map[key]->activate((double)m_it->y);
                 key++;
             }
 #ifndef KNOWN_MAP

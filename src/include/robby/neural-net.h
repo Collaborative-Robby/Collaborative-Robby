@@ -113,6 +113,11 @@ class Species {
 
 		unsigned long int cull(bool onlyone);
 		double calculate_avg_fitness(void);
+
+		friend bool operator>  (Species &s1, Species &s2);
+		friend bool operator<  (Species &s1, Species &s2);
+		friend bool operator>= (Species &s1, Species &s2);
+		friend bool operator<= (Species &s1, Species &s2);
 };
 
 #endif

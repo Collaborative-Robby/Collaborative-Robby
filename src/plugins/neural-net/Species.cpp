@@ -2,6 +2,12 @@
 
 #include <robby/neural-net.h>
 #include <robby/neural-net-utils.h>
+
+bool species_desc_cmp(Species *s1, Species *s2)
+{
+	return *s1 > *s2;
+}
+
 /* Species */
 Species::Species(void)
 {
@@ -62,4 +68,24 @@ double Species::calculate_avg_fitness(void)
 
 	this->average_fitness = (avg/(double) size);
 	return this->average_fitness;
+}
+
+bool operator< (Species &s1, Species &s2)
+{
+	return s1.average_fitness < s2.average_fitness;
+}
+
+bool operator> (Species &s1, Species &s2)
+{
+	return s1.average_fitness < s2.average_fitness;
+}
+
+bool operator<= (Species &s1, Species &s2)
+{
+	return s1.average_fitness <= s2.average_fitness;
+}
+
+bool operator>= (Species &s1, Species &s2)
+{
+	return s1.average_fitness <= s2.average_fitness;
 }

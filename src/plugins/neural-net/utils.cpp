@@ -2,8 +2,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <robby/struct.h>
+
 #include <robby/neural-net.h>
 #include <robby/neural-net-const.h>
+
+void setup_positions(struct robby **rl, long unsigned int robbynum)
+{
+    rl[0][0].original_x = 0;
+    rl[0][0].original_y = 0;
+    if (robbynum > 1) {
+       /* original_ values contains sizex and sizey */
+       rl[0][1].original_x--;
+       rl[0][1].original_y--;
+    }
+    /* Random placing for the other robbies. */
+}
 
 /* Compare the level (in the Q domain) of two nodes
  * Return -1 or 1 if, respectively the first or the second node is at an
@@ -220,4 +234,3 @@ int remove_stale_species(list <Species *> *sl)
 	}   
     return 0;
 }
-
