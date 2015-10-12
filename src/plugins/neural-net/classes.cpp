@@ -842,7 +842,7 @@ int Genome::node_mutate(void) {
 
     n2=g_orig->out->level_numerator;
     d2=g_orig->out->level_denom;
-    
+
     lv_it=g_orig->out->level_it;
     lv_it--;
 
@@ -850,7 +850,6 @@ int Genome::node_mutate(void) {
     tmp2=g_orig->in;
     //if the input level and the level preceding output are the same, create a new level
     if(compare_level(tmp1,tmp2)==0) {
-    
         get_level_num(n1,d1,n2,d2,&new_n, &new_d); 
 
         neuron=new Node(this->node_count,NODE_TYPE_HIDDEN, new_n, new_d);
@@ -947,7 +946,6 @@ int Genome::link_mutate(bool force_bias) {
     if(force_bias) {
 	input_size = get_dis_circle_area(VIEW_RADIUS);
 	key = POSSIBLE_MOVES;
-	cout << "bias id: " << key << endl;
         new_gene->in = this->node_map[key];
     }
 
@@ -1090,8 +1088,10 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
                 this->node_map[key]->activate(m_it->y);
                 key++;
             }
+#ifndef KNOWN_MAP
             this->node_map[key]->activate((*m_it).old_move);
             key++;
+#endif
         }
     }
 
