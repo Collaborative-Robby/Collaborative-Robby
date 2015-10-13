@@ -163,74 +163,63 @@ bool cmp_desc_genomes(Genome *g1, Genome *g2)
    }
 }
 
-int remove_weak_species(list <Species *> *sl, long unsigned int couplenum)
+static inline int calculate_species_values(list <Species *> *sl, long unsigned int couplenum, double &tot_fitness, double &max_fitness) 
 {
 	list <Species *>::iterator s_it;
     Genome* cgenome;
-	double tot_fitness = 0, breed = 0, max_fitness=0;
 
+    /*calculate max fitness and total avg fitness*/
     for (s_it = sl->begin(); s_it != sl->end(); s_it++) {
         
 		(*s_it)->genomes.sort(cmp_desc_genomes);
 		
 		cgenome = LIST_GET(Genome*, ((*s_it)->genomes), 0);
         
-		if (cgenome->fitness > (*s_it)->top_fitness)
+		if (cgenome->fitness > (*s_it)->top_fitness) {
 			(*s_it)->top_fitness = cgenome->fitness;
+			(*s_it)->staleness = 0;
+        }
+        else {
+			(*s_it)->staleness++;
+        }
         
         tot_fitness += (*s_it)->calculate_avg_fitness();
 
         if(max_fitness < (*s_it)->top_fitness)
             max_fitness=(*s_it)->top_fitness;
     }
+    return 0;
+}
 
+/*remove species that have staled or have a low avg fitness*/
+int remove_species(list <Species *> *sl, long unsigned int couplenum, double &tot_fitness)
+{
+	list <Species *>::iterator s_it;
+	double breed = 0, max_fitness=0;
+
+    calculate_species_values(sl, couplenum, tot_fitness, max_fitness);
+    
+    /*remove species that are very weak*/
 	for (s_it = sl->begin(); s_it != sl->end();) {
 		breed = floor(((*s_it)->average_fitness / tot_fitness) *
 		              (double) couplenum)-1;
-
+        
 		if (breed < 1 && sl->size()>1) {
+            /*remove species that have a low average*/
+            tot_fitness-=(*s_it)->average_fitness;
             delete (*s_it);
 			s_it = sl->erase(s_it);
-		}
-        else {
-            s_it++;
-        }
-	}
-    return 0;
-}
-
-int remove_stale_species(list <Species *> *sl)
-{
-	Genome *cgenome;
-	double max_fitness = 0;
-	list <Species *>::iterator s_it;
-
-	for (s_it = sl->begin(); s_it != sl->end(); s_it++) {
-		(*s_it)->genomes.sort(cmp_desc_genomes);
-
-		cgenome = LIST_GET(Genome*, ((*s_it)->genomes), 0);
-		if (cgenome->fitness > (*s_it)->top_fitness) {
-			(*s_it)->top_fitness = cgenome->fitness;
-
-			(*s_it)->staleness = 0;
-		} else {
-			(*s_it)->staleness++;
-		}
-
-		if (max_fitness < (*s_it)->top_fitness)
-			max_fitness = (*s_it)->top_fitness;
-
-	}
-
-	for (s_it = sl->begin(); s_it != sl->end();) {
-		if ((*s_it)->staleness >= SPECIES_STALE_TRESHOLD &&
+		} else if((*s_it)->staleness >= SPECIES_STALE_TRESHOLD &&
 		    (*s_it)->top_fitness < max_fitness) {
+            /*remove species that have staled*/
+            tot_fitness-=(*s_it)->average_fitness;
             delete (*s_it);
 			s_it = sl->erase(s_it);
-		}
+        }
         else {
             s_it++;
         }
-	}   
+	}
     return 0;
 }
+

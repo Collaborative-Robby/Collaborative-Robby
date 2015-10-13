@@ -20,7 +20,7 @@
 #define COEFFICIENT_DISJOINT_GENES 2.0
 
 /* Number of turns of species survival. */
-#define SPECIES_STALE_TRESHOLD 60
+#define SPECIES_STALE_TRESHOLD 100
 
 /* Parameter of the sigmoid activation function */
 #define SIGMOID_BETA -4.9

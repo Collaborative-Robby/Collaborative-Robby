@@ -224,6 +224,8 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
     }
 #endif
     }
+
+    /*cut the species in half*/
     for (s_it = species_list.begin(); s_it != species_list.end();) {
         if(!(*s_it)->cull(false)) {
             delete (*s_it);    
@@ -236,24 +238,27 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
 
     species_list.sort(species_desc_cmp);
 
-    /* FIXME: guarda se e' davvero necessaria */
-    //remove_stale_species(&species_list);
-    remove_weak_species(&species_list, couplenum);
-
     tot_fitness=0;
-    for (s_it = species_list.begin(); s_it != species_list.end(); s_it++)
-        tot_fitness += (*s_it)->average_fitness;
+    size=0;
+    
+    /* FIXME: guarda se e' davvero necessaria */
 
+    //remove_stale_species(&species_list);
+    
+    remove_species(&species_list, couplenum, tot_fitness);
+    
+
+    /*create children from crossover of species */
     for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
         breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum)-2;
         for(i=0; i<breed; i++) {
             gen=new Genome(*s_it);
             children.push_back(gen);
+            size++;
         }
     }
 
-    size=children.size();
-
+    /*keep only 2 genomes per species, delete empty ones*/
     for (s_it = species_list.begin(); s_it != species_list.end();) {
         if(!(*s_it)->cull(true)) {
             delete (*s_it);
@@ -266,7 +271,7 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
 
 
     while(size<couplenum) {
-        /* Add a remaining children */
+        /* Add remaining children */
         r=(int)round(RANDOM_DOUBLE(species_list.size()-1));
 
         s=LIST_GET(Species*, species_list, r);
@@ -276,12 +281,15 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
 
         size++;
     }
-
+    
+    /*assign each children to a species*/
     for(g_it=children.begin(); g_it!=children.end(); g_it++) {
         (*g_it)->specialize(&species_list);
     }
 
     i=0;
+
+    /*assign genomes to robbies and clean up*/
     for(s_it=species_list.begin(); s_it!=species_list.end(); s_it++){
 
         for(g_it=(*s_it)->genomes.begin(); g_it!=(*s_it)->genomes.end(); g_it++) {

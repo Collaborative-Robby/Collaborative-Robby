@@ -29,8 +29,8 @@ bool exist_genome_file(char *dir, int fileno);
 
 long unsigned int next_innovation(void);
 
-int remove_stale_species(list <class Species *> *sl);
-int remove_weak_species(list <class Species *> *sl, long unsigned int couplenum);
+//int remove_stale_species(list <class Species *> *sl);
+int remove_species(list <class Species *> *sl, long unsigned int couplenum, double &tot_fitness);
 
 class Gene {
 	public:
