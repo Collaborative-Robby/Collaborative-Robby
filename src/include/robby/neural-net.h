@@ -52,7 +52,6 @@ class Node{
 		int type;
 		unsigned long int id;
 		unsigned long int active_in_genes;
-		unsigned long int activate_count;
 		double value;
 		unsigned long int level_numerator, level_denom;
         list<Gene*> input_genes;

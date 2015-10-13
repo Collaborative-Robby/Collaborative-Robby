@@ -195,13 +195,14 @@ static inline int calculate_species_values(list <Species *> *sl, long unsigned i
 int remove_species(list <Species *> *sl, long unsigned int couplenum, double &tot_fitness)
 {
 	list <Species *>::iterator s_it;
-	double breed = 0, max_fitness=0;
+	double breed = 0, max_fitness=0, local_tot;
 
     calculate_species_values(sl, couplenum, tot_fitness, max_fitness);
+    local_tot=tot_fitness;
     
     /*remove species that are very weak*/
 	for (s_it = sl->begin(); s_it != sl->end();) {
-		breed = floor(((*s_it)->average_fitness / tot_fitness) *
+		breed = floor(((*s_it)->average_fitness / local_tot) *
 		              (double) couplenum)-1;
         
 		if (breed < 1 && sl->size()>1) {

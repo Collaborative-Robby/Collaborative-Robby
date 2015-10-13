@@ -37,15 +37,12 @@ void Node::print(void) {
 
 void Node::activate(double input) {
     list<Gene*>::iterator it;
-    this->activate_count++;
 
     this->value=0;
+
     if(this->type==NODE_TYPE_INPUT) {
         this->value=input;
     } else {
-        /* Check if we are over the relative max_activation */
-        if(this->activate_count >= this->active_in_genes + MAX_REACTIVATIONS)
-            return;
 
         for(it=this->input_genes.begin(); it!=this->input_genes.end(); it++) {
             value+=(*it)->weight*(*it)->value;

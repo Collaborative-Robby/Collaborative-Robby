@@ -32,13 +32,10 @@ void Gene::print(void) {
 }
 
 void Gene::activate(double value) {
-    if(this->enabled) {
+    if(this->enabled) 
         this->value=value;
-#if 0
-/* FIXME Non abbiamo piu' la dfs. */
-        this->out->activate(value);
-#endif
-    }
+    else
+        this->value=0;
 }
 
 int Gene::point_mutate(void) {
