@@ -26,6 +26,6 @@
 #define SIGMOID_BETA -4.9
 
 /* Simulation features */
-#define ROBBY_NNET_POSITION false
+#define ROBBY_NNET_POSITION true
 
 #endif /* ROBBY_NEURAL_NET_CONST_H */
