@@ -532,7 +532,7 @@ int Genome::node_mutate(void) {
     tmp1=(*(*lv_it).begin());
     tmp2=g_orig->in;
 
-    if(tmp1 == tmp2) {
+    if(tmp1->level == tmp2->level) {
         /*if the input level and the level preceding output are the same, create a new level*/
 	f = Fraction(&g_orig->in->level, &g_orig->out->level);
 
