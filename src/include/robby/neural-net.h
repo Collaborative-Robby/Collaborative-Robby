@@ -3,6 +3,7 @@
 
 #include <map>
 #include <list>
+#include <robby/Fraction.h>
 
 #define NODE_TYPE_INPUT 0
 #define NODE_TYPE_HIDDEN 1
@@ -53,7 +54,7 @@ class Node{
 		unsigned long int id;
 		unsigned long int active_in_genes;
 		double value;
-		unsigned long int level_numerator, level_denom;
+		Fraction level;
         list<Gene*> input_genes;
 		list<Gene*> output_genes;
         list< list<Node*> >::iterator level_it;

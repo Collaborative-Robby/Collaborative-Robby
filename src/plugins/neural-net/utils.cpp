@@ -19,25 +19,6 @@ void setup_positions(struct robby **rl, long unsigned int robbynum)
     /* Random placing for the other robbies. */
 }
 
-/* Compare the level (in the Q domain) of two nodes
- * Return -1 or 1 if, respectively the first or the second node is at an
- * inferior level.
- */
-int compare_level(Node* n1, Node *n2)
-{
-    unsigned long long int v1,v2;
-
-    v1 = n1->level_numerator*n2->level_denom;
-    v2 = n2->level_numerator*n1->level_denom;
-
-    if (v1<v2)
-        return -1;
-    if (v1>v2)
-        return 1;
-
-    return 0;
-}
-
 /* Hash function to encode two unsigned long int */
  unsigned long long int hash_ull_int_encode(unsigned long from, unsigned long to)
 {
@@ -150,17 +131,6 @@ bool cmp_desc_genomes(Genome *g1, Genome *g2)
 
 	double x = (delta_excess + delta_disjoint + delta_weight);
 	return x;
-}
-
- void get_level_num(long unsigned int n1, long unsigned int d1, long unsigned int n2, long unsigned int d2, long unsigned int *new_n, long unsigned int *new_d) {
-   if(d1>=d2) {
-        *new_d=d1*2;
-        *new_n=(n2*(d1/d2))+n1;
-   }
-   else {
-        *new_d=d2*2;
-        *new_n=(n1*(d2/d1))+n2;
-   }
 }
 
 static inline int calculate_species_values(list <Species *> *sl, long unsigned int couplenum, double &tot_fitness, double &max_fitness) 

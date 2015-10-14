@@ -1,6 +1,7 @@
 #include <iostream>
 #include <robby/neural-net.h>
 #include <robby/neural-net-utils.h>
+#include <robby/Fraction.h>
 
 using namespace std;
 /* Node */
@@ -10,8 +11,7 @@ Node::Node(unsigned long int id, int type, unsigned long int l_num, unsigned lon
     this->id=id;
     this->value=0;
     this->active_in_genes = 0;
-    this->level_numerator=l_num;
-    this->level_denom=l_den;
+    this->level = Fraction(l_num, l_den);
 }
 
 Node::Node(Node* copy) {
@@ -20,8 +20,7 @@ Node::Node(Node* copy) {
     this->type=copy->type;
     this->value=copy->value;
     this->id=copy->id;
-    this->level_numerator=copy->level_numerator;
-    this->level_denom=copy->level_denom;
+    this->level = Fraction(copy->level.n, copy->level.d);
 
     this->active_in_genes = copy->active_in_genes;
 }

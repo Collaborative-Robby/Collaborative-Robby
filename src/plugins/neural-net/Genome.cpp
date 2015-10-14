@@ -19,6 +19,8 @@
 #include <robby/neural-net-const.h>
 #include <robby/neural-net-utils.h>
 
+#include <robby/Fraction.h>
+
 using namespace std;
 
 extern long unsigned int genome_count;
@@ -42,7 +44,7 @@ void Genome::copy(Genome *gen) {
     for(n_it=gen->node_map.begin(); n_it!=gen->node_map.end(); n_it++) {
         val = n_it->second;
         node_key = n_it->first;
-        node=new Node(node_key, val->type, val->level_numerator, val->level_denom);
+        node=new Node(node_key, val->type, val->level.n, val->level.d);
         NODE_INSERT(node, this->node_map);
 
 	    this->insert_level_list(node);
@@ -264,10 +266,10 @@ int Genome::insert_gene(Gene *g) {
     Gene *new_gene;
     long unsigned int id_in, id_out;
     Node *n1,*n2;
-    
+
     id_in=g->in->id;
     id_out=g->out->id;
-    
+
     /*If adjacent nodes don't exist, create them*/
     if(!this->node_map.count(id_in)) {
         n1=new Node(g->in);
@@ -277,7 +279,7 @@ int Genome::insert_gene(Gene *g) {
     } else {
         n1=this->node_map[id_in];
     }
-    
+
     if(!this->node_map.count(id_out)) {
         n2=new Node(g->out);
         NODE_INSERT(n2, this->node_map);
@@ -286,12 +288,11 @@ int Genome::insert_gene(Gene *g) {
     } else {
         n2=this->node_map[id_out];
     }
-    
+
     /*Avoid loops*/
-    if(compare_level(n1,n2)>=0) {
+    if(n1->level >= n2->level)
 	    return 0;
-    }
-    
+
     /*Create and push the gene*/
     new_gene=new Gene(g);
     new_gene->in=n1;
@@ -348,11 +349,11 @@ void Genome::insert_level_list(Node *n) {
 		l_it++;
 
 		/* Advance the list to our level */
-		while(compare_level(*(l_it->begin()), n) < 0)
+		while((*(l_it->begin()))->level < n->level)
 			l_it++;
 
 		n->level_it = l_it;
-		if(compare_level(*(l_it->begin()), n) == 0) {
+		if((*(l_it->begin()))->level == n->level) {
 			/* Push the node in the existent level */
 			l_it->push_back(n);
 		} else {
@@ -504,13 +505,14 @@ int Genome::node_mutate(void) {
     Node *neuron;
     unsigned long int list_len;
     unsigned long int gene_index;
-    unsigned long int n1,n2,d1,d2,new_n,new_d;
     list <Node*> new_l;
     map<unsigned long int, Node*>::iterator it;
     Node *tmp1,*tmp2;
     list< list<Node*> >::iterator lv_it;
     Gene *g_orig, *g1,*g2;
-    
+    /* Empty fraction */
+    Fraction f;
+
     /*Select a random gene*/
     list_len=this->gene_map.size();
     if(list_len==0)
@@ -524,30 +526,22 @@ int Genome::node_mutate(void) {
         return -1;
 
     /*Get the levels for the input and outputs of the selected gene*/
-    n1=g_orig->in->level_numerator;
-    d1=g_orig->in->level_denom;
-
-    n2=g_orig->out->level_numerator;
-    d2=g_orig->out->level_denom;
-
     lv_it=g_orig->out->level_it;
     lv_it--;
 
     tmp1=(*(*lv_it).begin());
     tmp2=g_orig->in;
 
-    if(compare_level(tmp1,tmp2)==0) {
+    if(tmp1 == tmp2) {
         /*if the input level and the level preceding output are the same, create a new level*/
-        get_level_num(n1,d1,n2,d2,&new_n, &new_d); 
+	f = Fraction(&g_orig->in->level, &g_orig->out->level);
 
-        neuron=new Node(this->node_count,NODE_TYPE_HIDDEN, new_n, new_d);
+        neuron=new Node(this->node_count,NODE_TYPE_HIDDEN, f.n, f.d);
         new_l.push_back(neuron);
         this->level_list.push_back(new_l);
     } else {
         /*else choose the level preceding output*/
-        new_n=tmp1->level_numerator;
-        new_d=tmp1->level_denom;
-        neuron=new Node(this->node_count,NODE_TYPE_HIDDEN,new_n, new_d);
+        neuron=new Node(this->node_count,NODE_TYPE_HIDDEN,tmp1->level.n, tmp1->level.d);
         lv_it->push_back(neuron);
     }
 
@@ -622,11 +616,11 @@ int Genome::link_mutate(bool force_bias) {
     n2=this->node_map[rand2];
 
     /*Check if the two nodes are on the same level*/
-    if(compare_level(n1,n2)==0)
+    if(n1->level == n2->level)
         return 1;
-    
+
     /*If the first node is on a higher level, swap the nodes*/
-    if(compare_level(n1,n2)==1) {
+    if(n1->level > n2->level) {
         temp=n2;
         n2=n1;
         n1=temp;
