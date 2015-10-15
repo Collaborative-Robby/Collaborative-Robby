@@ -184,6 +184,7 @@ Genome::Genome(char *dir, int fileno) {
 	int rval, i;
 	int node_size, gene_size;
 	int node_id, node_type;
+    long unsigned int node_num, node_den;
     int tmp;
 	Node *cur_node;
 	Gene *cur_gene;
@@ -203,12 +204,12 @@ Genome::Genome(char *dir, int fileno) {
 	cout << "loading genome from " << path << endl;
 
 	fscanf(f, "%d %d\n{\n", &node_size, &gene_size);
-
+    
 	for (i =0 ; i < node_size; i ++) {
-		fscanf(f, "%d %d\n", &node_id, &node_type);
-        //FIXME
-		cur_node = new Node(node_id, node_type,1,0);
+		fscanf(f, "%d %d, %lu/%lu\n", &node_id, &node_type, &node_num, &node_den);
+		cur_node = new Node(node_id, node_type,node_num, node_den);
 		NODE_INSERT(cur_node, this->node_map);
+        this->insert_level_list(cur_node);
 	}
 	this->node_count = node_size;
 
@@ -229,6 +230,10 @@ Genome::Genome(char *dir, int fileno) {
             global_innovation=cur_gene->innovation+1;
         if(cur_gene->innovation>this->max_innov)
             this->max_innov=cur_gene->innovation;
+        
+        cur_gene->in->output_genes.push_back(cur_gene);
+        cur_gene->out->input_genes.push_back(cur_gene);
+
 	}
 	fclose(f);
 
@@ -349,19 +354,23 @@ void Genome::insert_level_list(Node *n) {
 		l_it++;
 
 		/* Advance the list to our level */
-		while((*(l_it->begin()))->level < n->level)
+		while((*(l_it->begin()))->level < n->level) {
 			l_it++;
+        }
 
-		n->level_it = l_it;
 		if((*(l_it->begin()))->level == n->level) {
 			/* Push the node in the existent level */
 			l_it->push_back(n);
+		    n->level_it = l_it;
 		} else {
 			/* Create a new level and insert the node*/
 			l.push_back(n);
+
 			l_it=this->level_list.insert(l_it, l);
+            
             n->level_it=l_it;
 		}
+
 	}
 }
 
@@ -524,7 +533,8 @@ int Genome::node_mutate(void) {
 
     if(!g_orig->enabled)
         return -1;
-
+    
+    //FIXME sta roba non si puo vedere
     /*Get the levels for the input and outputs of the selected gene*/
     lv_it=g_orig->out->level_it;
     lv_it--;
@@ -534,11 +544,12 @@ int Genome::node_mutate(void) {
 
     if(tmp1->level == tmp2->level) {
         /*if the input level and the level preceding output are the same, create a new level*/
-	f = Fraction(&g_orig->in->level, &g_orig->out->level);
+	    f = Fraction(&g_orig->in->level, &g_orig->out->level);
 
         neuron=new Node(this->node_count,NODE_TYPE_HIDDEN, f.n, f.d);
         new_l.push_back(neuron);
-        this->level_list.push_back(new_l);
+        this->level_list.insert(g_orig->out->level_it, new_l);
+
     } else {
         /*else choose the level preceding output*/
         neuron=new Node(this->node_count,NODE_TYPE_HIDDEN,tmp1->level.n, tmp1->level.d);
@@ -813,15 +824,18 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
     return (int)max_id;
 }
 
-int Genome::save_to_file(char *dir, int fileno) {
+/*save genomes to file*/
+int Genome::save_to_file(char *dir, long unsigned int fileno) {
 	map <GENE_KEY_TYPE, Gene *>::iterator g_it;
-	map <NODE_KEY_TYPE, Node *>::iterator n_it;
 	long unsigned int idin = 0, idout = 0;
+    list<Node*>::iterator n_it;
+    list<list <Node*> >::iterator l_it,o_it;
 	char *path;
 	FILE *f;
 	DIR *d;
 	int rval;
-
+    
+    /*check if the dir exists, if not create it*/
 	d = opendir(dir);
 	if (!d) {
 		mkdir(dir, 0755);
@@ -832,23 +846,42 @@ int Genome::save_to_file(char *dir, int fileno) {
 		}
 	}
 
-	rval = asprintf(&path, "%s/%d.%s", dir, fileno, GENOME_EXT);
+    /*create the genome file*/
+	rval = asprintf(&path, "%s/%lu.%s", dir, fileno, GENOME_EXT);
 	if (rval < 0)
 		return rval;
-
+    
 	f = fopen(path, "w");
 	if (!f) {
 		perror("genome save");
 		return -1;
 	}
-
+    
+    /*save node and genome size*/
 	fprintf(f, "%lu %lu\n{\n", this->node_map.size(), this->gene_map.size());
+    
+    /*save input layer*/
+    l_it=this->level_list.begin();
+    for (n_it=l_it->begin(); n_it != l_it->end(); n_it++)
+        fprintf(f, "%lu %d, %lu/%lu \n", (*n_it)->id, (*n_it)->type, (*n_it)->level.n, (*n_it)->level.d);
 
-	for (n_it=this->node_map.begin(); n_it != this->node_map.end(); n_it++)
-		fprintf(f, "%lu %d\n", n_it->second->id, n_it->second->type);
 
+    /*save output layer*/
+    o_it=this->level_list.end();
+    o_it--;
+    for (n_it=o_it->begin(); n_it != o_it->end(); n_it++)
+        fprintf(f, "%lu %d, %lu/%lu \n", (*n_it)->id, (*n_it)->type, (*n_it)->level.n, (*n_it)->level.d);
+
+    /*save node info*/
+    l_it=this->level_list.begin();
+    l_it++;
+    for(; l_it!=o_it; l_it++) {
+        for (n_it=l_it->begin(); n_it != l_it->end(); n_it++)
+            fprintf(f, "%lu %d, %lu/%lu \n", (*n_it)->id, (*n_it)->type, (*n_it)->level.n, (*n_it)->level.d);
+    }
 	fprintf(f, "}\n{\n");
 
+    /*save genome info*/
 	for (g_it=this->gene_map.begin(); g_it != this->gene_map.end(); g_it++) {
 		if (g_it->second->in)
 			idin = g_it->second->in->id;

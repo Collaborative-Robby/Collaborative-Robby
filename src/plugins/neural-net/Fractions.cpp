@@ -39,7 +39,7 @@ void Fraction::normalize() {
 
 bool operator== (Fraction &f1, Fraction &f2)
 {
-	return f1.n * f2.d == f2.n * f1.d;
+	return (f1.n * f2.d) == (f2.n * f1.d);
 }
 
 bool operator!= (Fraction &f1, Fraction &f2)

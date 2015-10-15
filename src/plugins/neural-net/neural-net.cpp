@@ -161,11 +161,11 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
 
 	/* Get genome from file or generate a new genome. */
         /* FIXME: Gestione file genoma. */
-        if (true ||  !exist_genome_file(DEFAULT_GENOME_DIR, coup))
+        if (!exist_genome_file(DEFAULT_GENOME_DIR, coup))
             rl[coup][0].genome = new Genome(input_no,POSSIBLE_MOVES,robbynum);
         else
             rl[coup][0].genome = new Genome(DEFAULT_GENOME_DIR, coup);
-
+        
         rl[coup][0].genome->specialize(&species_list);
 
 #ifdef KNOWN_MAP
@@ -357,7 +357,6 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
         next_generation(rl, couplenum, robbynum);
     }
 
-    cout << "species list size: " << species_list.size() << endl;
 
 #ifdef DEBUG_GENOMES
     i=0;
@@ -382,9 +381,15 @@ void cleanup(struct robby **rl, long unsigned int couplenum, long unsigned int r
 { 
     unsigned long int i, j;
     list<Species*>::iterator s_it;
-
+    list<Genome*>::iterator g_it;
+    
+    i=0;
     s_it=species_list.begin();
     while(s_it!=species_list.end()) {
+        for(g_it=(*s_it)->genomes.begin(); g_it!=(*s_it)->genomes.end(); g_it++) {
+            (*g_it)->save_to_file(DEFAULT_GENOME_DIR,i);
+            i++;
+        }
         delete (*s_it);
         s_it=species_list.erase(s_it);
     }

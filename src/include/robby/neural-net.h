@@ -96,7 +96,7 @@ class Genome {
 		void print(void);
 		bool containslink(class Gene *g);
 		int activate(struct robby *r, list <struct robby_msg> *ml);
-		int save_to_file(char *dir, int fno);
+		int save_to_file(char *dir, long unsigned int fno);
 		int specialize(list <class Species *> *sl);
 		void insert_level_list(Node *n);
 };
