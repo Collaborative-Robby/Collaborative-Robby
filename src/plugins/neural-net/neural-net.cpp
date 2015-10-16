@@ -160,7 +160,6 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
     for (coup = 0; coup < couplenum; coup++) {
 
 	/* Get genome from file or generate a new genome. */
-        /* FIXME: Gestione file genoma. */
         if (!exist_genome_file(DEFAULT_GENOME_DIR, coup))
             rl[coup][0].genome = new Genome(input_no,POSSIBLE_MOVES,robbynum);
         else
@@ -181,6 +180,7 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
                 perror("calloc known map");
                 exit(-1);
             }
+	    memset(k_map[i], -1, rl[coup][0].m_sizey * sizeof(char));
         }
 #endif
 
@@ -240,10 +240,6 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
 
     tot_fitness=0;
     size=0;
-    
-    /* FIXME: guarda se e' davvero necessaria */
-
-    //remove_stale_species(&species_list);
     
     remove_species(&species_list, couplenum, tot_fitness);
     

@@ -101,7 +101,6 @@ bool cmp_desc_genomes(Genome *g1, Genome *g2)
 		else if (!found)
 			disjoint_genes++;
 
-		/* XXX check the same innovation number */
 		else {
 			equal_gene = oth_g->gene_map[g_it->first];
 

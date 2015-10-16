@@ -646,6 +646,9 @@ int main(int argc, char **argv)
 		}
 	}
 
+	for (i = 0; i < couplenum; i++)
+		zero_fitness(rl[i], robbynum);
+
 	for (generation = 0; generation < totalgenerations; generation++) {
 		print_in_generation_header(generation);
 

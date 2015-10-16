@@ -175,7 +175,6 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
     this->mutate();
 }
 
-//TODO sistema
 Genome::Genome(char *dir, int fileno) {
 	map <GENE_KEY_TYPE, Gene *>::iterator g_it;
 	map <NODE_KEY_TYPE, Node *>::iterator n_it;
@@ -238,8 +237,6 @@ Genome::Genome(char *dir, int fileno) {
 	fclose(f);
 
 	free(path);
-
-	/* XXX active_in_count update */
 }
 
 Genome::Genome(Species *s) {
@@ -512,13 +509,16 @@ void Genome::print() {
 
 int Genome::node_mutate(void) {
     Node *neuron;
+    Gene *g_orig, *g1,*g2;
+    Node *node_preceding_output_level, *node_input_level;
+
     unsigned long int list_len;
     unsigned long int gene_index;
+
     list <Node*> new_l;
-    map<unsigned long int, Node*>::iterator it;
-    Node *tmp1,*tmp2;
     list< list<Node*> >::iterator lv_it;
-    Gene *g_orig, *g1,*g2;
+    map<unsigned long int, Node*>::iterator it;
+
     /* Empty fraction */
     Fraction f;
 
@@ -534,15 +534,14 @@ int Genome::node_mutate(void) {
     if(!g_orig->enabled)
         return -1;
     
-    //FIXME sta roba non si puo vedere
     /*Get the levels for the input and outputs of the selected gene*/
     lv_it=g_orig->out->level_it;
     lv_it--;
 
-    tmp1=(*(*lv_it).begin());
-    tmp2=g_orig->in;
+    node_preceding_output_level = (*(*lv_it).begin());
+    node_input_level = g_orig->in;
 
-    if(tmp1->level == tmp2->level) {
+    if(node_preceding_output_level->level == node_input_level->level) {
         /*if the input level and the level preceding output are the same, create a new level*/
 	    f = Fraction(&g_orig->in->level, &g_orig->out->level);
 
@@ -552,7 +551,9 @@ int Genome::node_mutate(void) {
 
     } else {
         /*else choose the level preceding output*/
-        neuron=new Node(this->node_count,NODE_TYPE_HIDDEN,tmp1->level.n, tmp1->level.d);
+        neuron=new Node(this->node_count,NODE_TYPE_HIDDEN,
+                        node_preceding_output_level->level.n,
+                        node_preceding_output_level->level.d);
         lv_it->push_back(neuron);
     }
 
