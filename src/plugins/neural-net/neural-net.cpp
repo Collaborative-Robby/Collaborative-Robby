@@ -180,7 +180,7 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
                 perror("calloc known map");
                 exit(-1);
             }
-	    memset(k_map[i], -1, rl[coup][0].m_sizey * sizeof(char));
+	    memset(k_map[i], VIEW_TOO_FAR, rl[coup][0].m_sizey * sizeof(char));
         }
 #endif
 
@@ -220,7 +220,7 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
         rl[coup][0].genome->fitness = rl[coup][0].fitness;
 #ifdef KNOWN_MAP
     for(i=0; i<rl[coup][0].m_sizex; i++) {
-        memset(rl[coup][0].known_map[i], -1, rl[coup][0].m_sizey);
+        memset(rl[coup][0].known_map[i], VIEW_TOO_FAR, rl[coup][0].m_sizey);
     }
 #endif
     }

@@ -758,12 +758,12 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
     }
 #endif
 
-    /* Activate with robby position*/
+    /* Activate with robby position, from 1 to map size*/
     if (ROBBY_NNET_POSITION) {
-        this->node_map[key]->activate((double)r->x);
+        this->node_map[key]->activate((double)r->x+1.0);
         key++;
 
-        this->node_map[key]->activate((double)r->y);
+        this->node_map[key]->activate((double)r->y+1.0);
         key++;
     }
     
@@ -781,11 +781,11 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
                     }
             }
 #endif      
-            /*Get other robbies position*/
+            /*Get other robbies position, from 1 to map size*/
             if(ROBBY_NNET_POSITION) {
-                this->node_map[key]->activate((double)m_it->x);
+                this->node_map[key]->activate((double)m_it->x+1.0);
                 key++;
-                this->node_map[key]->activate((double)m_it->y);
+                this->node_map[key]->activate((double)m_it->y+1.0);
                 key++;
             }
 #ifdef OLD_MOVE
