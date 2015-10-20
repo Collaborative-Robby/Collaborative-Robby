@@ -109,8 +109,10 @@ int move(struct world_map *m, struct robby *r)
     cout << "position BEFORE " << r->x << "," << r->y << endl;
     cout << "over BEFORE " << r->over << "vs"<< (int)(r->over==CAN_DUMMY_PTR) << endl;
 #endif
-    //if(r->gathered_cans >= m->n_cans)
-    //    return 2;
+    
+    /*done, terminate early*/
+    if(m->gathered_cans == m->n_cans)
+        return 2;
     
     dirnum=r->genome->activate(r, &msg_list);
     if(dirnum<4) {
@@ -119,6 +121,7 @@ int move(struct world_map *m, struct robby *r)
     else if(r->over==CAN_DUMMY_PTR) {
         r->over=NULL;
         r->gathered_cans++;
+        m->gathered_cans++;
         success=1;
     }
     else 

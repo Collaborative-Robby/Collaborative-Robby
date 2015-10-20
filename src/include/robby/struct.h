@@ -14,6 +14,7 @@ struct world_map {
 	long unsigned int sizex, sizey;
 	long unsigned int n_robots;
 	long unsigned int n_cans;
+    long unsigned int gathered_cans;
 	void ***innermatrix;
 	struct robby **rl;
 };
@@ -34,9 +35,8 @@ struct robby {
 	void *over;
 	int (*move)(struct world_map *, struct robby *);
 
-	int gathered_cans;
-	int failed_moves;
-	int last_gathered_can_time;
+	long unsigned int gathered_cans;
+	long unsigned int failed_moves;
 	long unsigned int num_moves;
 
 	double fitness;

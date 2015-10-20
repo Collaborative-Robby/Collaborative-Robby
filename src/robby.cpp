@@ -54,6 +54,7 @@ int map_constructor(struct world_map *m, unsigned long int x, unsigned long int 
 
     m->n_robots = 0;
     m->n_cans = cannum;
+    m->gathered_cans=0;
 
     for (i = 0; i < cannum; i++) {
         long unsigned int nx, ny;
@@ -95,6 +96,8 @@ void map_copy(struct world_map *src, struct world_map *dst, unsigned long int ro
     for (i = 0; i < src->sizex; i++)
         for (j = 0; j < src->sizey; j++)
             dst->innermatrix[i][j] = src->innermatrix[i][j];
+
+    dst->gathered_cans=0;
 }
 
 void map_destructor(struct world_map *m)
@@ -178,14 +181,14 @@ struct robby *add_robby(struct world_map *m, struct robby *r)
         })
 
 #define MOVE_ALL_ROBBIES(m,train) ({\
-	unsigned long int i;\
-	for (i=0; i < m.n_robots; i++) {\
-		if (!m.rl[i]->moved) m.rl[i]->move(&m, m.rl[i]);\
-	}\
-	for (i=0; i < m.n_robots; i++) {\
-		m.rl[i]->moved = 0;\
-	}\
-})
+        unsigned long int i;\
+        for (i=0; i < m.n_robots; i++) {\
+        if (!m.rl[i]->moved) m.rl[i]->move(&m, m.rl[i]);\
+        }\
+        for (i=0; i < m.n_robots; i++) {\
+        m.rl[i]->moved = 0;\
+        }\
+        })
 
 void load_function(void **f, void *callback, const char *name)
 {
@@ -211,7 +214,7 @@ void load_plugin(char *path)
     load_function((void **) &update_view_and_send_callback, callbacks, "update_view_and_send");
 
     if (!generate_robbies_callback || !move_callback || !update_view_callback ||
-	    !update_view_and_send_callback) {
+            !update_view_and_send_callback) {
         exit(EXIT_FAILURE);
     }
 }
@@ -228,24 +231,18 @@ double eval(struct robby *r, long unsigned int totalcans)
 }
 
 double eval_couple(struct robby *r, long unsigned int robbynum, long unsigned
-int totalcans, long unsigned int roundnum, long unsigned int map_num)
+        int totalcans, long unsigned int roundnum, long unsigned int map_num)
 {
     unsigned long int i;
     double sum = 0;
-    for (i=0; i < robbynum; i++)
-        sum += (((double) r[i].gathered_cans / (double) (totalcans*map_num)));
-               //((double) (roundnum-r[i].failed_moves)/(double) (roundnum)));
-    
 
+    for (i=0; i < robbynum; i++) {
+        sum += (((double) r[i].gathered_cans / (double) (totalcans)) +
+                (((double) (map_num*roundnum-r[i].failed_moves))/(double) (map_num*roundnum*robbynum*totalcans)));
+       
+    }
 
-    //for (i=0; i < robbynum; i++)
-    //    sum+= (double)r[i].gathered_cans/(double)r[i].num_moves;
-    //printf("total cans %lu, number rounds: %lu\n", totalcans, roundnum);
-
-    /*if(r[0].failed_moves>20)
-        r[0].fitness=0;
-    else*/
-    r[0].fitness = (sum);
+    r[0].fitness = (sum)/((double) map_num);
 
     return r[0].fitness;
 }
@@ -304,12 +301,12 @@ int compare_eval(const void *a, const void *b)
 #define print_in_generation_header(g) printf("===> Generation %lu\n", g)
 #define print_end_generation_header(g, r, rnum)\
     printf("===> End of Generation %lu Best fitness: %f\n",g,(rnum>0 ? r[0].fitness:0)); \
-    for(long unsigned int i=0; i<rnum; i++) printf("failed: %d gathered: %d\n", r[i].failed_moves, r[i].gathered_cans);
+for(long unsigned int i=0; i<rnum; i++) printf("failed: %lu gathered: %lu\n", r[i].failed_moves, r[i].gathered_cans);
 
 #define print_test_generation_header(g) printf("===> Test Generation\n")
 #define print_end_test_generation_header(r, rnum)\
     printf("===> End of Test Generation fitness: %f\n", (rnum>0 ? r[0].fitness:0)); \
-    for(long unsigned int i=0; i<rnum; i++) printf("failed: %d gathered: %d\n", r[i].failed_moves, r[i].gathered_cans);
+for(long unsigned int i=0; i<rnum; i++) printf("failed: %lu gathered: %lu\n", r[i].failed_moves, r[i].gathered_cans);
 
 
 void choose_position(struct world_map *m, struct robby **rl,
@@ -339,7 +336,7 @@ void choose_position(struct world_map *m, struct robby **rl,
             rl[current_couple][i].original_y = rl[0][i].original_y;
         }
     }
-    
+
 }
 
 int map_fetch_from_file(struct world_map *m, char* filename, long unsigned int robbynum) {
@@ -399,56 +396,52 @@ int generational_step(long unsigned int sizex, long unsigned int sizey,
         long unsigned int map_set_size,
         bool training, bool verbose)
 {
-	long unsigned int round;
-	unsigned long int i, current_pool;
-	struct world_map morig, m;
-	unsigned long int current_map=0;
-	round = 0;
+    long unsigned int round;
+    unsigned long int i, current_pool;
+    struct world_map morig, m;
+    unsigned long int current_map=0;
+    round = 0;
 
-	//TODO pensa al test
-	for(current_map=0; current_map < map_set_size; current_map++) {
+    for(current_map=0; current_map < map_set_size; current_map++) {
 
-		/* Get the training map */
-		if(map_fetch_from_int(&morig, current_map, map_dir, robbynum)) {
-			perror("map fetch");
-			return EXIT_FAILURE;
-		}
-		//} else if (map_constructor(&morig, sizex, sizey, robbynum, cannum) != 0) {
-		//[> Create a new random map <]
-		//perror("map construction");
-		//return EXIT_FAILURE;
+        /* Get the training map */
+        if(map_fetch_from_int(&morig, current_map, map_dir, robbynum)) {
+            perror("map fetch");
+            return EXIT_FAILURE;
+        }
 
-	for (current_pool = 0; current_pool < couple_num; current_pool++) {
-		map_copy(&morig, &m, robbynum);
+        for (current_pool = 0; current_pool < couple_num; current_pool++) {
+            map_copy(&morig, &m, robbynum);
 
-		choose_position(&m, rl, current_pool, robbynum);
+            choose_position(&m, rl, current_pool, robbynum);
 
-		for (i = 0; i < robbynum; i++) 
-			add_robby(&m, &rl[current_pool][i]);
+            for (i = 0; i < robbynum; i++) 
+                add_robby(&m, &rl[current_pool][i]);
 
-		for (round = 0; round < totalrounds; round++) {
-			if(verbose) {
-				print_status(m, round);
-				print_map(&m);
-			}
-			update_view_and_send_callback(&m, rl[current_pool], robbynum);
-			MOVE_ALL_ROBBIES(m,training);
-		}
-		/* last turn print */
-		if(verbose) {
-			print_status(m, round);
-			print_map(&m);
-		}
-		map_destructor(&m);
-	}
+            for (round = 0; round < totalrounds; round++) {
+                if(verbose) {
+                    print_status(m, round);
+                    print_map(&m);
+                }
+                update_view_and_send_callback(&m, rl[current_pool], robbynum);
+                MOVE_ALL_ROBBIES(m,training);
+            }
+            
+            /* last turn print */
+            if(verbose) {
+                print_status(m, round);
+                print_map(&m);
+            }
+            map_destructor(&m);
+        }
 
-	map_destructor(&morig);
-}
-for(current_pool=0; current_pool<couple_num; current_pool++)
-eval_couple(rl[current_pool], robbynum, cannum, totalrounds,
-		map_set_size);
+        map_destructor(&morig);
+    }
+    for(current_pool=0; current_pool<couple_num; current_pool++)
+        eval_couple(rl[current_pool], robbynum, cannum, totalrounds,
+                map_set_size);
 
-return 0;
+    return 0;
 }
 
 void zero_fitness(struct robby *rl, long unsigned int robbynum)
@@ -457,7 +450,6 @@ void zero_fitness(struct robby *rl, long unsigned int robbynum)
     for (i = 0; i < robbynum; i++) {
         rl[i].gathered_cans = 0;
         rl[i].failed_moves=0;
-        rl[i].last_gathered_can_time = 0;
         rl[i].fitness = 0.0;
         rl[i].num_moves=0;
         rl[i].old_move=NOP_MOVE;
@@ -539,145 +531,145 @@ unsigned long int generate_maps(unsigned long int nmaps,char* dir, long unsigned
 #define USAGE "<plugin> [-h| -x <sizex>| -y <size y> | -r <#ofrobbies> | -c <#ofcans> | -R <# of rounds> | -g <# of generations> | -m <# of test_maps[,# of training maps]> | -d <dir for test maps[,dir for training maps]> ]"
 int main(int argc, char **argv)
 {
-	long unsigned int sizex, sizey, robbynum, cannum, totalrounds,
-	     totalgenerations, generation, training_map_num, test_map_num,couplenum,i,j;
-	struct robby **rl;
-	int opt;
-	int nargs;
-	char *test_dir,*train_dir, *tmp;
-	bool verbose;
+    long unsigned int sizex, sizey, robbynum, cannum, totalrounds,
+         totalgenerations, generation, training_map_num, test_map_num,couplenum,i,j;
+    struct robby **rl;
+    int opt;
+    int nargs;
+    char *test_dir,*train_dir, *tmp;
+    bool verbose;
 
-	sizex = 10;
-	sizey = 10;
-	robbynum = 1;
-	cannum = 1;
-	couplenum = 1;
-	totalrounds = 10;
-	totalgenerations = 10;
-	training_map_num=10;
-	test_map_num=10;
-	test_dir=train_dir=tmp=NULL;
-	verbose=false;
+    sizex = 10;
+    sizey = 10;
+    robbynum = 1;
+    cannum = 1;
+    couplenum = 1;
+    totalrounds = 10;
+    totalgenerations = 10;
+    training_map_num=10;
+    test_map_num=10;
+    test_dir=train_dir=tmp=NULL;
+    verbose=false;
 
-	if (argc < 2) {
-		fprintf(stderr, "%s %s\n", argv[0], USAGE);
-		return EXIT_FAILURE;
-	}
+    if (argc < 2) {
+        fprintf(stderr, "%s %s\n", argv[0], USAGE);
+        return EXIT_FAILURE;
+    }
 
-	RANDOM_SEED();
-	load_plugin(argv[1]);
+    RANDOM_SEED();
+    load_plugin(argv[1]);
 
-	while ((opt = getopt(argc - 1, argv + 1, "hx:y:r:c:R:g:d:m:C:v")) != -1) {
-		switch (opt) {
-			case 'x':
-				sizex = strtoul(optarg, NULL, 10);
-				break;
-			case 'y':
-				sizey = strtoul(optarg, NULL, 10);
-				break;
-			case 'r':
-				robbynum = strtoul(optarg, NULL, 10);
-				break;
-			case 'C':
-				couplenum = strtoul(optarg, NULL, 10);
-				break;
-			case 'R':
-				totalrounds = strtoul(optarg, NULL, 10);
-				break;
-			case 'c':
-				cannum = strtoul(optarg, NULL, 10);
-				break;
-			case 'g':
-				totalgenerations = strtoul(optarg, NULL, 10);
-				break;
-			case 'm':
-				nargs=sscanf(optarg, "%lu,%lu",&test_map_num, &training_map_num);
-				if(nargs==1)
-					training_map_num=0;
-				break;
-			case 'd':
-				asprintf(&test_dir, "%s", strtok(optarg, ","));
-				tmp=strtok(NULL, ",");
-				if(tmp)
-					asprintf(&train_dir, "%s", tmp);
-				break;
-			case 'v':
-				verbose=true;
-				break;
-			case 'h':
-			default:
-				fprintf(stderr, "usage: %s %s\n", argv[0], USAGE);
-				exit(0);
-		}
-	}
+    while ((opt = getopt(argc - 1, argv + 1, "hx:y:r:c:R:g:d:m:C:v")) != -1) {
+        switch (opt) {
+            case 'x':
+                sizex = strtoul(optarg, NULL, 10);
+                break;
+            case 'y':
+                sizey = strtoul(optarg, NULL, 10);
+                break;
+            case 'r':
+                robbynum = strtoul(optarg, NULL, 10);
+                break;
+            case 'C':
+                couplenum = strtoul(optarg, NULL, 10);
+                break;
+            case 'R':
+                totalrounds = strtoul(optarg, NULL, 10);
+                break;
+            case 'c':
+                cannum = strtoul(optarg, NULL, 10);
+                break;
+            case 'g':
+                totalgenerations = strtoul(optarg, NULL, 10);
+                break;
+            case 'm':
+                nargs=sscanf(optarg, "%lu,%lu",&test_map_num, &training_map_num);
+                if(nargs==1)
+                    training_map_num=0;
+                break;
+            case 'd':
+                asprintf(&test_dir, "%s", strtok(optarg, ","));
+                tmp=strtok(NULL, ",");
+                if(tmp)
+                    asprintf(&train_dir, "%s", tmp);
+                break;
+            case 'v':
+                verbose=true;
+                break;
+            case 'h':
+            default:
+                fprintf(stderr, "usage: %s %s\n", argv[0], USAGE);
+                exit(0);
+        }
+    }
 
-	if(!train_dir) {
-		generate_maps(training_map_num, TRAINING_DEFAULT_DIR,sizex, sizey, cannum);
-		asprintf(&train_dir, TRAINING_DEFAULT_DIR);
-	}
-	if(!test_dir) {
-		generate_maps(test_map_num, TEST_DEFAULT_DIR, sizex, sizey, cannum);
-		asprintf(&test_dir, TEST_DEFAULT_DIR);
-	}
+    if(!train_dir) {
+        generate_maps(training_map_num, TRAINING_DEFAULT_DIR,sizex, sizey, cannum);
+        asprintf(&train_dir, TRAINING_DEFAULT_DIR);
+    }
+    if(!test_dir) {
+        generate_maps(test_map_num, TEST_DEFAULT_DIR, sizex, sizey, cannum);
+        asprintf(&test_dir, TEST_DEFAULT_DIR);
+    }
 
-	rl = (struct robby **)calloc(couplenum, sizeof(struct robby *));
-	if (rl==NULL){
-		fprintf(stderr, "robby list malloc %s\n", strerror(errno));
-		exit(EXIT_FAILURE);
-	}
+    rl = (struct robby **)calloc(couplenum, sizeof(struct robby *));
+    if (rl==NULL){
+        fprintf(stderr, "robby list malloc %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
 
-	for (i = 0; i < couplenum; i++) {
-		rl[i] = (struct robby *)calloc(robbynum, sizeof(struct robby));
-		if (rl[i]==NULL){
-			fprintf(stderr, "robby list malloc %s on step %lu\n", strerror(errno), i);
-			exit(EXIT_FAILURE);
-		}
-	}
+    for (i = 0; i < couplenum; i++) {
+        rl[i] = (struct robby *)calloc(robbynum, sizeof(struct robby));
+        if (rl[i]==NULL){
+            fprintf(stderr, "robby list malloc %s on step %lu\n", strerror(errno), i);
+            exit(EXIT_FAILURE);
+        }
+    }
 
-	generation = 0;
-	/* Random placing */
-	for (i = 0; i < robbynum; i++) {
-		for (j = 0; j < couplenum; j++ ) {
-			rl[j][i].original_x = sizex;
-			rl[j][i].original_y = sizey;
+    generation = 0;
+    /* Random placing */
+    for (i = 0; i < robbynum; i++) {
+        for (j = 0; j < couplenum; j++ ) {
+            rl[j][i].original_x = sizex;
+            rl[j][i].original_y = sizey;
 
             rl[j][i].m_sizex=sizex;
             rl[j][i].m_sizey=sizey;
-		}
-	}
+        }
+    }
 
-	for (i = 0; i < couplenum; i++)
-		zero_fitness(rl[i], robbynum);
+    for (i = 0; i < couplenum; i++)
+        zero_fitness(rl[i], robbynum);
 
-	for (generation = 0; generation < totalgenerations; generation++) {
-		print_in_generation_header(generation);
+    for (generation = 0; generation < totalgenerations; generation++) {
+        print_in_generation_header(generation);
 
-		generate_robbies_callback(rl, couplenum, robbynum, generation);
+        generate_robbies_callback(rl, couplenum, robbynum, generation);
 
-		for (i = 0; i < couplenum; i++)
-			zero_fitness(rl[i], robbynum);
+        for (i = 0; i < couplenum; i++)
+            zero_fitness(rl[i], robbynum);
 
-		generational_step(sizex, sizey, robbynum, cannum, totalrounds,
-				couplenum, rl, train_dir, training_map_num,
-				true, verbose);
+        generational_step(sizex, sizey, robbynum, cannum, totalrounds,
+                couplenum, rl, train_dir, training_map_num,
+                true, verbose);
 
-		sort_by_best_eval(rl, couplenum);
+        sort_by_best_eval(rl, couplenum);
 
-		print_end_generation_header(generation, rl[0], robbynum);
-	}
+        print_end_generation_header(generation, rl[0], robbynum);
+    }
 
-	/* Test generation */
-	print_test_generation_header();
-	for (i = 0; i < couplenum; i++)
-		zero_fitness(rl[0], robbynum);
+    /* Test generation */
+    print_test_generation_header();
+    for (i = 0; i < couplenum; i++)
+        zero_fitness(rl[0], robbynum);
 
-	generational_step(sizex, sizey, robbynum, cannum, totalrounds,
-			couplenum, rl, test_dir, test_map_num,
-			false, verbose);
+    generational_step(sizex, sizey, robbynum, cannum, totalrounds,
+            couplenum, rl, test_dir, test_map_num,
+            false, verbose);
 
-	print_end_test_generation_header(rl[0], robbynum);
+    print_end_test_generation_header(rl[0], robbynum);
 
-	destroy_robbies(rl, couplenum, robbynum);
-	free(test_dir);
-	free(train_dir);
+    destroy_robbies(rl, couplenum, robbynum);
+    free(test_dir);
+    free(train_dir);
 }
