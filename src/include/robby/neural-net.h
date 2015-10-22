@@ -82,7 +82,7 @@ class Genome {
 		Genome(Genome *gen);
 		Genome(Genome *g1, Genome *g2);
 		Genome(char *dir, int fileno);
-		Genome(class Species *s);
+		Genome(class Species *s, bool crossover);
 
 		~Genome(void);
 

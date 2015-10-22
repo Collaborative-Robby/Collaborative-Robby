@@ -239,7 +239,7 @@ Genome::Genome(char *dir, int fileno) {
 	free(path);
 }
 
-Genome::Genome(Species *s) {
+Genome::Genome(Species *s, bool crossover) {
     Genome *g1,*g2;
     long unsigned int r;
 
@@ -247,7 +247,7 @@ Genome::Genome(Species *s) {
     this->max_innov=0;
     this->fitness=0;
 
-    if(RANDOM_DOUBLE(1)<CROSSOVER_CHANCE) {
+    if(crossover) {
         r=(long unsigned int) round(RANDOM_DOUBLE(s->genomes.size()-1));
         g1=LIST_GET(Genome*, s->genomes, r);
         r=(long unsigned int) round(RANDOM_DOUBLE(s->genomes.size()-1));

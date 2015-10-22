@@ -11,6 +11,7 @@
 #include <robby/module.h>
 #include <robby/dismath.h>
 #include <robby/neural-net.h>
+#include <robby/neural-net-const.h>
 
 #include <robby/neural-net-utils.h>
 
@@ -210,10 +211,11 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
 {
     unsigned long int coup,size;
     unsigned long int i;
+    unsigned long int r1, r2;
     int r;
     unsigned long int j;
     double breed, tot_fitness;
-    Genome* gen;
+    Genome *gen;
     Species *s;
     list<Genome*> children;
     list<Genome*>::iterator g_it;
@@ -229,15 +231,15 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
     }
 
     /*cut the species in half*/
-    for (s_it = species_list.begin(); s_it != species_list.end();) {
-        if(!(*s_it)->cull(false)) {
-            delete (*s_it);    
-            s_it=species_list.erase(s_it);
-        }
-        else {
-            s_it++;
-        }
-    }
+    //for (s_it = species_list.begin(); s_it != species_list.end();) {
+        //if(!(*s_it)->cull(false)) {
+            //delete (*s_it);    
+            //s_it=species_list.erase(s_it);
+        //}
+        //else {
+            //s_it++;
+        //}
+    //}
 
     species_list.sort(species_desc_cmp);
 
@@ -247,23 +249,40 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
     remove_species(&species_list, couplenum, tot_fitness);
     
 
-    /*create children from crossover of species */
+    /*create children */
     for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
-        breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum)-2;
+        /* Crossover children */
+        breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum * .75)-1;
         for(i=0; i<breed; i++) {
-            gen=new Genome(*s_it);
+            if (RANDOM_DOUBLE(1) >= INTERSPECIES_CROSSOVER_PROB) {
+		    gen=new Genome(*s_it, false);
+	    } else {
+		    /* Crossover between different species */
+		    r1 = (long unsigned int)round(RANDOM_DOUBLE(couplenum - 1));
+		    r2 = (long unsigned int)round(RANDOM_DOUBLE(couplenum - 1));
+
+		    gen=new Genome(rl[r1][0].genome, rl[r2][0].genome);
+            }
+            children.push_back(gen);
+            size++;
+        }
+
+        /* Mutate children */
+        breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum * .25)-1;
+        for(i=0; i<breed; i++) {
+            gen=new Genome(*s_it, true);
             children.push_back(gen);
             size++;
         }
     }
 
-    /*keep only 2 genomes per species, delete empty ones*/
+    /*keep only 1 genome per species, delete empty ones*/
     for (s_it = species_list.begin(); s_it != species_list.end();) {
         if(!(*s_it)->cull(true)) {
             delete (*s_it);
             s_it=species_list.erase(s_it);
         } else {
-            size+=(*s_it)->genomes.size();
+            size+=1;
             s_it++;
         }
     }
@@ -275,12 +294,12 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
 
         s=LIST_GET(Species*, species_list, r);
 
-        gen=new Genome(s);
+        gen=new Genome(s, true);
         children.push_back(gen);
 
         size++;
     }
-    
+
     /*assign each children to a species*/
     for(g_it=children.begin(); g_it!=children.end(); g_it++) {
         (*g_it)->specialize(&species_list);

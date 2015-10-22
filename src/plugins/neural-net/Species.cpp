@@ -36,11 +36,9 @@ unsigned long int Species::cull(bool top_only)
 	this->genomes.sort(cmp_desc_genomes);
 	size = this->genomes.size();
 
-	if (top_only && size>=2)
-		cutoff = 2;
-	else if (top_only)
-        cutoff=1;
-    else 
+	if (top_only)
+		cutoff=1;
+	else 
 		cutoff = (int) round((double)this->genomes.size() / 2.0);
     
     if(size>0) {
