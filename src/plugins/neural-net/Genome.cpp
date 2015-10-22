@@ -411,15 +411,23 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
         id_in=g_it->second->in->id;
         id_out=g_it->second->out->id;
         
-        if(!g2->gene_map.count(hash_ull_int_encode(id_in, id_out))){
+        if(!g2->gene_map.count(g_it->first)){
             this->insert_gene(g_it->second);
         } else {
             /*If both genomes have the same gene, choose it randomly*/
             if(round(RANDOM_DOUBLE(1))) {
                 this->insert_gene(g_it->second);
             } else {
-                this->insert_gene(g2->gene_map[hash_ull_int_encode(id_in, id_out)]);
+                this->insert_gene(g2->gene_map[g_it->first]);
             }
+
+	    if (!g_it->second->enabled ||
+		    !g2->gene_map[g_it->first]->enabled) {
+		    if (RANDOM_DOUBLE(1) < DISABLE_INHERIT_GENE_RATIO)
+			    this->gene_map[g_it->first]->enabled = false;
+		    else
+			    this->gene_map[g_it->first]->enabled = true;
+	    }
         }
     }
     
