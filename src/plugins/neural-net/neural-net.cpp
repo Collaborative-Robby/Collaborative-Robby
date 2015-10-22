@@ -364,6 +364,7 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 #endif
     } else {
 #ifdef DEBUG_SPECIES
+        FILE *f;
         f=fopen("fitvalues","a");
         for(i=0;i<couplenum;i++) {
             fprintf(f,"%lu %f %lu\n",i, rl[i][0].fitness,generation);
