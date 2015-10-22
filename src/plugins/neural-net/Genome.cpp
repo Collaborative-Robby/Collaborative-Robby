@@ -420,9 +420,9 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
             } else {
                 this->insert_gene(g2->gene_map[g_it->first]);
             }
-
-	    if (!g_it->second->enabled ||
-		    !g2->gene_map[g_it->first]->enabled) {
+        /*avoid problems when the gene is not really inserted because it creates a cycle*/
+	    if ((!g_it->second->enabled ||
+		    !g2->gene_map[g_it->first]->enabled) && this->gene_map.count(g_it->first)>0 ) {
 		    if (RANDOM_DOUBLE(1) < DISABLE_INHERIT_GENE_RATIO)
 			    this->gene_map[g_it->first]->enabled = false;
 		    else

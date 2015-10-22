@@ -237,12 +237,14 @@ double eval_couple(struct robby *r, long unsigned int robbynum, long unsigned
     double sum = 0;
 
     for (i=0; i < robbynum; i++) {
-        sum += (((double) r[i].gathered_cans / (double) (totalcans)) +
-                (((double) (map_num*roundnum-r[i].failed_moves))/(double) (map_num*roundnum*robbynum*totalcans)));
-       
+       sum += (((double) r[i].gathered_cans /  (((double) totalcans+1.0)*(double) map_num)) +
+                (((double) (map_num*roundnum-r[i].failed_moves))/ ((double) map_num*(double) roundnum*(double) robbynum*((double) totalcans+1.0))));
     }
 
-    r[0].fitness = (sum)/((double) map_num);
+
+
+
+    r[0].fitness = (sum);
 
     return r[0].fitness;
 }
