@@ -217,6 +217,8 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
     double breed, tot_fitness;
     Genome *gen;
     Species *s;
+    list <Species *>::iterator rs1, rs2;
+    list <Genome *>::iterator rg1, rg2;
     list<Genome*> children;
     list<Genome*>::iterator g_it;
     list <Species *>::iterator s_it;
@@ -230,17 +232,6 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
 #endif
     }
 
-    /*cut the species in half*/
-    //for (s_it = species_list.begin(); s_it != species_list.end();) {
-        //if(!(*s_it)->cull(false)) {
-            //delete (*s_it);    
-            //s_it=species_list.erase(s_it);
-        //}
-        //else {
-            //s_it++;
-        //}
-    //}
-
     species_list.sort(species_desc_cmp);
 
     tot_fitness=0;
@@ -248,6 +239,16 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
     
     remove_species(&species_list, couplenum, tot_fitness);
     
+    /*cut the species in half*/
+    for (s_it = species_list.begin(); s_it != species_list.end();) {
+	if(!(*s_it)->cull(false)) {
+	    delete (*s_it);    
+	    s_it=species_list.erase(s_it);
+	}
+	else {
+	    s_it++;
+	}
+    }
 
     /*create children */
     for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
@@ -258,10 +259,27 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
 		    gen=new Genome(*s_it, false);
 	    } else {
 		    /* Crossover between different species */
-		    r1 = (long unsigned int)round(RANDOM_DOUBLE(couplenum - 1));
-		    r2 = (long unsigned int)round(RANDOM_DOUBLE(couplenum - 1));
+		    r1 = (long unsigned int)round(RANDOM_DOUBLE(species_list.size() - 1));
+		    do {
+			    r2 = (long unsigned int)round(RANDOM_DOUBLE(species_list.size() - 1));
+		    } while(r1 == r2 && species_list.size() > 1);
 
-		    gen=new Genome(rl[r1][0].genome, rl[r2][0].genome);
+		    rs1 = species_list.begin();
+		    advance(rs1, r1);
+
+		    rs2 = species_list.begin();
+		    advance(rs2, r2);
+
+		    r1 = (long unsigned int)round(RANDOM_DOUBLE((*rs1)->genomes.size() - 1));
+		    r2 = (long unsigned int)round(RANDOM_DOUBLE((*rs2)->genomes.size() - 1));
+
+		    rg1 = (*rs1)->genomes.begin();
+		    advance(rg1, r1);
+
+		    rg2 = (*rs2)->genomes.begin();
+		    advance(rg2, r2);
+
+		    gen=new Genome(*rg1, *rg2);
             }
             children.push_back(gen);
             size++;
