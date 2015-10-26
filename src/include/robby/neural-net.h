@@ -1,7 +1,7 @@
 #ifndef NEURAL_NET_H
 #define NEURAL_NET_H
 
-#include <map>
+#include <unordered_map>
 #include <list>
 #include <robby/Fraction.h>
 
@@ -15,7 +15,7 @@
 #define GENOME_EXT ((char *)"genome")
 
 #define LIST_GET(ltype, l ,nelem) ({list<ltype>::iterator it=(l).begin(); advance(it,nelem); *it;})
-#define HASH_GET(ktype, etype, l ,nelem) ({map<ktype, etype>::iterator it=l.begin(); advance(it,nelem); it->second;})
+#define HASH_GET(ktype, etype, l ,nelem) ({unordered_map<ktype, etype>::iterator it=l.begin(); advance(it,nelem); it->second;})
 
 #define NODE_KEY_TYPE unsigned long int
 #define GENE_KEY_TYPE unsigned long long int
@@ -70,8 +70,8 @@ class Node{
 class Genome {
 
 	public:
-		map<unsigned long int, Node*> node_map;
-		map<unsigned long long int, Gene*> gene_map;
+		unordered_map<unsigned long int, Node*> node_map;
+		unordered_map<unsigned long long int, Gene*> gene_map;
 		unsigned long int node_count;
 		unsigned long int max_innov;
 		unsigned long int id;

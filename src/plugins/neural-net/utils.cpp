@@ -67,7 +67,7 @@ bool cmp_desc_genomes(Genome *g1, Genome *g2)
 	double delta_excess = 0, delta_disjoint = 0, delta_weight = 0;
 
     long unsigned int gene_count,equal_genes_count,excess_genes,disjoint_genes;
-	map<GENE_KEY_TYPE, Gene*>::iterator g_it;
+	unordered_map<GENE_KEY_TYPE, Gene*>::iterator g_it, end_git;
 	Gene *equal_gene;
 	Genome *g, *oth_g;
 
@@ -90,7 +90,7 @@ bool cmp_desc_genomes(Genome *g1, Genome *g2)
 	if (gene_count < g2->gene_map.size())
 		gene_count = g2->gene_map.size();
 
-	for (g_it=g->gene_map.begin(); g_it!=g->gene_map.end();g_it++) {
+	for (g_it=g->gene_map.begin(), end_git = g->gene_map.end(); g_it!=end_git;++g_it) {
 		found = oth_g->gene_map.count(g_it->first) &&
 		(oth_g->gene_map[g_it->first]->innovation ==
 		g_it->second->innovation);
@@ -110,7 +110,7 @@ bool cmp_desc_genomes(Genome *g1, Genome *g2)
 		}
 	}
 
-	for (g_it=oth_g->gene_map.begin(); g_it!=oth_g->gene_map.end();g_it++) {
+	for (g_it=oth_g->gene_map.begin(), end_git = oth_g->gene_map.end(); g_it!=end_git; ++g_it) {
 		/* Excesses genes are already counted. */
 		found = g->gene_map.count(g_it->first) &&
 		        (g->gene_map[g_it->first]->innovation == g_it->second->innovation);
@@ -134,11 +134,11 @@ bool cmp_desc_genomes(Genome *g1, Genome *g2)
 
 static inline int calculate_species_values(list <Species *> *sl, long unsigned int couplenum, double &tot_fitness, double &max_fitness) 
 {
-	list <Species *>::iterator s_it;
+	list <Species *>::iterator s_it, end_sit;
     Genome* cgenome;
 
     /*calculate max fitness and total avg fitness*/
-    for (s_it = sl->begin(); s_it != sl->end(); s_it++) {
+    for (s_it = sl->begin(), end_sit = sl->end(); s_it != end_sit; ++s_it) {
         
 		(*s_it)->genomes.sort(cmp_desc_genomes);
 		
@@ -187,7 +187,7 @@ int remove_species(list <Species *> *sl, long unsigned int couplenum, double &to
 			s_it = sl->erase(s_it);
         }
         else {
-            s_it++;
+            ++s_it;
         }
 	}
     return 0;

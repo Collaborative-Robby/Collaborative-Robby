@@ -220,8 +220,8 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
     list <Species *>::iterator rs1, rs2;
     list <Genome *>::iterator rg1, rg2;
     list<Genome*> children;
-    list<Genome*>::iterator g_it;
-    list <Species *>::iterator s_it;
+    list<Genome*>::iterator g_it, end_git;
+    list <Species *>::iterator s_it, end_sit;
 
     for (coup = 0; coup < couplenum; coup++) {
         rl[coup][0].genome->fitness = rl[coup][0].fitness;
@@ -246,12 +246,12 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
 	    s_it=species_list.erase(s_it);
 	}
 	else {
-	    s_it++;
+	    ++s_it;
 	}
     }
     
     /*create children */
-    for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
+    for (s_it = species_list.begin(), end_sit = species_list.end(); s_it != end_sit; ++s_it) {
         /* Crossover children */
         breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum * .75)-2;
         for(i=0; i<breed; i++) {
@@ -301,7 +301,7 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
             s_it=species_list.erase(s_it);
         } else {
             size+=(*s_it)->genomes.size();
-            s_it++;
+            ++s_it;
         }
     }
 
@@ -319,16 +319,16 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
     }
 
     /*assign each children to a species*/
-    for(g_it=children.begin(); g_it!=children.end(); g_it++) {
+    for(g_it=children.begin(), end_git = children.end(); g_it!=end_git; ++g_it) {
         (*g_it)->specialize(&species_list);
     }
 
     i=0;
 
     /*assign genomes to robbies and clean up*/
-    for(s_it=species_list.begin(); s_it!=species_list.end(); s_it++){
+    for(s_it=species_list.begin(), end_sit = species_list.end(); s_it!=end_sit; ++s_it){
 
-        for(g_it=(*s_it)->genomes.begin(); g_it!=(*s_it)->genomes.end(); g_it++) {
+        for(g_it=(*s_it)->genomes.begin(), end_git = (*s_it)->genomes.end(); g_it!=end_git; ++g_it) {
             rl[i][0].genome=(*g_it);
 
             for(j=1; j<robbynum; j++) {
@@ -364,9 +364,9 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
     list <Genome *>::iterator g_it;
 
     i=0;
-    for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
+    for (s_it = species_list.begin(); s_it != species_list.end(); ++s_it) {
         cout << "Species BEFORE " << i++ << endl;
-        for (g_it = (*s_it)->genomes.begin(); g_it != (*s_it)->genomes.end(); g_it++) {
+        for (g_it = (*s_it)->genomes.begin(); g_it != (*s_it)->genomes.end(); ++g_it) {
             cout <<"fitness is: "  <<(*g_it)->fitness <<" >> "<< (*g_it)->id << endl;
             cout << "----" << endl;
         }
@@ -397,9 +397,9 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 
 #ifdef DEBUG_GENOMES
     i=0;
-    for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
+    for (s_it = species_list.begin(); s_it != species_list.end(); ++s_it) {
         cout << "Species AFTER " << i++ << endl;
-        for (g_it = (*s_it)->genomes.begin(); g_it != (*s_it)->genomes.end(); g_it++) {
+        for (g_it = (*s_it)->genomes.begin(); g_it != (*s_it)->genomes.end(); ++g_it) {
             cout <<"fitness is: "  <<(*g_it)->fitness <<" >> "<< (*g_it)->id << endl;
             cout << "----" << endl;
         }
@@ -423,7 +423,7 @@ void cleanup(struct robby **rl, long unsigned int couplenum, long unsigned int r
     i=0;
     s_it=species_list.begin();
     while(s_it!=species_list.end()) {
-        for(g_it=(*s_it)->genomes.begin(); g_it!=(*s_it)->genomes.end(); g_it++) {
+        for(g_it=(*s_it)->genomes.begin(); g_it!=(*s_it)->genomes.end(); ++g_it) {
             (*g_it)->save_to_file(DEFAULT_GENOME_DIR,i);
             i++;
         }

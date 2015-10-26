@@ -35,7 +35,7 @@ void Node::print(void) {
 }
 
 void Node::activate(double input) {
-    list<Gene*>::iterator it;
+    list<Gene*>::iterator it, end_it;
 
     this->value=0;
 
@@ -43,12 +43,12 @@ void Node::activate(double input) {
         this->value=input;
     } else {
 
-        for(it=this->input_genes.begin(); it!=this->input_genes.end(); it++) {
+        for(it=this->input_genes.begin(), end_it = this->input_genes.end(); it!=end_it; ++it) {
             value+=(*it)->weight*(*it)->value;
         }
         this->value=sigmoid(this->value);
     }
-    for(it=this->output_genes.begin(); it!=this->output_genes.end(); it++) {
+    for(it=this->output_genes.begin(), end_it = this->output_genes.end(); it!=end_it; ++it) {
         (*it)->activate(this->value);
     }
 }

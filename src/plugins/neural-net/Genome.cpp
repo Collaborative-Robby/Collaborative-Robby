@@ -35,22 +35,22 @@ void Genome::copy(Genome *gen) {
     unsigned long int node_key;
     Node *node, *val;
     Gene* gene;
-    map<unsigned long int,      Node*>::iterator n_it;
-    map<unsigned long long int, Gene*>::iterator g_it;
+    unordered_map<unsigned long int,      Node*>::iterator n_it, end_nit;
+    unordered_map<unsigned long long int, Gene*>::iterator g_it, end_git;
 
     this->node_count=gen->node_count;
     this->max_innov=gen->max_innov;
-
-    for(n_it=gen->node_map.begin(); n_it!=gen->node_map.end(); n_it++) {
+    
+    for(n_it=gen->node_map.begin(), end_nit=gen->node_map.end(); n_it!=end_nit; ++n_it) {
         val = n_it->second;
         node_key = n_it->first;
         node=new Node(node_key, val->type, val->level.n, val->level.d);
         NODE_INSERT(node, this->node_map);
-
+        
 	    this->insert_level_list(node);
     }
 
-    for(g_it=gen->gene_map.begin(); g_it!=gen->gene_map.end(); g_it++) {
+    for(g_it=gen->gene_map.begin(), end_git=gen->gene_map.end() ;  g_it!=end_git; ++g_it) {
         gene = new Gene(g_it->second);
         gene->in  = node_map[gene->in->id];
         gene->out = node_map[gene->out->id];
@@ -71,8 +71,8 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
     Node *curr;
     Gene *cgene;
     list<Node*> in_list, out_list;
-    list <Node*>::iterator inner_level_it;
-    list < list <Node*> >::iterator l_it;
+    list <Node*>::iterator inner_level_it, end_inner_level_it;
+    list < list <Node*> >::iterator l_it, end_lit;
 
     this->id=genome_count++;
     this->node_count=0;
@@ -150,8 +150,8 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
     this->level_list.push_back(out_list);
     
     /*Get iterator for each level*/
-    for (l_it = this->level_list.begin(); l_it!=this->level_list.end(); l_it++)
-        for (inner_level_it = l_it->begin(); inner_level_it != l_it->end(); inner_level_it++)
+    for (l_it = this->level_list.begin(), end_lit=this->level_list.end(); l_it!=end_lit; ++l_it)
+        for (inner_level_it = l_it->begin(),end_inner_level_it=l_it->end() ; inner_level_it != end_inner_level_it; ++inner_level_it)
              (*inner_level_it)->level_it = l_it;
     
     /*Connect inputs to outputs*/
@@ -177,8 +177,8 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
 }
 
 Genome::Genome(char *dir, int fileno) {
-	map <GENE_KEY_TYPE, Gene *>::iterator g_it;
-	map <NODE_KEY_TYPE, Node *>::iterator n_it;
+	unordered_map <GENE_KEY_TYPE, Gene *>::iterator g_it;
+	unordered_map <NODE_KEY_TYPE, Node *>::iterator n_it;
 	char *path;
 	FILE *f;
 	int rval, i;
@@ -352,14 +352,14 @@ void Genome::insert_level_list(Node *n) {
 		l_it->push_back(n);
 	} else {
 		l_it = this->level_list.begin();
-		l_it++;
-
+		++l_it;
+        
 		/* Advance the list to our level */
-		while((*(l_it->begin()))->level < n->level) {
-			l_it++;
+		while(l_it->size()>0 && (*(l_it->begin()))->level < n->level) {
+			++l_it;
         }
 
-		if((*(l_it->begin()))->level == n->level) {
+		if(l_it->size()>0 && (*(l_it->begin()))->level == n->level) {
 			/* Push the node in the existent level */
 			l_it->push_back(n);
 		    n->level_it = l_it;
@@ -376,8 +376,8 @@ void Genome::insert_level_list(Node *n) {
 }
 
 void Genome::crossover(Genome *rg1, Genome *rg2){
-    map<unsigned long long, Gene*>::iterator g_it;
-    map<NODE_KEY_TYPE, Node*>::iterator n_it;
+    unordered_map<unsigned long long, Gene*>::iterator g_it, end_git;
+    unordered_map<NODE_KEY_TYPE, Node*>::iterator n_it, end_nit;
     long unsigned int id_in,id_out;
     Genome *g1, *g2;
     Node *new_n;
@@ -399,7 +399,7 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
     this->node_count=0; 
     
     /*Copy input and output genes*/
-    for(n_it=g1->node_map.begin(); n_it!=g1->node_map.end(); n_it++) {
+    for(n_it=g1->node_map.begin(), end_nit=g1->node_map.end() ; n_it!=end_nit; ++n_it) {
         if(n_it->second->type!=NODE_TYPE_HIDDEN) {
             new_n=new Node(n_it->second);
 
@@ -411,7 +411,7 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
     }
     
     /*Crossover genes from the first genome*/
-    for(g_it=g1->gene_map.begin(); g_it!=g1->gene_map.end(); g_it++) {
+    for(g_it=g1->gene_map.begin(), end_git=g1->gene_map.end(); g_it!=end_git; ++g_it) {
         id_in=g_it->second->in->id;
         id_out=g_it->second->out->id;
         
@@ -446,7 +446,7 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
     }
     
     /*Add remaining genes from the second genome*/
-    for(g_it=g2->gene_map.begin(); g_it!=g2->gene_map.end(); g_it++) {
+    for(g_it=g2->gene_map.begin(), end_git=g2->gene_map.end(); g_it!=end_git; ++g_it) {
         id_in=g_it->second->in->id;
         id_out=g_it->second->out->id;
         
@@ -458,19 +458,19 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
 }
 
 Genome::~Genome(void) {
-    map<unsigned long long, Gene*>::iterator g_it;
-    map<unsigned long int,  Node*>::iterator n_it;
-    list< list <Node*> >::iterator lev_it;
+    unordered_map<unsigned long long, Gene*>::iterator g_it;
+    unordered_map<unsigned long int,  Node*>::iterator n_it;
+    list< list <Node*> >::iterator lev_it, end_levit;
 
-    for(n_it=this->node_map.begin(); n_it!=this->node_map.end(); n_it++)
+    for(n_it=this->node_map.begin(); n_it!=this->node_map.end(); ++n_it)
         delete n_it->second;
 
-    for(g_it=this->gene_map.begin(); g_it!=this->gene_map.end(); g_it++)
+    for(g_it=this->gene_map.begin(); g_it!=this->gene_map.end(); ++g_it)
         delete g_it->second;
 
     this->gene_map.clear();
     this->node_map.clear();
-    for(lev_it=this->level_list.begin(); lev_it!=this->level_list.end(); lev_it++) {
+    for(lev_it=this->level_list.begin(), end_levit=this->level_list.end(); lev_it!=end_levit; ++lev_it) {
         lev_it->clear();
     }
     this->level_list.clear();
@@ -478,7 +478,7 @@ Genome::~Genome(void) {
 
 int Genome::mutate(void) {
     double mrate_link;
-    map<unsigned long long int, Gene*>::iterator gene_iter;
+    unordered_map<unsigned long long int, Gene*>::iterator gene_iter, end_geneiter;
 
     mrate_link=MUTATION_RATE_LINK;
 
@@ -499,7 +499,7 @@ int Genome::mutate(void) {
 
     /*Change the gene weight*/
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_CONNECTION) {
-        for (gene_iter = this->gene_map.begin(); gene_iter != this->gene_map.end(); gene_iter++)
+        for (gene_iter = this->gene_map.begin(), end_geneiter=this->gene_map.end() ; gene_iter != end_geneiter; gene_iter++)
             gene_iter->second->point_mutate();
     } 
 
@@ -515,14 +515,14 @@ int Genome::mutate(void) {
 }
 
 void Genome::print() {
-    map<unsigned long int,      Node*>::iterator node_it;
-    map<unsigned long long int, Gene*>::iterator gene_it;
+    unordered_map<unsigned long int,      Node*>::iterator node_it, end_nodeit;
+    unordered_map<unsigned long long int, Gene*>::iterator gene_it, end_geneit;
 
-    for(node_it=this->node_map.begin(); node_it!=this->node_map.end(); node_it++) {
+    for(node_it=this->node_map.begin(), end_nodeit=this->node_map.end(); node_it!=end_nodeit; ++node_it) {
         node_it->second->print();
     }
 
-    for(gene_it=this->gene_map.begin(); gene_it!=this->gene_map.end(); gene_it++) {
+    for(gene_it=this->gene_map.begin(), end_geneit=this->gene_map.end(); gene_it!=end_geneit; ++gene_it) {
         gene_it->second->print();
     }
 
@@ -539,7 +539,7 @@ int Genome::node_mutate(void) {
 
     list <Node*> new_l;
     list< list<Node*> >::iterator lv_it;
-    map<unsigned long int, Node*>::iterator it;
+    unordered_map<unsigned long int, Node*>::iterator it;
 
     /* Empty fraction */
     Fraction f;
@@ -703,10 +703,10 @@ int Genome::link_mutate(bool force_bias) {
 int Genome::enable_disable_mutate(bool enable) {
     Gene *selected;
     list<Gene*> candidates;
-    map<GENE_KEY_TYPE, Gene*>::iterator it;
+    unordered_map<GENE_KEY_TYPE, Gene*>::iterator it, end_it;
     
     /*Choose candidates that are disabled or enabled depending on the parameter*/
-    for(it=this->gene_map.begin(); it!=this->gene_map.end();it++) {
+    for(it=this->gene_map.begin(), end_it=this->gene_map.end(); it!=end_it;++it) {
         if(it->second->enabled == not enable)
             candidates.push_back(it->second);
     }
@@ -739,14 +739,14 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
     unsigned long int max_id;
     double max;
     Node* in_node;
-    map<unsigned long long int, Gene*>::iterator g_it;
-    map<unsigned long int, Node*>::iterator n_it;
-    list<struct robby_msg>::iterator m_it;
-    list < list <Node *> >::iterator l_it;
-    list <Node *>::iterator level_it;
+    unordered_map<unsigned long long int, Gene*>::iterator g_it, end_git;
+    unordered_map<unsigned long int, Node*>::iterator n_it, end_nit;
+    list<struct robby_msg>::iterator m_it, end_mit;
+    list < list <Node *> >::iterator l_it, end_lit;
+    list <Node *>::iterator level_it, end_levelit;
 
     #ifdef DEBUG_MSG
-    for (m_it=msg_list->begin(); m_it!=msg_list->end(); m_it++) {
+    for (m_it=msg_list->begin(); m_it!=msg_list->end(); ++m_it) {
           cout << "From: " << (*m_it).id << " Move: " << (*m_it).old_move << endl;
     }
     #endif
@@ -790,7 +790,7 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
     }
     
     /*Read info from the message list*/
-    for(m_it=msg_list->begin(); m_it!=msg_list->end(); m_it++) {
+    for(m_it=msg_list->begin(), end_mit=msg_list->end(); m_it!=end_mit; ++m_it) {
         /*Get info from the other robbies*/
         if((*m_it).id!=r->id) {
 #ifndef KNOWN_MAP
@@ -821,11 +821,13 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
     /* BFS activation */
     l_it = this->level_list.begin();
     /* We already done with the input layer */
-    l_it++;
+    ++l_it;
+
+    end_lit=this->level_list.end();
     
     /*Activate each layer*/
-    for (; l_it != this->level_list.end(); l_it++) {
-        for (level_it = l_it->begin(); level_it != l_it->end(); level_it++) {
+    for (; l_it != end_lit ; ++l_it) {
+        for (level_it = l_it->begin(), end_levelit=l_it->end(); level_it != end_levelit; ++level_it) {
              (*level_it)->activate(0.0);
         }
     }
@@ -849,7 +851,7 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
 
 /*save genomes to file*/
 int Genome::save_to_file(char *dir, long unsigned int fileno) {
-	map <GENE_KEY_TYPE, Gene *>::iterator g_it;
+	unordered_map <GENE_KEY_TYPE, Gene *>::iterator g_it;
 	long unsigned int idin = 0, idout = 0;
     list<Node*>::iterator n_it;
     list<list <Node*> >::iterator l_it,o_it;
@@ -885,27 +887,27 @@ int Genome::save_to_file(char *dir, long unsigned int fileno) {
     
     /*save input layer*/
     l_it=this->level_list.begin();
-    for (n_it=l_it->begin(); n_it != l_it->end(); n_it++)
+    for (n_it=l_it->begin(); n_it != l_it->end(); ++n_it)
         fprintf(f, "%lu %d, %lu/%lu \n", (*n_it)->id, (*n_it)->type, (*n_it)->level.n, (*n_it)->level.d);
 
 
     /*save output layer*/
     o_it=this->level_list.end();
     o_it--;
-    for (n_it=o_it->begin(); n_it != o_it->end(); n_it++)
+    for (n_it=o_it->begin(); n_it != o_it->end(); ++n_it)
         fprintf(f, "%lu %d, %lu/%lu \n", (*n_it)->id, (*n_it)->type, (*n_it)->level.n, (*n_it)->level.d);
 
     /*save node info*/
     l_it=this->level_list.begin();
-    l_it++;
-    for(; l_it!=o_it; l_it++) {
-        for (n_it=l_it->begin(); n_it != l_it->end(); n_it++)
+    ++l_it;
+    for(; l_it!=o_it; ++l_it) {
+        for (n_it=l_it->begin(); n_it != l_it->end(); ++n_it)
             fprintf(f, "%lu %d, %lu/%lu \n", (*n_it)->id, (*n_it)->type, (*n_it)->level.n, (*n_it)->level.d);
     }
 	fprintf(f, "}\n{\n");
 
     /*save genome info*/
-	for (g_it=this->gene_map.begin(); g_it != this->gene_map.end(); g_it++) {
+	for (g_it=this->gene_map.begin(); g_it != this->gene_map.end(); ++g_it) {
 		if (g_it->second->in)
 			idin = g_it->second->in->id;
 		if (g_it->second->out)
@@ -928,7 +930,7 @@ int Genome::save_to_file(char *dir, long unsigned int fileno) {
 int Genome::specialize(list <Species *> *sl)
 {
 	Species *new_species;
-	list <Species *>::iterator s_it;
+	list <Species *>::iterator s_it, end_sit;
     double min_distance,curr_distance;
     Species *found_species;
 
@@ -936,7 +938,7 @@ int Genome::specialize(list <Species *> *sl)
     found_species=NULL;
     
     /*For each species*/
-	for (s_it=sl->begin(); s_it !=sl->end();s_it++) {
+	for (s_it=sl->begin(), end_sit=sl->end(); s_it !=end_sit;++s_it) {
         /*Get the best genome in the species and compare it with this*/
 		Genome *oth_g = LIST_GET(Genome*, (*s_it)->genomes, 0);
         curr_distance=delta_species(this,oth_g);

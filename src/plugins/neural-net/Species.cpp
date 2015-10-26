@@ -57,11 +57,11 @@ double Species::calculate_avg_fitness(void)
 {
 	double avg = 0.0;
 	unsigned long int size = 0;
-	list <Genome *>::iterator g_it;
+	list <Genome *>::iterator g_it, end_git;
 
 	size = this->genomes.size();
 
-	for (g_it=this->genomes.begin(); g_it != this->genomes.end(); g_it++)
+	for (g_it=this->genomes.begin(), end_git = this->genomes.end(); g_it != end_git; ++g_it)
 		avg += (*g_it)->fitness;
 
 	this->average_fitness = (avg/(double) size);
