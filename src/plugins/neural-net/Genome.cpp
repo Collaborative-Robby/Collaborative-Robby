@@ -55,9 +55,10 @@ void Genome::copy(Genome *gen) {
         gene->in  = node_map[gene->in->id];
         gene->out = node_map[gene->out->id];
 
-        gene->in->output_genes.push_back(gene);
-        gene->out->input_genes.push_back(gene);
-
+        if(gene->enabled) {
+            gene->in->output_genes.push_back(gene);
+            gene->out->input_genes.push_back(gene);
+        }
         GENE_INSERT(gene, this->gene_map);
 
 	    if (gene->enabled)
@@ -219,7 +220,7 @@ Genome::Genome(char *dir, int fileno) {
 		fscanf(f, "%d -> %d: %lu %d %lf\n", &idin, &idout,
 			&cur_gene->innovation, &tmp,
 			&cur_gene->weight);
-        cur_gene->enabled=tmp;
+        cur_gene->enabled=(bool)tmp;
 		if (idin >= 0)
 			cur_gene->in = this->node_map[idin];
 		if (idout >= 0)
@@ -230,9 +231,10 @@ Genome::Genome(char *dir, int fileno) {
         if(cur_gene->innovation>this->max_innov)
             this->max_innov=cur_gene->innovation;
         
-        cur_gene->in->output_genes.push_back(cur_gene);
-        cur_gene->out->input_genes.push_back(cur_gene);
-
+        if(cur_gene->enabled) {
+            cur_gene->in->output_genes.push_back(cur_gene);
+            cur_gene->out->input_genes.push_back(cur_gene);
+        }
 	}
 	fclose(f);
 
@@ -299,8 +301,10 @@ int Genome::insert_gene(Gene *g) {
     new_gene=new Gene(g);
     new_gene->in=n1;
     new_gene->out=n2;
-    n1->output_genes.push_back(new_gene);
-    n2->input_genes.push_back(new_gene);
+    if(new_gene->enabled) {
+        n1->output_genes.push_back(new_gene);
+        n2->input_genes.push_back(new_gene);
+    }
 
     /* Update activation count */
     new_gene->out->active_in_genes++;
@@ -423,10 +427,20 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
         /*avoid problems when the gene is not really inserted because it creates a cycle*/
 	    if ((!g_it->second->enabled ||
 		    !g2->gene_map[g_it->first]->enabled) && this->gene_map.count(g_it->first)>0 ) {
-		    if (RANDOM_DOUBLE(1) < DISABLE_INHERIT_GENE_RATIO)
+		    if (RANDOM_DOUBLE(1) < DISABLE_INHERIT_GENE_RATIO) {
 			    this->gene_map[g_it->first]->enabled = false;
-		    else
+                this->gene_map[g_it->first]->in->output_genes.remove(this->gene_map[g_it->first]);
+                this->gene_map[g_it->first]->out->input_genes.remove(this->gene_map[g_it->first]);
+            }
+		    else if(!this->gene_map[g_it->first]->enabled){
 			    this->gene_map[g_it->first]->enabled = true;
+                this->gene_map[g_it->first]->in->output_genes.push_back(this->gene_map[g_it->first]);
+                this->gene_map[g_it->first]->out->input_genes.push_back(this->gene_map[g_it->first]);
+            }
+            else {
+			    this->gene_map[g_it->first]->enabled = true;
+            }
+
 	    }
         }
     }

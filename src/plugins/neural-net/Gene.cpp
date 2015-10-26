@@ -34,8 +34,10 @@ void Gene::print(void) {
 void Gene::activate(double value) {
     if(this->enabled) 
         this->value=value;
-    else
+    else {
         this->value=0;
+        cerr << "Gene disabled still in the network" << endl;
+    }
 }
 
 int Gene::point_mutate(void) {
