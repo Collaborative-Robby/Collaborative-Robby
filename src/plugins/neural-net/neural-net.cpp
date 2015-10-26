@@ -249,11 +249,11 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
 	    s_it++;
 	}
     }
-
+    
     /*create children */
     for (s_it = species_list.begin(); s_it != species_list.end(); s_it++) {
         /* Crossover children */
-        breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum * .75)-1;
+        breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum * .75)-2;
         for(i=0; i<breed; i++) {
             if (RANDOM_DOUBLE(1) >= INTERSPECIES_CROSSOVER_PROB) {
 		    gen=new Genome(*s_it, false);
@@ -286,7 +286,7 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
         }
 
         /* Mutate children */
-        breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum * .25)-1;
+        breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum * .25)-2;
         for(i=0; i<breed; i++) {
             gen=new Genome(*s_it, true);
             children.push_back(gen);
@@ -300,7 +300,7 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
             delete (*s_it);
             s_it=species_list.erase(s_it);
         } else {
-            size+=1;
+            size+=(*s_it)->genomes.size();
             s_it++;
         }
     }

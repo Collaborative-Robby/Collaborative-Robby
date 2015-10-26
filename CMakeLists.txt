@@ -4,10 +4,12 @@ project(Collaborative-Robby)
 set(Robby_VERSION_MAJOR 0)
 set(Robby_VERSION_MINOR 1)
 
+#set_property(TARGET Collaborative-Robby PROPERTY CXX_STANDARD 11)
+
 set(CORE_SOURCE_PROJECT_DIR "${PROJECT_SOURCE_DIR}/src")
 set(PLUGINS_SOURCE_DIR "${CORE_SOURCE_PROJECT_DIR}/plugins")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wconversion -Wall -Wextra -Wno-unused-parameter")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wconversion -Wall -Wextra -Wno-unused-parameter -std=c++11")
 set(CMAKE_CXX_DEBUG_FLAGS "${CMAKE_CXX_DEBUG_FLAGS} -fsanitize=address")
 
 

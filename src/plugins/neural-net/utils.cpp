@@ -172,7 +172,7 @@ int remove_species(list <Species *> *sl, long unsigned int couplenum, double &to
     /*remove species that are very weak*/
 	for (s_it = sl->begin(); s_it != sl->end();) {
 		breed = floor(((*s_it)->average_fitness / local_tot) *
-		              (double) couplenum)-1;
+		              (double) couplenum)-2;
         
 		if (breed < 1 && sl->size()>1) {
             /*remove species that have a low average*/

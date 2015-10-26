@@ -37,11 +37,11 @@ unsigned long int Species::cull(bool top_only)
 	size = this->genomes.size();
 
 	if (top_only)
-		cutoff=1;
+		cutoff=2;
 	else 
 		cutoff = (int) round((double)this->genomes.size() / 2.0);
     
-    if(size>0) {
+    if(size>1) {
         it=this->genomes.begin();
         advance(it,cutoff);
         while(it!=this->genomes.end()) {

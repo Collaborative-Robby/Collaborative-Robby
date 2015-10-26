@@ -22,7 +22,7 @@
 #define DISABLE_INHERIT_GENE_RATIO 0.75
 
 /* Number of turns of species survival. */
-#define SPECIES_STALE_TRESHOLD 50
+#define SPECIES_STALE_TRESHOLD 1000
 
 /* Parameter of the sigmoid activation function */
 #define SIGMOID_BETA -4.9
