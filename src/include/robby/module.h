@@ -26,10 +26,10 @@
 #include <stdio.h>
 #include <robby/struct.h>
 
-#define VIEW_TOO_FAR 1
-#define VIEW_WALL 2
-#define VIEW_ROBBY 3
-#define VIEW_EMPTY 4
+#define VIEW_WALL 1
+#define VIEW_ROBBY 2
+#define VIEW_EMPTY 3
+#define VIEW_TOO_FAR 4
 #define VIEW_CAN 5
 
 /* Extern (got from the main engine) dummy variable to recognize

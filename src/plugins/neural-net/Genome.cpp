@@ -498,10 +498,9 @@ int Genome::mutate(void) {
         this->link_mutate(true); 
 
     /*Change the gene weight*/
-    if(RANDOM_DOUBLE(1)<MUTATION_RATE_CONNECTION) {
-        for (gene_iter = this->gene_map.begin(), end_geneiter=this->gene_map.end() ; gene_iter != end_geneiter; gene_iter++)
+    for (gene_iter = this->gene_map.begin(), end_geneiter=this->gene_map.end() ; gene_iter != end_geneiter; gene_iter++)
+        if(RANDOM_DOUBLE(1)<MUTATION_RATE_CONNECTION) 
             gene_iter->second->point_mutate();
-    } 
 
     /*Enable a random gene*/
     if(RANDOM_DOUBLE(1)<MUTATION_RATE_ENABLE)
