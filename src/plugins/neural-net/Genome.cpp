@@ -279,7 +279,8 @@ int Genome::insert_gene(Gene *g) {
         n1=new Node(g->in);
         NODE_INSERT(n1, this->node_map);
 	    this->insert_level_list(n1);
-        this->node_count++;
+        if(n1->id>=this->node_count)
+            this->node_count++;
     } else {
         n1=this->node_map[id_in];
     }
@@ -287,8 +288,9 @@ int Genome::insert_gene(Gene *g) {
     if(!this->node_map.count(id_out)) {
         n2=new Node(g->out);
         NODE_INSERT(n2, this->node_map);
-        this->node_count++;
 	    this->insert_level_list(n2);
+        if(n2->id>=this->node_count)
+            this->node_count++;
     } else {
         n2=this->node_map[id_out];
     }
