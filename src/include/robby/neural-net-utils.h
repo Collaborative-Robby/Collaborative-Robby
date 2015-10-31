@@ -1,8 +1,11 @@
 #ifndef ROBBY_NEURAL_NET_UTILS_H
 #define ROBBY_NEURAL_NET_UTILS_H
 #include <robby/struct.h>
+#include <robby/neural-net-const.h>
+#include <math.h>
 
-double sigmoid(double input);
+#define sigmoid(input) (1.0/(1.0+pow(M_E, -((double)input)*SIGMOID_BETA)))
+
 double delta_species(Genome *g1, Genome *g2);
 unsigned long long int hash_ull_int_encode(unsigned long from, unsigned long to);
 int compare_level(Node* n1, Node *n2);

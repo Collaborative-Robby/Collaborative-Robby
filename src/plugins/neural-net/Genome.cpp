@@ -32,28 +32,28 @@ Genome::Genome(Genome *gen) {
 }
 
 void Genome::copy(Genome *gen) {
-    unsigned long int node_key;
+    unsigned long int node_key=0;
     Node *node, *val;
     Gene* gene;
-    unordered_map<unsigned long int,      Node*>::iterator n_it, end_nit;
+    vector<Node*>::iterator n_it, end_nit;
     unordered_map<unsigned long long int, Gene*>::iterator g_it, end_git;
 
     this->node_count=gen->node_count;
     this->max_innov=gen->max_innov;
-    
-    for(n_it=gen->node_map.begin(), end_nit=gen->node_map.end(); n_it!=end_nit; ++n_it) {
-        val = n_it->second;
-        node_key = n_it->first;
+     
+    for(n_it=gen->node_vector.begin(), end_nit=gen->node_vector.end(); n_it!=end_nit; ++n_it) {
+        val = *n_it;
         node=new Node(node_key, val->type, val->level.n, val->level.d);
-        NODE_INSERT(node, this->node_map);
+        ++node_key;
+        NODE_INSERT(node, this->node_vector);
         
 	    this->insert_level_list(node);
     }
 
     for(g_it=gen->gene_map.begin(), end_git=gen->gene_map.end() ;  g_it!=end_git; ++g_it) {
         gene = new Gene(g_it->second);
-        gene->in  = node_map[gene->in->id];
-        gene->out = node_map[gene->out->id];
+        gene->in  = node_vector[gene->in->id];
+        gene->out = node_vector[gene->out->id];
 
         if(gene->enabled) {
             gene->in->output_genes.push_back(gene);
@@ -70,9 +70,9 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
     unsigned long int i,j;
     Node *curr;
     Gene *cgene;
-    list<Node*> in_list, out_list;
-    list <Node*>::iterator inner_level_it, end_inner_level_it;
-    list < list <Node*> >::iterator l_it, end_lit;
+    vector<Node*> in_vector, out_vector;
+    vector <Node*>::iterator inner_level_it, end_inner_level_it;
+    list < vector <Node*> >::iterator l_it, end_lit;
 
     this->id=genome_count++;
     this->node_count=0;
@@ -82,35 +82,35 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
     /*Output nodes*/
     for(i=0;i<output_no;i++) {
         curr=new Node(this->node_count, NODE_TYPE_OUTPUT,1,1);
-        NODE_INSERT(curr, this->node_map);
-        out_list.push_back(curr);
+        NODE_INSERT(curr, this->node_vector);
+        out_vector.push_back(curr);
         this->node_count++;
     }
 
     /* Bias node */
     curr = new Node(this->node_count, NODE_TYPE_INPUT,0,1);
-    NODE_INSERT(curr, this->node_map);
-    in_list.push_back(curr);
+    NODE_INSERT(curr, this->node_vector);
+    in_vector.push_back(curr);
     this->node_count++;
     
     /*This robby input nodes*/
     for(i=0;i<input_no;i++) {
         curr=new Node(this->node_count, NODE_TYPE_INPUT, 0,1);
-        NODE_INSERT(curr, this->node_map);
-        in_list.push_back(curr);
+        NODE_INSERT(curr, this->node_vector);
+        in_vector.push_back(curr);
         this->node_count++;
     }
     
     /*This robby position*/
     if (ROBBY_NNET_POSITION) {
         curr=new Node(this->node_count, NODE_TYPE_INPUT,0,1);
-        NODE_INSERT(curr, this->node_map);
-        in_list.push_back(curr);
+        NODE_INSERT(curr, this->node_vector);
+        in_vector.push_back(curr);
 	    this->node_count++;
 
         curr=new Node(this->node_count, NODE_TYPE_INPUT,0,1);
-        NODE_INSERT(curr, this->node_map);
-        in_list.push_back(curr);
+        NODE_INSERT(curr, this->node_vector);
+        in_vector.push_back(curr);
 	    this->node_count++;
     }
 
@@ -119,35 +119,35 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
 #ifndef KNOWN_MAP
         for(j=0; j<input_no; j++) {
             curr=new Node(this->node_count, NODE_TYPE_INPUT,0,1);
-            NODE_INSERT(curr, this->node_map);
-            in_list.push_back(curr);
+            NODE_INSERT(curr, this->node_vector);
+            in_vector.push_back(curr);
             this->node_count++;
         }
 #endif
         /*Other robbies positions*/
         if(ROBBY_NNET_POSITION) {
             curr=new Node(this->node_count, NODE_TYPE_INPUT,0,1);
-            NODE_INSERT(curr, this->node_map);
-            in_list.push_back(curr);
+            NODE_INSERT(curr, this->node_vector);
+            in_vector.push_back(curr);
             this->node_count++;
 
             curr=new Node(this->node_count, NODE_TYPE_INPUT,0,1);
-            NODE_INSERT(curr, this->node_map);
-            in_list.push_back(curr);
+            NODE_INSERT(curr, this->node_vector);
+            in_vector.push_back(curr);
             this->node_count++;
         }
 #ifdef OLD_MOVE
         /*old move node*/
         curr=new Node(this->node_count, NODE_TYPE_INPUT,0,1);
-        NODE_INSERT(curr, this->node_map);
-        in_list.push_back(curr);
+        NODE_INSERT(curr, this->node_vector);
+        in_vector.push_back(curr);
         this->node_count++;
 #endif
     }
     
     /*Push inputs and outputs in level list*/
-    this->level_list.push_back(in_list);
-    this->level_list.push_back(out_list);
+    this->level_list.push_back(in_vector);
+    this->level_list.push_back(out_vector);
     
     /*Get iterator for each level*/
     for (l_it = this->level_list.begin(), end_lit=this->level_list.end(); l_it!=end_lit; ++l_it)
@@ -160,15 +160,14 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
 		    cgene = new Gene();
 		    cgene->innovation=0;
 
-		    cgene->in  = this->node_map[i];
-		    cgene->out = this->node_map[j];
+		    cgene->in  = this->node_vector[i];
+		    cgene->out = this->node_vector[j];
 
-		    this->node_map[i]->output_genes.push_back(cgene);
-		    this->node_map[j]->input_genes.push_back(cgene);
+		    this->node_vector[i]->output_genes.push_back(cgene);
+		    this->node_vector[j]->input_genes.push_back(cgene);
 
 		    cgene->out->active_in_genes++;
 
-		    GENE_INSERT(cgene, this->gene_map);
 	    }
     }
     
@@ -208,7 +207,7 @@ Genome::Genome(char *dir, int fileno) {
 	for (i =0 ; i < node_size; i ++) {
 		fscanf(f, "%d %d, %lu/%lu\n", &node_id, &node_type, &node_num, &node_den);
 		cur_node = new Node(node_id, node_type,node_num, node_den);
-		NODE_INSERT(cur_node, this->node_map);
+		NODE_INSERT(cur_node, this->node_vector);
         this->insert_level_list(cur_node);
 	}
 	this->node_count = node_size;
@@ -222,9 +221,9 @@ Genome::Genome(char *dir, int fileno) {
 			&cur_gene->weight);
         cur_gene->enabled=(bool)tmp;
 		if (idin >= 0)
-			cur_gene->in = this->node_map[idin];
+			cur_gene->in = this->node_vector[idin];
 		if (idout >= 0)
-			cur_gene->out = this->node_map[idout];
+			cur_gene->out = this->node_vector[idout];
 		GENE_INSERT(cur_gene, this->gene_map);
         if(cur_gene->innovation>global_innovation)
             global_innovation=cur_gene->innovation+1;
@@ -251,14 +250,17 @@ Genome::Genome(Species *s, bool crossover) {
 
     if(crossover) {
         r=(long unsigned int) round(RANDOM_DOUBLE(s->genomes.size()-1));
-        g1=LIST_GET(Genome*, s->genomes, r);
+	g1 = s->genomes[r];
+        //g1=LIST_GET(Genome*, s->genomes, r);
         r=(long unsigned int) round(RANDOM_DOUBLE(s->genomes.size()-1));
-        g2=LIST_GET(Genome*, s->genomes, r);
+        //g2=LIST_GET(Genome*, s->genomes, r);
+	g2 = s->genomes[r];
         this->crossover(g1,g2);
     }
     else {
         r=(long unsigned int) round(RANDOM_DOUBLE(s->genomes.size()-1));
-        g1=LIST_GET(Genome*, s->genomes, r);
+        //g1=LIST_GET(Genome*, s->genomes, r);
+	g1 = s->genomes[r];
         this->copy(g1);
     }
     
@@ -275,24 +277,24 @@ int Genome::insert_gene(Gene *g) {
     id_out=g->out->id;
 
     /*If adjacent nodes don't exist, create them*/
-    if(!this->node_map.count(id_in)) {
+    if(this->node_vector.size() < id_in) {
         n1=new Node(g->in);
-        NODE_INSERT(n1, this->node_map);
-	    this->insert_level_list(n1);
-        if(n1->id>=this->node_count)
-            this->node_count++;
+        NODE_INSERT(n1, this->node_vector);
+        this->insert_level_list(n1);
+        //if(n1->id>=this->node_count)
+	this->node_count++;
     } else {
-        n1=this->node_map[id_in];
+        n1=this->node_vector[id_in];
     }
 
-    if(!this->node_map.count(id_out)) {
+    if(this->node_vector.size() < id_out) {
         n2=new Node(g->out);
-        NODE_INSERT(n2, this->node_map);
+        NODE_INSERT(n2, this->node_vector);
 	    this->insert_level_list(n2);
-        if(n2->id>=this->node_count)
+        //if(n2->id>=this->node_count)
             this->node_count++;
     } else {
-        n2=this->node_map[id_out];
+        n2=this->node_vector[id_out];
     }
 
     /*Avoid loops*/
@@ -328,8 +330,8 @@ Genome::Genome(Genome *g1, Genome *g2){
 
 /*Insert a node to the appropriate level list*/
 void Genome::insert_level_list(Node *n) {
-	list <Node *> l;
-	list < list <Node *> >::iterator l_it;
+	vector <Node *> l;
+	list < vector <Node *> >::iterator l_it;
     
     /*If no list is present, create input and output lists*/
 	if (this->level_list.size() == 0) {
@@ -379,7 +381,7 @@ void Genome::insert_level_list(Node *n) {
 
 void Genome::crossover(Genome *rg1, Genome *rg2){
     unordered_map<unsigned long long, Gene*>::iterator g_it, end_git;
-    unordered_map<NODE_KEY_TYPE, Node*>::iterator n_it, end_nit;
+    vector<Node*>::iterator n_it, end_nit;
     long unsigned int id_in,id_out;
     Genome *g1, *g2;
     Node *new_n;
@@ -401,12 +403,12 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
     this->node_count=0; 
     
     /*Copy input and output genes*/
-    for(n_it=g1->node_map.begin(), end_nit=g1->node_map.end() ; n_it!=end_nit; ++n_it) {
-        if(n_it->second->type!=NODE_TYPE_HIDDEN) {
-            new_n=new Node(n_it->second);
+    for(n_it=g1->node_vector.begin(), end_nit=g1->node_vector.end() ; n_it!=end_nit; ++n_it) {
+        if((*n_it)->type!=NODE_TYPE_HIDDEN) {
+            new_n=new Node(*n_it);
 
 	        new_n->active_in_genes = 0;
-            NODE_INSERT(new_n, this->node_map);
+            NODE_INSERT(new_n, this->node_vector);
             this->node_count++;
 	        this->insert_level_list(new_n);
         }
@@ -461,17 +463,17 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
 
 Genome::~Genome(void) {
     unordered_map<unsigned long long, Gene*>::iterator g_it;
-    unordered_map<unsigned long int,  Node*>::iterator n_it;
-    list< list <Node*> >::iterator lev_it, end_levit;
+    vector <Node*>::iterator n_it;
+    list< vector <Node*> >::iterator lev_it, end_levit;
 
-    for(n_it=this->node_map.begin(); n_it!=this->node_map.end(); ++n_it)
-        delete n_it->second;
+    for(n_it=this->node_vector.begin(); n_it!=this->node_vector.end(); ++n_it)
+        delete *n_it;
 
     for(g_it=this->gene_map.begin(); g_it!=this->gene_map.end(); ++g_it)
         delete g_it->second;
 
     this->gene_map.clear();
-    this->node_map.clear();
+    this->node_vector.clear();
     for(lev_it=this->level_list.begin(), end_levit=this->level_list.end(); lev_it!=end_levit; ++lev_it) {
         lev_it->clear();
     }
@@ -516,11 +518,11 @@ int Genome::mutate(void) {
 }
 
 void Genome::print() {
-    unordered_map<unsigned long int,      Node*>::iterator node_it, end_nodeit;
+    vector<Node*>::iterator node_it, end_nodeit;
     unordered_map<unsigned long long int, Gene*>::iterator gene_it, end_geneit;
 
-    for(node_it=this->node_map.begin(), end_nodeit=this->node_map.end(); node_it!=end_nodeit; ++node_it) {
-        node_it->second->print();
+    for(node_it=this->node_vector.begin(), end_nodeit=this->node_vector.end(); node_it!=end_nodeit; ++node_it) {
+        (*node_it)->print();
     }
 
     for(gene_it=this->gene_map.begin(), end_geneit=this->gene_map.end(); gene_it!=end_geneit; ++gene_it) {
@@ -538,9 +540,9 @@ int Genome::node_mutate(void) {
     unsigned long int list_len;
     unsigned long int gene_index;
 
-    list <Node*> new_l;
-    list< list<Node*> >::iterator lv_it;
-    unordered_map<unsigned long int, Node*>::iterator it;
+    vector <Node*> new_l;
+    list< vector<Node*> >::iterator lv_it;
+    //unordered_map<unsigned long int, Node*>::iterator it;
 
     /* Empty fraction */
     Fraction f;
@@ -580,7 +582,7 @@ int Genome::node_mutate(void) {
         lv_it->push_back(neuron);
     }
 
-    NODE_INSERT(neuron, this->node_map);
+    NODE_INSERT(neuron, this->node_vector);
     this->node_count++;
     
     /*Disable the old gene and remove it from the nodes*/
@@ -647,8 +649,8 @@ int Genome::link_mutate(bool force_bias) {
     rand2=(unsigned long int) round(RANDOM_DOUBLE(node_size-1));
 
 
-    n1=this->node_map[rand1];
-    n2=this->node_map[rand2];
+    n1=this->node_vector[rand1];
+    n2=this->node_vector[rand2];
 
     /*Check if the two nodes are on the same level*/
     if(n1->level == n2->level)
@@ -669,7 +671,7 @@ int Genome::link_mutate(bool force_bias) {
     /*Use the bias gene as input*/
     if(force_bias) {
 	    key = POSSIBLE_MOVES;
-        new_gene->in = this->node_map[key];
+        new_gene->in = this->node_vector[key];
     }
     
     /*Do not add the gene if it's already there*/
@@ -734,17 +736,20 @@ int Genome::enable_disable_mutate(bool enable) {
 }
 
 /* Activate the neural net*/
-int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
+int Genome::activate(struct robby *r, vector<struct robby_msg> *msg_list ) {
     unsigned long int i,j;
     unsigned long int key;
     unsigned long int max_id;
     double max;
     Node* in_node;
     unordered_map<unsigned long long int, Gene*>::iterator g_it, end_git;
-    unordered_map<unsigned long int, Node*>::iterator n_it, end_nit;
-    list<struct robby_msg>::iterator m_it, end_mit;
-    list < list <Node *> >::iterator l_it, end_lit;
-    list <Node *>::iterator level_it, end_levelit;
+    vector<Node*>::iterator n_it, end_nit;
+    vector<struct robby_msg>::iterator m_it, end_mit;
+    list < vector <Node *> >::iterator l_it, end_lit;
+    vector <Node *>::iterator level_it, end_levelit;
+    vector <Node *>::iterator node_it;
+
+    node_it = this->level_list.begin()->begin();
 
     #ifdef DEBUG_MSG
     for (m_it=msg_list->begin(); m_it!=msg_list->end(); ++m_it) {
@@ -753,19 +758,18 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
     #endif
     
     /* Bias (input node with value 1.0) activation */
-    key = POSSIBLE_MOVES;
-    in_node = this->node_map[key];
+    in_node = (*node_it);
     in_node->activate(1.0);
-    key++;
+    ++node_it;
     
 
 #ifdef KNOWN_MAP
     /*Activate with known map*/
     for(i=0; i<r->m_sizex; i++) {
         for(j=0; j<r->m_sizey; j++) {
-            in_node=this->node_map[key];
+            in_node=(*node_it);
             in_node->activate(r->known_map[i][j]);
-            key++;
+            ++node_it;
         }
     }
 #else
@@ -773,9 +777,9 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
     for(i=0; i<SQUARE_SIDE; i++) {
         for(j=0; j<SQUARE_SIDE; j++) {
             if (r->view[i][j] != -1) {
-                  in_node=this->node_map[key];
+                  in_node=(*node_it);
                   in_node->activate(r->view[i][j]);
-                  key++;
+                  ++node_it;
             }
         }
     }
@@ -783,11 +787,11 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
 
     /* Activate with robby position, from 1 to map size*/
     if (ROBBY_NNET_POSITION) {
-        this->node_map[key]->activate((double)r->x+1.0);
-        key++;
+        (*node_it)->activate((double)r->x+1.0);
+        ++node_it;
 
-        this->node_map[key]->activate((double)r->y+1.0);
-        key++;
+        (*node_it)->activate((double)r->y+1.0);
+        ++node_it;
     }
     
     /*Read info from the message list*/
@@ -799,22 +803,22 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
             for(i=0; i<SQUARE_SIDE; i++) {
                 for(j=0; j<SQUARE_SIDE;j++)
                     if((*m_it).view[i][j]!=-1) {
-                        this->node_map[key]->activate((*m_it).view[i][j]);
-                        key++;
+                        (*node_it)->activate((*m_it).view[i][j]);
+                        ++node_it;
                     }
             }
 #endif      
             /*Get other robbies position, from 1 to map size*/
             if(ROBBY_NNET_POSITION) {
-                this->node_map[key]->activate((double)m_it->x+1.0);
-                key++;
-                this->node_map[key]->activate((double)m_it->y+1.0);
-                key++;
+                (*node_it)->activate((double)m_it->x+1.0);
+                ++node_it;
+                (*node_it)->activate((double)m_it->y+1.0);
+                ++node_it;
             }
 #ifdef OLD_MOVE
             /*Get other robbies last move*/
-            this->node_map[key]->activate((*m_it).old_move);
-            key++;
+            (*node_it)->activate((*m_it).old_move);
+            ++node_it;
 #endif
         }
     }
@@ -832,12 +836,15 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
              (*level_it)->activate(0.0);
         }
     }
+
+    --l_it;
+    node_it = l_it->begin();
     
     /*Get the chosen ouput*/
     max=(-DBL_MAX);
-    for(key=0; key<POSSIBLE_MOVES; key++) {
-        if(max<this->node_map[key]->value) {
-            max=this->node_map[key]->value;
+    for(key=0; key<POSSIBLE_MOVES; key++, ++node_it) {
+        if(max<(*node_it)->value) {
+            max=(*node_it)->value;
             max_id=key;
         }
     }
@@ -854,8 +861,8 @@ int Genome::activate(struct robby *r, list<struct robby_msg> *msg_list ) {
 int Genome::save_to_file(char *dir, long unsigned int fileno) {
 	unordered_map <GENE_KEY_TYPE, Gene *>::iterator g_it;
 	long unsigned int idin = 0, idout = 0;
-    list<Node*>::iterator n_it;
-    list<list <Node*> >::iterator l_it,o_it;
+    vector<Node*>::iterator n_it;
+    list<vector <Node*> >::iterator l_it,o_it;
 	char *path;
 	FILE *f;
 	DIR *d;
@@ -884,7 +891,7 @@ int Genome::save_to_file(char *dir, long unsigned int fileno) {
 	}
     
     /*save node and genome size*/
-	fprintf(f, "%lu %lu\n{\n", this->node_map.size(), this->gene_map.size());
+	fprintf(f, "%lu %lu\n{\n", this->node_vector.size(), this->gene_map.size());
     
     /*save input layer*/
     l_it=this->level_list.begin();
@@ -941,7 +948,8 @@ int Genome::specialize(list <Species *> *sl)
     /*For each species*/
 	for (s_it=sl->begin(), end_sit=sl->end(); s_it !=end_sit;++s_it) {
         /*Get the best genome in the species and compare it with this*/
-		Genome *oth_g = LIST_GET(Genome*, (*s_it)->genomes, 0);
+		//Genome *oth_g = LIST_GET(Genome*, (*s_it)->genomes, 0);
+		Genome *oth_g = (*s_it)->genomes[0];
         curr_distance=delta_species(this,oth_g);
         /*Get the most similar species below the treshold*/
 		if (curr_distance<min_distance) {

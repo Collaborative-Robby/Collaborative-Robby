@@ -7,6 +7,8 @@
 #include <robby/neural-net.h>
 #include <robby/neural-net-const.h>
 
+#include <algorithm>
+
 void setup_positions(struct robby **rl, long unsigned int robbynum)
 {
     rl[0][0].original_x = 0;
@@ -27,11 +29,6 @@ void setup_positions(struct robby **rl, long unsigned int robbynum)
     b = to;
 
     return (a >= b ? (a * a + a + b) : (a + b * b));
-}
-
-/* Sigmoid smooth activation function */
-double sigmoid(double input) {
-    return 1/(1+pow(M_E, -input*SIGMOID_BETA));
 }
 
 /* Check if a genome file exist. */
@@ -140,9 +137,10 @@ static inline int calculate_species_values(list <Species *> *sl, long unsigned i
     /*calculate max fitness and total avg fitness*/
     for (s_it = sl->begin(), end_sit = sl->end(); s_it != end_sit; ++s_it) {
         
-		(*s_it)->genomes.sort(cmp_desc_genomes);
+		sort((*s_it)->genomes.begin(), (*s_it)->genomes.end(), (cmp_desc_genomes));
 		
-		cgenome = LIST_GET(Genome*, ((*s_it)->genomes), 0);
+		//cgenome = LIST_GET(Genome*, ((*s_it)->genomes), 0);
+		cgenome = (*s_it)->genomes[0];
         
 		if (cgenome->fitness > (*s_it)->top_fitness) {
 			(*s_it)->top_fitness = cgenome->fitness;

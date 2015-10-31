@@ -16,12 +16,12 @@
 #include <robby/neural-net-utils.h>
 
 double pool_maxfitness = 0.0;
-list<Species *> species_list;
 
 long unsigned int genome_count = 0;
 long unsigned int global_innovation = 0;
 
-list <struct robby_msg> msg_list;
+list <Species *> species_list;
+vector <struct robby_msg> msg_list;
 
 int update_known_map(struct robby_msg *msg, struct robby *r, struct world_map *m)
 {
@@ -218,9 +218,10 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
     Genome *gen;
     Species *s;
     list <Species *>::iterator rs1, rs2;
-    list <Genome *>::iterator rg1, rg2;
+    Genome *rg1, *rg2;
     list<Genome*> children;
     list<Genome*>::iterator g_it, end_git;
+    vector<Genome*>::iterator vg_it, vend_git;
     list <Species *>::iterator s_it, end_sit;
 
     for (coup = 0; coup < couplenum; coup++) {
@@ -270,16 +271,18 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
 		    rs2 = species_list.begin();
 		    advance(rs2, r2);
 
-		    r1 = (long unsigned int)round(RANDOM_DOUBLE((*rs1)->genomes.size() - 1));
-		    r2 = (long unsigned int)round(RANDOM_DOUBLE((*rs2)->genomes.size() - 1));
+		    r1 = (long unsigned int)round(RANDOM_DOUBLE(((*rs1)->genomes.size() - 1)));
+		    r2 = (long unsigned int)round(RANDOM_DOUBLE(((*rs2)->genomes.size() - 1)));
 
-		    rg1 = (*rs1)->genomes.begin();
-		    advance(rg1, r1);
+		    rg1 = (*rs1)->genomes[r1];
+		    //rg1 = (*rs1)->genomes.begin();
+		    //advance(rg1, r1);
 
-		    rg2 = (*rs2)->genomes.begin();
-		    advance(rg2, r2);
+		    rg2 = (*rs2)->genomes[r2];
+		    //rg2 = (*rs2)->genomes.begin();
+		    //advance(rg2, r2);
 
-		    gen=new Genome(*rg1, *rg2);
+		    gen=new Genome(rg1, rg2);
             }
             children.push_back(gen);
             size++;
@@ -328,13 +331,13 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
     /*assign genomes to robbies and clean up*/
     for(s_it=species_list.begin(), end_sit = species_list.end(); s_it!=end_sit; ++s_it){
 
-        for(g_it=(*s_it)->genomes.begin(), end_git = (*s_it)->genomes.end(); g_it!=end_git; ++g_it) {
-            rl[i][0].genome=(*g_it);
+        for(vg_it=(*s_it)->genomes.begin(), vend_git = (*s_it)->genomes.end(); vg_it!=vend_git; ++vg_it) {
+            rl[i][0].genome=(*vg_it);
 
             for(j=1; j<robbynum; j++) {
                 if(rl[i][j].genome)
                     delete rl[i][j].genome;
-                rl[i][j].genome=new Genome(*g_it);
+                rl[i][j].genome=new Genome(*vg_it);
             }
 
             i++;
@@ -418,7 +421,7 @@ void cleanup(struct robby **rl, long unsigned int couplenum, long unsigned int r
 { 
     unsigned long int i, j;
     list<Species*>::iterator s_it;
-    list<Genome*>::iterator g_it;
+    vector<Genome*>::iterator g_it;
     
     i=0;
     s_it=species_list.begin();

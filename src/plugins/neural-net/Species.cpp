@@ -1,4 +1,5 @@
 #include <math.h>
+#include <algorithm>
 
 #include <robby/neural-net.h>
 #include <robby/neural-net-utils.h>
@@ -18,7 +19,7 @@ Species::Species(void)
 
 Species::~Species(void)
 {
-    list<Genome*>::iterator it;
+    vector<Genome*>::iterator it;
 
     it=this->genomes.begin();
     while(it!=this->genomes.end()) {
@@ -31,9 +32,10 @@ unsigned long int Species::cull(bool top_only)
 {
 	int cutoff = 0;
 	unsigned long int size = 0;
-	list <Genome *>::iterator it;
+	vector <Genome *>::iterator it;
 
-	this->genomes.sort(cmp_desc_genomes);
+	//this->genomes.sort(cmp_desc_genomes);
+	sort(this->genomes.begin(), this->genomes.end(), cmp_desc_genomes);
 	size = this->genomes.size();
 
 	if (top_only)
@@ -57,7 +59,7 @@ double Species::calculate_avg_fitness(void)
 {
 	double avg = 0.0;
 	unsigned long int size = 0;
-	list <Genome *>::iterator g_it, end_git;
+	vector <Genome *>::iterator g_it, end_git;
 
 	size = this->genomes.size();
 
