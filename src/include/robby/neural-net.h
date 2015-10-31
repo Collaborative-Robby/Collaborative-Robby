@@ -74,7 +74,6 @@ class Genome {
 		//unordered_map<unsigned long int, Node*> node_map;
 		vector <Node*> node_vector;
 		unordered_map<unsigned long long int, Gene*> gene_map;
-		unsigned long int node_count;
 		unsigned long int max_innov;
 		unsigned long int id;
 		double fitness;
