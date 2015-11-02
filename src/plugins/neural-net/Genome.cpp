@@ -166,7 +166,9 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
 
 Genome::Genome(char *dir, int fileno) {
 	unordered_map <GENE_KEY_TYPE, Gene *>::iterator g_it;
-	unordered_map <NODE_KEY_TYPE, Node *>::iterator n_it;
+	//unordered_map <NODE_KEY_TYPE, Node *>::iterator n_it;
+	unordered_map <NODE_KEY_TYPE, Node *> tmp_map;
+
 	char *path;
 	FILE *f;
 	int rval, i;
@@ -193,16 +195,21 @@ Genome::Genome(char *dir, int fileno) {
 
 	fscanf(f, "%d %d\n{\n", &node_size, &gene_size);
     
-	for (i =0 ; i < node_size; i ++) {
+	for (i =0 ; i < node_size; i++) {
 		fscanf(f, "%d %d, %lu/%lu\n", &node_id, &node_type, &node_num, &node_den);
 		cur_node = new Node(node_id, node_type,node_num, node_den);
-		NODE_INSERT(cur_node, this->node_vector);
+        HASH_INSERT(cur_node, tmp_map);
         this->insert_level_list(cur_node);
 	}
 
+    for(i=0; i<node_size; i++) {
+        cur_node=tmp_map[i];
+        NODE_INSERT(cur_node, this->node_vector);
+    }
+
 	fscanf(f, "}\n{\n");
 
-	for (i =0 ; i < gene_size; i ++) {
+	for (i =0 ; i < gene_size; i++) {
 		cur_gene = new Gene();
 		fscanf(f, "%d -> %d: %lu %d %lf\n", &idin, &idout,
 			&cur_gene->innovation, &tmp,

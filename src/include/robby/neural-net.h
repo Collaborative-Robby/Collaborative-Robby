@@ -24,6 +24,7 @@
 #define GENE_INSERT(cgene, refhash) (refhash.insert(pair<GENE_KEY_TYPE, Gene *>(hash_ull_int_encode((cgene)->in->id, (cgene)->out->id), (cgene))))
 
 #define NODE_INSERT(cnode, refvector) (refvector.push_back(cnode))
+#define HASH_INSERT(cnode, refhash) (refhash.insert(pair<NODE_KEY_TYPE, Node *>((cnode)->id, (cnode))))
 
 using namespace std;
 
