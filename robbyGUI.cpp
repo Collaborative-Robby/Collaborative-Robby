@@ -19,12 +19,26 @@
 
 
 using namespace std;
-Fl_Image* jpeg_image;
+/**
+ * Some constant for the whole computation,
+ * MAX_SIZE_X AND MAX_SIZE_Y must be equals
+ **/
 #define MAX_SIZE_X 10
 #define MAX_SIZE_Y 10
+/**
+ * Some constant for the whole computation,
+ * SCREEN_SIZE_X >= SCREEN_SIZE_Y+(75+5)*3+10
+ **/
 #define SCREEN_SIZE_X 1024
 #define SCREEN_SIZE_Y 768
+/**
+ * robby_size <=(SCREEN_SIZE_Y-50)/MAX_SIZE_Y
+ **/
 int robby_size=70;
+/**
+ * SIZE_X <=MAX_SIZE_X
+ * SIZE_Y <=MAX_SIZE_Y
+ **/
 int SIZE_X=3;
 int SIZE_Y=3;
 
@@ -35,6 +49,7 @@ Fl_Box* b[MAX_SIZE_X][MAX_SIZE_Y];
 Fl_Button *stop;
 Fl_Button *start;
 Fl_Button *step;
+Fl_Image* jpeg_image;
 
 int scene[][MAX_SIZE_Y] = {
 					  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -48,24 +63,27 @@ int scene[][MAX_SIZE_Y] = {
 					  {0, 0, 0, 0, 1, -1, 0, 0, 0, 0},
 					  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 				  };
-class Scena{
-	
+
+/**
+ * Each scene represents a specific status of the problem to be solved
+ * map is a N*N Matrix of int where 
+ * 0 represent void
+ * 1 represent robby
+ * -1 represent can/garbage 
+ **/
+class Scena{	
 	public :
 		int map[MAX_SIZE_X][MAX_SIZE_Y];
 		void setLine(int x,string l){
 			for(int i=0;i<SIZE_Y;i++){
 				string tock=l.substr(3*i+i,3);
-				//cout << "TOCK |" << tock <<"|\n";
 				if(tock==" c "){
-					//cout << "lattina in ["<<x<<", "<< i << "]\n";
 					map[x][i]=-1;
 				}
 				if(tock[0]=='R'){
-					//cout << "robot in ["<<x<<", "<< i << "]\n";
 					map[x][i]=1;
 				}
 				if(tock=="   "){
-					//cout << "vuoto in ["<<x<<", "<< i << "]\n";
 					map[x][i]=0;
 				}
 			}
@@ -94,6 +112,10 @@ class Scena{
 } s;  
 
 list<Scena> first;
+/**
+ * This method load a list of Scena from file named nome
+ * @input nome the name of the file
+ * */
 void loadScene(const char* nome){
 	string line;
 	ifstream myfile (nome);
@@ -115,48 +137,40 @@ void loadScene(const char* nome){
 				if(line.substr(0,6)=="failed"){
 				}else
 				if(line.substr(0,8)=="===> End"){
-					//cout<< "FINE DELLA RUN"<<"\n";
 				}else
 				if(line.substr(0,3)=="-->"){
-					//cout << "TROVATA NUOVA SCENA DA CALCOLARE"<<"\n";
 					if(prima){
-						//cout<< "E' LA PRIMA SCENA"<<"\n";
 					}else{
-						//cout<<"NON SIAMO ALLA PRIMA"<<"\n";
 						first.push_back(*bappo);
 						bappo=new Scena();
 					}
 					prima=false;
 					deep=0;
 				}else{
-					//"[  R0   c      ]"
 					string l=line.substr(3,line.size()-4);
 					SIZE_Y=(l.size()-2)/3;
-					//cout << "dimensione = "<<SIZE_Y << '\n';
 					(*bappo).setLine(deep,l);
-					//cout << "FATTO \n";
-					//(*bappo).stampa();
 					deep=deep+1;
 				}
 			}
 		}
 		myfile.close();
-		/* STAMPA DI DEBUG
-		  for (list<Scena>::iterator it=first.begin(); it != first.end(); ++it){
-			(*it).stampa();
-		}*/		
 	}
 	else cout << "Unable to open file"; 
 	
 }
+/**
+ * This method draw a Scene in the window and repaint it
+ * @input window the window that will be repainted
+ * @input b the matrix of box that contain the robby and the cans
+ * @input scene the scene that will be displayed
+ **/
 void drawScene(Fl_Window* window,Fl_Box* b[][MAX_SIZE_Y],int scene[][MAX_SIZE_Y]){
 	
   Fl_PNG_Image  *robby_orig = new Fl_PNG_Image("img/robby.png");
   Fl_PNG_Image  *trash_orig = new Fl_PNG_Image("img/trash.png");
   for(int i=0;i<SIZE_X;i++){
-	  for(int j=0;j<SIZE_Y;j++){
-		   //b[i][j] = new Fl_Box(5+i*robby_size,15+j*robby_size,robby_size,robby_size,"");
-		   
+	  for(int j=0;j<SIZE_Y;j++){		   
 		   if(scene[i][j]==1){
 			   jpeg_image = robby_orig->copy( b[i][j]->w(), b[i][j]->h() );
 		   }
@@ -173,6 +187,10 @@ void drawScene(Fl_Window* window,Fl_Box* b[][MAX_SIZE_Y],int scene[][MAX_SIZE_Y]
   }
   window->redraw();
 }
+/**
+ * This method will be called after each "speed" by default 1 second.
+ * He load a new scene and print it to the screen
+ **/
 void callback(void*) {
 	for(int i=0;i<SIZE_X;i++){
 		for(int j=0;j<SIZE_Y;j++){
@@ -192,6 +210,9 @@ void callback(void*) {
 		step->deactivate();
 	}
 }
+/**
+ * This method start calling the callback method and start running the show 
+ **/
 void run(){
 	for(int i=0;i<SIZE_X;i++){
 		for(int j=0;j<SIZE_Y;j++){
@@ -204,24 +225,21 @@ void run(){
 	Fl::add_timeout(1.0,callback);  
 }
 
+/**
+ * This method let user select the run to be displayed
+ **/
 void Open_CB(Fl_Widget *w, void *) {
 	 Fl_File_Chooser chooser("run/",                        // directory
                             "*",                        // filter
                             Fl_File_Chooser::SINGLE,     // chooser type
                             "Chose the run to be shown");        // title
     chooser.show();
-
-    // Block until user picks something.
-    //     (The other way to do this is to use a callback())
-    //
     while(chooser.shown())
         { Fl::wait(); }
 
-    // User hit cancel?
     if ( chooser.value() == NULL )
         { fprintf(stderr, "(User hit 'Cancel')\n"); return; }
 
-    // Print what the user picked
     fprintf(stderr, "--------------------\n");
     fprintf(stderr, "DIRECTORY: '%s'\n", chooser.directory());
     fprintf(stderr, "    VALUE: '%s'\n", chooser.value());
@@ -231,39 +249,46 @@ void Open_CB(Fl_Widget *w, void *) {
 	fl_alert("Selected: %s \n", chooser.value());
 	start->activate();
 	step->activate();
-	//run();
-    // Multiple files? Show all of them
-    /*if ( chooser.count() > 1 ) {
-        for ( int t=1; t<=chooser.count(); t++ ) {
-            fprintf(stderr, " VALUE[%d]: '%s'\n", t, chooser.value(t));
-        }
-    }*/
 	
 }
+/**
+ * This method stop the run
+ **/
 void Stop_CB(Fl_Widget *w, void *) {
 	RUN=false;
 	stop->deactivate();
 }
+/**
+ * This method close the program
+ **/
 void Quit_CB(Fl_Widget *, void *) {
     exit(0);
 }
+/**
+ * This method start the run
+ **/
 void Start_CB(Fl_Widget *, void *) {
     RUN=true;
     run();
     stop->activate();
 }
+/**
+ * This method move forward of a single step
+ **/
 void Step_CB(Fl_Widget * q, void *) {
 	RUN=false;
     callback(q);
 }
-
-
+/**
+ * This method change the step "speed" of the run
+ **/
 static void Slider_CB(Fl_Widget *w, void *data) {
 	Fl_Slider* slider = (Fl_Slider*)w;
 	cout << slider->value() << "\n";
 	speed=(11+slider->value())/5;
 //	slider->value();
 }
+
 int main(int argc, char **argv) {
 	Fl_Menu_Bar *menu = new Fl_Menu_Bar(0,0,SCREEN_SIZE_X,25);
     menu->add("File/Open",   FL_CTRL+'n', Open_CB);
@@ -288,8 +313,6 @@ int main(int argc, char **argv) {
 	slider->range(-10,10);
 	slider->value(1);
 	slider->step(1);
-	//string nome="run/run.txt";
-	//loadScene(nome.c_str());
 	
 	for(int i=0;i<SIZE_X;i++){
 		for(int j=0;j<SIZE_Y;j++){
