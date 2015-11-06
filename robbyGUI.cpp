@@ -60,7 +60,7 @@ class Scena{
 					//cout << "lattina in ["<<x<<", "<< i << "]\n";
 					map[x][i]=-1;
 				}
-				if(tock=="R0 "){
+				if(tock[0]=='R'){
 					//cout << "robot in ["<<x<<", "<< i << "]\n";
 					map[x][i]=1;
 				}
@@ -303,5 +303,4 @@ int main(int argc, char **argv) {
   return Fl::run();;
 }
 
-// per compilare g++ -o go hello.cpp -L/home/sterling/Downloads/fltk-1.3.x-r8695/FL -lfltk -lXext -lX11 -lm -lfltk_images
-//g++ -o go hello.cpp -L/home/sterling/Downloads/fltk-1.3.x-r8695/FL -lfltk -lXext -lX11 -lm
+// per compilare g++ -o go robbyGUI.cpp -L/home/sterling/Downloads/fltk-1.3.x-r8695/FL -lfltk -lXext -lX11 -lm -lfltk_images
