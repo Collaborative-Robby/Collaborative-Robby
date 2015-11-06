@@ -1,0 +1,146 @@
+generating 1 maps in training_maps
+directory training_maps exists
+generating 1 maps in test_maps
+directory test_maps exists
+===> Generation 0
+loading genome from genomes/0.genome
+--> 3 3 | round 0: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 1: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 2: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 3: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 4: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 5: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 6: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 7: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 8: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 9: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 10: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+===> End of Generation 0 Best fitness: 0.000000
+failed: 10 gathered: 0
+===> Generation 1
+--> 3 3 | round 0: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 1: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 2: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 3: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 4: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 5: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 6: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 7: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 8: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 9: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+--> 3 3 | round 10: 1 robby 4 cans
+[  R0   c      ]
+[   c          ]
+[       c   c  ]
+===> End of Generation 1 Best fitness: 0.000000
+failed: 10 gathered: 0
+===> Test Generation
+--> 3 3 | round 0: 1 robby 4 cans
+[  R0   c      ]
+[   c       c  ]
+[              ]
+--> 3 3 | round 1: 1 robby 4 cans
+[       c      ]
+[  R0       c  ]
+[              ]
+--> 3 3 | round 2: 1 robby 4 cans
+[       c      ]
+[           c  ]
+[  R0          ]
+--> 3 3 | round 3: 1 robby 4 cans
+[       c      ]
+[  R0       c  ]
+[              ]
+--> 3 3 | round 4: 1 robby 4 cans
+[  R0   c      ]
+[           c  ]
+[              ]
+--> 3 3 | round 5: 1 robby 4 cans
+[      R0      ]
+[           c  ]
+[              ]
+--> 3 3 | round 6: 1 robby 4 cans
+[          R0  ]
+[           c  ]
+[              ]
+--> 3 3 | round 7: 1 robby 4 cans
+[              ]
+[          R0  ]
+[              ]
+--> 3 3 | round 8: 1 robby 4 cans
+[              ]
+[          R0  ]
+[              ]
+--> 3 3 | round 9: 1 robby 4 cans
+[              ]
+[          R0  ]
+[              ]
+--> 3 3 | round 10: 1 robby 4 cans
+[              ]
+[          R0  ]
+[              ]
+===> End of Test Generation fitness: 0.220000
+failed: 9 gathered: 1
