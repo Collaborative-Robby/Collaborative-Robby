@@ -378,14 +378,15 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
     long unsigned int id_in,id_out,i;
     Genome *g1, *g2;
     Node *new_n;
-    
-    /*We privilege one genome, over the other, randomize the order*/
-	if (round(RANDOM_DOUBLE(1))) {
-		g1 = rg2;
-		g2 = rg1;
-	} else {
+    // Select the best genome as the first
+	if (g1->fitness > g2->fitness || 
+	    ((g1->fitness == g2->fitness) &&
+	       (g1->genes.size() < g2->gene_map.size()))) {
 		g1 = rg1;
 		g2 = rg2;
+	} else {
+		g1 = rg2;
+		g2 = rg1;
 	}
     
     if(g1==g2) {
@@ -446,6 +447,11 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
         }
     }
     
+
+return;
+#if 0
+// not used because this seems wrong after watching the official source.
+
     /*Add remaining genes from the second genome*/
     for(g_it=g2->gene_map.begin(), end_git=g2->gene_map.end(); g_it!=end_git; ++g_it) {
         id_in=g_it->second->in->id;
@@ -455,6 +461,7 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
             this->insert_gene(g_it->second);
         }
     }
+#endif
 
 }
 
