@@ -381,7 +381,7 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
     // Select the best genome as the first
 	if (g1->fitness > g2->fitness || 
 	    ((g1->fitness == g2->fitness) &&
-	       (g1->genes.size() < g2->gene_map.size()))) {
+	       (g1->gene_map.size() < g2->gene_map.size()))) {
 		g1 = rg1;
 		g2 = rg2;
 	} else {
