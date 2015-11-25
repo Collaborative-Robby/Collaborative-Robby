@@ -4,7 +4,7 @@
 #include <robby/neural-net-const.h>
 #include <math.h>
 
-#define sigmoid(input) (1.0/(1.0+pow(M_E, -((double)input)*SIGMOID_BETA)))
+#define sigmoid(input) (1.0/(1.0+pow(M_E, ((double)input)*-SIGMOID_BETA)))
 
 double delta_species(Genome *g1, Genome *g2);
 unsigned long long int hash_ull_int_encode(unsigned long from, unsigned long to);

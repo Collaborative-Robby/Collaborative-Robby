@@ -112,8 +112,9 @@ int move(struct world_map *m, struct robby *r)
 #endif
     
     /*done, terminate early*/
-    if(m->gathered_cans == m->n_cans)
+    if(m->gathered_cans == m->n_cans) {
         return 2;
+    }
     
     dirnum=r->genome->activate(r, &msg_list);
     if(dirnum<4) {
@@ -209,7 +210,7 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
 static int next_generation(struct robby **rl, unsigned long int couplenum,
         unsigned long int robbynum)
 {
-    unsigned long int coup,size;
+    unsigned long int coup,size, input_no;
     unsigned long int i;
     unsigned long int r1, r2;
     int r;
@@ -254,7 +255,7 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
     /*create children */
     for (s_it = species_list.begin(), end_sit = species_list.end(); s_it != end_sit; ++s_it) {
         /* Crossover children */
-        breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum * .75)-2;
+        breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum * .75)-1;
         for(i=0; i<breed; i++) {
             if (RANDOM_DOUBLE(1) >= INTERSPECIES_CROSSOVER_PROB) {
 		    gen=new Genome(*s_it, false);
@@ -289,7 +290,7 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
         }
 
         /* Mutate children */
-        breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum * .25)-2;
+        breed=floor((((*s_it)->average_fitness / (double) tot_fitness))*(double) couplenum * .25)-1;
         for(i=0; i<breed; i++) {
             gen=new Genome(*s_it, true);
             children.push_back(gen);
@@ -311,11 +312,16 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
 
     while(size<couplenum) {
         /* Add remaining children */
-        r=(int)round(RANDOM_DOUBLE(species_list.size()-1));
+        //r=(int)round(RANDOM_DOUBLE(species_list.size()-1));
+#ifdef KNOWN_MAP
+        input_no = rl[0][0].m_sizex*rl[0][0].m_sizey;
+#else
+        input_no = get_dis_circle_area(VIEW_RADIUS);
+#endif
+        /*s=LIST_GET(Species*, species_list, r);
 
-        s=LIST_GET(Species*, species_list, r);
-
-        gen=new Genome(s, true);
+        gen=new Genome(s, true);*/
+        gen=new Genome(input_no, POSSIBLE_MOVES,robbynum);
         children.push_back(gen);
 
         size++;

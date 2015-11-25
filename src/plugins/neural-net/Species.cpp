@@ -39,7 +39,7 @@ unsigned long int Species::cull(bool top_only)
 	size = this->genomes.size();
 
 	if (top_only)
-		cutoff=2;
+		cutoff=1;
 	else 
 		cutoff = (int) round((double)this->genomes.size() / 2.0);
     
