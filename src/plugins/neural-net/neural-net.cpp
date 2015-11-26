@@ -19,6 +19,7 @@ double pool_maxfitness = 0.0;
 
 long unsigned int genome_count = 0;
 long unsigned int global_innovation = 0;
+unordered_map<GENE_KEY_TYPE, unsigned long int> last_modifications;
 
 list <Species *> species_list;
 vector <struct robby_msg> msg_list;
@@ -233,6 +234,9 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
     }
 #endif
     }
+    
+    /*clear last modification map for each generation*/
+    last_modifications.clear();
 
     species_list.sort(species_desc_cmp);
 
@@ -312,16 +316,16 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
 
     while(size<couplenum) {
         /* Add remaining children */
-        //r=(int)round(RANDOM_DOUBLE(species_list.size()-1));
+        r=(int)round(RANDOM_DOUBLE(species_list.size()-1));
 #ifdef KNOWN_MAP
         input_no = rl[0][0].m_sizex*rl[0][0].m_sizey;
 #else
         input_no = get_dis_circle_area(VIEW_RADIUS);
 #endif
-        /*s=LIST_GET(Species*, species_list, r);
+        s=LIST_GET(Species*, species_list, r);
 
-        gen=new Genome(s, true);*/
-        gen=new Genome(input_no, POSSIBLE_MOVES,robbynum);
+        gen=new Genome(s, true);
+        /*gen=new Genome(input_no, POSSIBLE_MOVES,robbynum);*/
         children.push_back(gen);
 
         size++;
@@ -370,7 +374,7 @@ void generate_robbies(struct robby **rl, long unsigned int couplenum,
 
 #ifdef DEBUG_GENOMES
     list <Species *>::iterator s_it;
-    list <Genome *>::iterator g_it;
+    vector <Genome *>::iterator g_it;
 
     i=0;
     for (s_it = species_list.begin(); s_it != species_list.end(); ++s_it) {

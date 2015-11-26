@@ -21,16 +21,18 @@
 #define NODE_KEY_TYPE unsigned long int
 #define GENE_KEY_TYPE unsigned long long int
 
-#define GENE_INSERT(cgene, refhash) (refhash.insert(pair<GENE_KEY_TYPE, Gene *>(hash_ull_int_encode((cgene)->in->id, (cgene)->out->id), (cgene))))
+#define GENE_INSERT(cgene, refhash, innovhash) ({refhash.insert(pair<GENE_KEY_TYPE, Gene *>(hash_ull_int_encode((cgene)->in->id, (cgene)->out->id), (cgene)));\
+                                                 innovhash.insert(pair<unsigned long int, Gene*> ((cgene)->innovation, (cgene)));})
 
 #define NODE_INSERT(cnode, refvector) (refvector.push_back(cnode))
 #define HASH_INSERT(cnode, refhash) (refhash.insert(pair<NODE_KEY_TYPE, Node *>((cnode)->id, (cnode))))
 
 using namespace std;
 
+
 bool exist_genome_file(char *dir, int fileno);
 
-long unsigned int next_innovation(void);
+long unsigned int next_innovation(unsigned long int id_node_in, unsigned long int id_node_out);
 
 //int remove_stale_species(list <class Species *> *sl);
 int remove_species(list <class Species *> *sl, long unsigned int couplenum, double &tot_fitness);
@@ -75,10 +77,11 @@ class Genome {
 		//unordered_map<unsigned long int, Node*> node_map;
 		vector <Node*> node_vector;
 		unordered_map<unsigned long long int, Gene*> gene_map;
+		unordered_map<unsigned long int, Gene*> gene_innov_map;
 		unsigned long int max_innov;
 		unsigned long int id;
 		double fitness;
- 	        list< vector <Node*> > level_list;
+ 	    list< vector <Node*> > level_list;
 
 		Genome(unsigned long int input_no, unsigned long int output_no, unsigned long robbynum);
 		Genome(Genome *gen);

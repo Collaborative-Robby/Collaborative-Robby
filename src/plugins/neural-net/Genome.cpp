@@ -24,7 +24,9 @@
 using namespace std;
 
 extern long unsigned int genome_count;
+
 extern long unsigned int global_innovation;
+extern unordered_map<GENE_KEY_TYPE, unsigned long int> last_modifications;
 
 Genome::Genome(Genome *gen) {
     this->id=genome_count++;
@@ -58,7 +60,7 @@ void Genome::copy(Genome *gen) {
             gene->in->output_genes.push_back(gene);
             gene->out->input_genes.push_back(gene);
         }
-        GENE_INSERT(gene, this->gene_map);
+        GENE_INSERT(gene, this->gene_map, this->gene_innov_map);
 
 	    if (gene->enabled)
 		    gene->out->active_in_genes++;
@@ -219,7 +221,7 @@ Genome::Genome(char *dir, int fileno) {
 			cur_gene->in = this->node_vector[idin];
 		if (idout >= 0)
 			cur_gene->out = this->node_vector[idout];
-		GENE_INSERT(cur_gene, this->gene_map);
+		GENE_INSERT(cur_gene, this->gene_map, this->gene_innov_map);
         if(cur_gene->innovation>global_innovation)
             global_innovation=cur_gene->innovation+1;
         if(cur_gene->innovation>this->max_innov)
@@ -245,11 +247,14 @@ Genome::Genome(Species *s, bool crossover) {
 
     if(crossover) {
         r=(long unsigned int) round(RANDOM_DOUBLE(s->genomes.size()-1));
-	g1 = s->genomes[r];
+        //XXX constant
+        if(RANDOM_DOUBLE(1)<.95)
+            r=0;
+	    g1 = s->genomes[r];
         //g1=LIST_GET(Genome*, s->genomes, r);
         r=(long unsigned int) round(RANDOM_DOUBLE(s->genomes.size()-1));
         //g2=LIST_GET(Genome*, s->genomes, r);
-	g2 = s->genomes[r];
+	    g2 = s->genomes[r];
         this->crossover(g1,g2);
     }
     else {
@@ -306,7 +311,7 @@ int Genome::insert_gene(Gene *g) {
     /* Update activation count */
     new_gene->out->active_in_genes++;
 
-    GENE_INSERT(new_gene, this->gene_map);
+    GENE_INSERT(new_gene, this->gene_map,this->gene_innov_map);
 
     /*Update max innovation*/
     if(new_gene->innovation>this->max_innov)
@@ -379,9 +384,9 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
     Genome *g1, *g2;
     Node *new_n;
     // Select the best genome as the first
-	if (g1->fitness > g2->fitness || 
-	    ((g1->fitness == g2->fitness) &&
-	       (g1->genes.size() < g2->gene_map.size()))) {
+	if (rg1->fitness > rg2->fitness || 
+	    ((rg1->fitness == rg2->fitness) &&
+	       (rg1->gene_map.size() < rg2->gene_map.size()))) {
 		g1 = rg1;
 		g2 = rg2;
 	} else {
@@ -417,7 +422,8 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
         id_in=g_it->second->in->id;
         id_out=g_it->second->out->id;
         
-        if(!g2->gene_map.count(g_it->first)){
+        /*if they have the same gene, consider innovation*/
+        if(!g2->gene_innov_map.count(g_it->first) || g2->gene_innov_map[g_it->first]->innovation!=(g_it)->second->innovation){
             this->insert_gene(g_it->second);
         } else {
             /*If both genomes have the same gene, choose it randomly*/
@@ -448,9 +454,6 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
     }
     
 
-return;
-#if 0
-// not used because this seems wrong after watching the official source.
 
     /*Add remaining genes from the second genome*/
     for(g_it=g2->gene_map.begin(), end_git=g2->gene_map.end(); g_it!=end_git; ++g_it) {
@@ -461,7 +464,6 @@ return;
             this->insert_gene(g_it->second);
         }
     }
-#endif
 
 }
 
@@ -477,6 +479,7 @@ Genome::~Genome(void) {
         delete g_it->second;
 
     this->gene_map.clear();
+    this->gene_innov_map.clear();
     this->node_vector.clear();
     for(lev_it=this->level_list.begin(), end_levit=this->level_list.end(); lev_it!=end_levit; ++lev_it) {
         lev_it->clear();
@@ -599,11 +602,11 @@ int Genome::node_mutate(void) {
 
     g1->out=neuron;
     g1->weight=1.0;
-    g1->innovation=next_innovation();
+    g1->innovation=next_innovation(g1->in->id, g1->out->id);
     g1->enabled=true;
 
     g2->in=neuron;
-    g2->innovation=next_innovation();
+    g2->innovation=next_innovation(g2->in->id, g2->out->id);
     g2->enabled=true;
     
     /*Push appropriate nodes*/
@@ -613,8 +616,8 @@ int Genome::node_mutate(void) {
     g_orig->in->output_genes.push_back(g1);
     g_orig->out->input_genes.push_back(g2);
 
-    GENE_INSERT(g1, this->gene_map);
-    GENE_INSERT(g2, this->gene_map);
+    GENE_INSERT(g1, this->gene_map, this->gene_innov_map);
+    GENE_INSERT(g2, this->gene_map, this->gene_innov_map);
 
     this->max_innov = g2->innovation;
 
@@ -625,8 +628,15 @@ int Genome::node_mutate(void) {
 }
 
 /*Get the next innovation number and increment it globally*/
-long unsigned int next_innovation() {
-    return global_innovation++;
+long unsigned int next_innovation(long unsigned int id_node_in, long unsigned int id_node_out) {
+    if(last_modifications.count(hash_ull_int_encode(id_node_in, id_node_out))) {
+        return last_modifications[hash_ull_int_encode(id_node_in, id_node_out)];
+    }
+    else {
+        last_modifications.insert(pair<unsigned long long int, unsigned long int>(hash_ull_int_encode(id_node_in, id_node_out), global_innovation));
+        return global_innovation++;
+    }
+    
 }
 
 /*Check if a link between nodes is present*/
@@ -684,7 +694,7 @@ int Genome::link_mutate(bool force_bias) {
         return 1;
     }
 
-    new_gene->innovation=next_innovation();
+    new_gene->innovation=next_innovation(new_gene->in->id, new_gene->out->id);
     
     /*Get a random weight*/
     new_gene->weight=RANDOM_DOUBLE(4)-2;
@@ -694,7 +704,7 @@ int Genome::link_mutate(bool force_bias) {
     n2->print();
 #endif
 
-    GENE_INSERT(new_gene, this->gene_map);
+    GENE_INSERT(new_gene, this->gene_map, this->gene_innov_map);
 
     n1->output_genes.push_back(new_gene);
     n2->input_genes.push_back(new_gene);
