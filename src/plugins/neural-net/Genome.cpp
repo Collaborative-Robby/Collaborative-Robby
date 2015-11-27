@@ -423,7 +423,7 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
         id_out=g_it->second->out->id;
         
         /*if they have the same gene, consider innovation*/
-        if(!g2->gene_innov_map.count(g_it->first) || g2->gene_innov_map[g_it->first]->innovation!=(g_it)->second->innovation){
+        if(!g2->gene_innov_map.count(g_it->second->innovation)) {
             this->insert_gene(g_it->second);
         } else {
             /*If both genomes have the same gene, choose it randomly*/

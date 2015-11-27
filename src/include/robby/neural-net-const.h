@@ -21,6 +21,8 @@
 #define COEFFICIENT_DISJOINT_GENES 1.0
 #define DISABLE_INHERIT_GENE_RATIO 0.75
 
+#define MISSING_GENOME_CROSSOVER_PROB 0.95
+
 /* Number of turns of species survival. */
 #define SPECIES_STALE_TRESHOLD 1000
 

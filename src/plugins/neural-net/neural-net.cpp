@@ -324,8 +324,11 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
 #endif
         s=LIST_GET(Species*, species_list, r);
 
-        gen=new Genome(s, true);
-        /*gen=new Genome(input_no, POSSIBLE_MOVES,robbynum);*/
+	if(RANDOM_DOUBLE(1) < MISSING_GENOME_CROSSOVER_PROB)
+		gen=new Genome(s, true);
+	else
+		gen=new Genome(input_no, POSSIBLE_MOVES,robbynum);
+	
         children.push_back(gen);
 
         size++;
