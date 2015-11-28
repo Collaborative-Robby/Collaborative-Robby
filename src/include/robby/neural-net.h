@@ -107,6 +107,7 @@ class Genome {
 class Species {	
 	public:
 		int staleness;
+		long unsigned int age;
 		double top_fitness;
 		double average_fitness;
 		vector <Genome *> genomes;

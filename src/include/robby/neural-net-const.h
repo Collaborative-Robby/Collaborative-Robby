@@ -32,4 +32,8 @@
 /* Simulation features */
 #define ROBBY_NNET_POSITION true
 
+/* NOTE : penalize very old species? */
+#define BOOST_AGE_THRESHOLD  20
+#define BOOST_AGE_MULTIPLIER 1.1
+
 #endif /* ROBBY_NEURAL_NET_CONST_H */

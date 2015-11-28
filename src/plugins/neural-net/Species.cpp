@@ -12,6 +12,7 @@ bool species_desc_cmp(Species *s1, Species *s2)
 /* Species */
 Species::Species(void)
 {
+	this->age = 0;
 	this->staleness = 0;
 	this->top_fitness = 0.0;
 	this->average_fitness = 0.0;
@@ -63,10 +64,16 @@ double Species::calculate_avg_fitness(void)
 
 	size = this->genomes.size();
 
+	++this->age;
+
 	for (g_it=this->genomes.begin(), end_git = this->genomes.end(); g_it != end_git; ++g_it)
 		avg += (*g_it)->fitness;
 
 	this->average_fitness = (avg/(double) size);
+
+	if (this->age < BOOST_AGE_THRESHOLD)
+		this->average_fitness *= BOOST_AGE_MULTIPLIER;
+
 	return this->average_fitness;
 }
 
