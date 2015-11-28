@@ -21,8 +21,7 @@
 #define NODE_KEY_TYPE unsigned long int
 #define GENE_KEY_TYPE unsigned long long int
 
-#define GENE_INSERT(cgene, refhash, innovhash) ({refhash.insert(pair<GENE_KEY_TYPE, Gene *>(hash_ull_int_encode((cgene)->in->id, (cgene)->out->id), (cgene)));\
-                                                 innovhash.insert(pair<unsigned long int, Gene*> ((cgene)->innovation, (cgene)));})
+#define GENE_INSERT(cgene, refhash) ({refhash.insert(pair<GENE_KEY_TYPE, Gene *>(hash_ull_int_encode((cgene)->in->id, (cgene)->out->id), (cgene)));})
 
 #define NODE_INSERT(cnode, refvector) (refvector.push_back(cnode))
 #define HASH_INSERT(cnode, refhash) (refhash.insert(pair<NODE_KEY_TYPE, Node *>((cnode)->id, (cnode))))
@@ -77,7 +76,6 @@ class Genome {
 		//unordered_map<unsigned long int, Node*> node_map;
 		vector <Node*> node_vector;
 		unordered_map<unsigned long long int, Gene*> gene_map;
-		unordered_map<unsigned long int, Gene*> gene_innov_map;
 		unsigned long int max_innov;
 		unsigned long int id;
 		double fitness;

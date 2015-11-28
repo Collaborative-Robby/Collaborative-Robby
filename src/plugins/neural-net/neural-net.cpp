@@ -447,9 +447,11 @@ void cleanup(struct robby **rl, long unsigned int couplenum, long unsigned int r
         s_it=species_list.erase(s_it);
     }
 
+#ifdef KNOWN_MAP
     for(i=0; i<couplenum; i++) { 
         free_kmap(&rl[i][0]);
         for(j=1; j<robbynum; j++)
             delete(rl[i][j].genome);
     }
+#endif
 }

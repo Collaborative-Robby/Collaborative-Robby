@@ -60,7 +60,7 @@ void Genome::copy(Genome *gen) {
             gene->in->output_genes.push_back(gene);
             gene->out->input_genes.push_back(gene);
         }
-        GENE_INSERT(gene, this->gene_map, this->gene_innov_map);
+        GENE_INSERT(gene, this->gene_map);
 
 	    if (gene->enabled)
 		    gene->out->active_in_genes++;
@@ -221,7 +221,7 @@ Genome::Genome(char *dir, int fileno) {
 			cur_gene->in = this->node_vector[idin];
 		if (idout >= 0)
 			cur_gene->out = this->node_vector[idout];
-		GENE_INSERT(cur_gene, this->gene_map, this->gene_innov_map);
+		GENE_INSERT(cur_gene, this->gene_map);
         if(cur_gene->innovation>global_innovation)
             global_innovation=cur_gene->innovation+1;
         if(cur_gene->innovation>this->max_innov)
@@ -311,7 +311,7 @@ int Genome::insert_gene(Gene *g) {
     /* Update activation count */
     new_gene->out->active_in_genes++;
 
-    GENE_INSERT(new_gene, this->gene_map,this->gene_innov_map);
+    GENE_INSERT(new_gene, this->gene_map);
 
     /*Update max innovation*/
     if(new_gene->innovation>this->max_innov)
@@ -423,7 +423,7 @@ void Genome::crossover(Genome *rg1, Genome *rg2){
         id_out=g_it->second->out->id;
         
         /*if they have the same gene, consider innovation*/
-        if(!g2->gene_innov_map.count(g_it->second->innovation)) {
+        if(!g2->gene_map.count(g_it->first)) {
             this->insert_gene(g_it->second);
         } else {
             /*If both genomes have the same gene, choose it randomly*/
@@ -479,7 +479,6 @@ Genome::~Genome(void) {
         delete g_it->second;
 
     this->gene_map.clear();
-    this->gene_innov_map.clear();
     this->node_vector.clear();
     for(lev_it=this->level_list.begin(), end_levit=this->level_list.end(); lev_it!=end_levit; ++lev_it) {
         lev_it->clear();
@@ -616,8 +615,8 @@ int Genome::node_mutate(void) {
     g_orig->in->output_genes.push_back(g1);
     g_orig->out->input_genes.push_back(g2);
 
-    GENE_INSERT(g1, this->gene_map, this->gene_innov_map);
-    GENE_INSERT(g2, this->gene_map, this->gene_innov_map);
+    GENE_INSERT(g1, this->gene_map);
+    GENE_INSERT(g2, this->gene_map);
 
     this->max_innov = g2->innovation;
 
@@ -704,7 +703,7 @@ int Genome::link_mutate(bool force_bias) {
     n2->print();
 #endif
 
-    GENE_INSERT(new_gene, this->gene_map, this->gene_innov_map);
+    GENE_INSERT(new_gene, this->gene_map);
 
     n1->output_genes.push_back(new_gene);
     n2->input_genes.push_back(new_gene);
@@ -790,7 +789,7 @@ int Genome::activate(struct robby *r, vector<struct robby_msg> *msg_list ) {
     /*Activate with robby view*/
     for(i=0; i<SQUARE_SIDE; i++) {
         for(j=0; j<SQUARE_SIDE; j++) {
-            if (r->view[i][j] != -1) {
+            if (r->view[i][j] != VIEW_TOO_FAR) {
                   in_node=(*node_it);
                   in_node->activate(r->view[i][j]);
                   ++node_it;
@@ -798,7 +797,6 @@ int Genome::activate(struct robby *r, vector<struct robby_msg> *msg_list ) {
         }
     }
 #endif
-
     /* Activate with robby position, from 1 to map size*/
     if (ROBBY_NNET_POSITION) {
         (*node_it)->activate((double)r->x+1.0);
@@ -816,7 +814,7 @@ int Genome::activate(struct robby *r, vector<struct robby_msg> *msg_list ) {
             /*Get other robbies view*/
             for(i=0; i<SQUARE_SIDE; i++) {
                 for(j=0; j<SQUARE_SIDE;j++)
-                    if((*m_it).view[i][j]!=-1) {
+                    if((*m_it).view[i][j]!=VIEW_TOO_FAR) {
                         (*node_it)->activate((*m_it).view[i][j]);
                         ++node_it;
                     }
