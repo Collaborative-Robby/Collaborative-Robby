@@ -15,7 +15,7 @@
 #define PERTURB_STEP 0.1
 
 /* Species comparison parameters */
-#define SAME_SPECIES_TRESHOLD 2.0
+#define SAME_SPECIES_TRESHOLD 3.0
 #define COEFFICIENT_DELTA_WEIGHT 3.0
 #define COEFFICIENT_EXCESS_GENES 1.0
 #define COEFFICIENT_DISJOINT_GENES 1.0
@@ -34,6 +34,6 @@
 
 /* NOTE : penalize very old species? */
 #define BOOST_AGE_THRESHOLD  20
-#define BOOST_AGE_MULTIPLIER 1.1
+#define BOOST_AGE_MULTIPLIER 1.0
 
 #endif /* ROBBY_NEURAL_NET_CONST_H */

@@ -237,6 +237,8 @@ static int next_generation(struct robby **rl, unsigned long int couplenum,
     
     /*clear last modification map for each generation*/
     last_modifications.clear();
+    
+    cout << "Species size: " << species_list.size() << endl;
 
     species_list.sort(species_desc_cmp);
 

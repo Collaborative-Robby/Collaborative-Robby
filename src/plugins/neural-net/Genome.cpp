@@ -145,8 +145,9 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
         for (inner_level_it = l_it->begin(),end_inner_level_it=l_it->end() ; inner_level_it != end_inner_level_it; ++inner_level_it)
              (*inner_level_it)->level_it = l_it;
     
+    this->gene_map.reserve(4*input_no*output_no);
     /*Connect inputs to outputs*/
-    for(i=output_no;i<this->node_vector.size();i++) {
+    /*for(i=output_no;i<this->node_vector.size();i++) {
 	    for (j = 0; j < output_no; j++) {
 		    cgene = new Gene();
 		    cgene->innovation=0;
@@ -162,7 +163,7 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
 		    cgene->out->active_in_genes++;
 
 	    }
-    }
+    }*/
     
     /*Mutate this genome*/
     this->mutate();
