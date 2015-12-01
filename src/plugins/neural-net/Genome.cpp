@@ -157,6 +157,8 @@ Genome::Genome(unsigned long int input_no, unsigned long int output_no, unsigned
 		    this->node_vector[i]->output_genes.push_back(cgene);
 		    this->node_vector[j]->input_genes.push_back(cgene);
 
+		    GENE_INSERT(cgene, this->gene_map);
+
 		    cgene->out->active_in_genes++;
 
 	    }
@@ -181,6 +183,8 @@ Genome::Genome(char *dir, int fileno) {
 	Node *cur_node;
 	Gene *cur_gene;
 	int idin = -1, idout = -1;
+
+	this->max_innov = 0;
 
 	rval = asprintf(&path, "%s/%d.%s", dir, fileno, GENOME_EXT);
 	if (rval < 0) {
@@ -224,7 +228,7 @@ Genome::Genome(char *dir, int fileno) {
 		GENE_INSERT(cur_gene, this->gene_map);
         if(cur_gene->innovation>global_innovation)
             global_innovation=cur_gene->innovation+1;
-        if(cur_gene->innovation>this->max_innov)
+        if(cur_gene->innovation > this->max_innov)
             this->max_innov=cur_gene->innovation;
         
         if(cur_gene->enabled) {
@@ -890,6 +894,7 @@ int Genome::save_to_file(char *dir, long unsigned int fileno) {
 			return -1;
 		}
 	}
+	closedir(d);
 
     /*create the genome file*/
 	rval = asprintf(&path, "%s/%lu.%s", dir, fileno, GENOME_EXT);

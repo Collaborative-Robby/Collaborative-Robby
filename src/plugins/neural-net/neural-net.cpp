@@ -151,7 +151,7 @@ static int setup_generations(struct robby **rl, long unsigned int couplenum,
 {
     unsigned int coup, i;
     unsigned long int input_no;
-    char **k_map;
+    char **k_map = NULL;
 
 #ifdef KNOWN_MAP
    input_no = rl[0][0].m_sizex*rl[0][0].m_sizey;
@@ -432,7 +432,7 @@ static inline void free_kmap(struct robby *r) {
 
 void cleanup(struct robby **rl, long unsigned int couplenum, long unsigned int robbynum)
 { 
-    unsigned long int i, j;
+    unsigned long int i;
     list<Species*>::iterator s_it;
     vector<Genome*>::iterator g_it;
     
@@ -447,11 +447,12 @@ void cleanup(struct robby **rl, long unsigned int couplenum, long unsigned int r
         s_it=species_list.erase(s_it);
     }
 
-#ifdef KNOWN_MAP
+    unsigned long int j;
     for(i=0; i<couplenum; i++) { 
+#ifdef KNOWN_MAP
         free_kmap(&rl[i][0]);
+#endif
         for(j=1; j<robbynum; j++)
             delete(rl[i][j].genome);
     }
-#endif
 }

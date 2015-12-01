@@ -14,6 +14,14 @@
 #include <robby/dismath.h>
 #include <robby/commons.h>
 
+/* C++ inclusions */
+#include <set>
+#include <string>
+#include <iostream>
+using namespace std;
+
+#define MAP_MAX_RETRIES 5000
+
 /* callbacks functions */
 int (*move_callback)(struct world_map *, struct robby *);
 void (*generate_robbies_callback)(struct robby **, long unsigned int, long unsigned int, long unsigned int);
@@ -26,6 +34,9 @@ void *callbacks = NULL;
 char __can_const;
 
 #define CAN_DUMMY_PTR (void *)&__can_const
+
+/* set to check if the generated maps are unique */
+set<string> map_set;
 
 int map_constructor(struct world_map *m, unsigned long int x, unsigned long int y,
         unsigned long int robbynum,
@@ -285,8 +296,8 @@ void destroy_robbies(struct robby **rl, long unsigned int couplenum, long unsign
 
     free(rl);
 
-    //if (callbacks)
-    //    dlclose(callbacks);
+    if (callbacks)
+        dlclose(callbacks);
 }
 
 int compare_eval(const void *a, const void *b)
@@ -498,8 +509,29 @@ int count_files(char *dir) {
     return count;
 }
 
+bool is_new_map(struct world_map *m, set<string> *p) {
+    long unsigned int i, j;
+    string outstr = "";
+    bool notcontained;
+
+    for (i = 0; i< m->sizex;i++) {
+        for (j = 0; j< m->sizey;j++) {
+             outstr=outstr+to_string(m->innermatrix[i][j] == CAN_DUMMY_PTR);
+        }
+    }
+
+    if (p->count(outstr)) {
+        notcontained = false;
+        map_destructor(m);
+    } else {
+        notcontained = true;
+        p->emplace(outstr);
+    }
+    return notcontained;
+}
+
 unsigned long int generate_maps(unsigned long int nmaps,char* dir, long unsigned int sizex, long unsigned int sizey,long unsigned int cannum) {
-    int ret;
+    int ret, retries;
     unsigned long int fcount,i;
     struct world_map m;
     char *map_file_name;
@@ -519,13 +551,24 @@ unsigned long int generate_maps(unsigned long int nmaps,char* dir, long unsigned
             return 0;
         }
         return fcount;
-    }    
+    }
     else if(ret<0) {
         perror("dir: ");
         return 0;
     }
     for(i=0;i<nmaps;i++) {
-        map_constructor(&m,sizex,sizey, 0, cannum);
+        retries = 0;
+        do {
+             map_constructor(&m,sizex,sizey, 0, cannum);
+             /* Can diverge. */
+             retries++;
+        } while(!is_new_map(&m, &map_set) && (retries <= MAP_MAX_RETRIES));
+
+        if (retries >= MAP_MAX_RETRIES) {
+             fprintf(stderr, "Impossible to generate random maps (is the number of maps > than the max possible number of combinations?)\n");
+             exit(-1);
+        }
+
         asprintf(&map_file_name, "%lu", i);
         write_map(&m, map_file_name , dir);
         free(map_file_name);
@@ -618,6 +661,8 @@ int main(int argc, char **argv)
         generate_maps(test_map_num, TEST_DEFAULT_DIR, sizex, sizey, cannum);
         asprintf(&test_dir, TEST_DEFAULT_DIR);
     }
+
+    map_set.clear();
 
     rl = (struct robby **)calloc(couplenum, sizeof(struct robby *));
     if (rl==NULL){
